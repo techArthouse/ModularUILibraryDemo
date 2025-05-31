@@ -6,12 +6,15 @@
 //
 
 import SwiftUI
+import ModularUILibrary
 
 @main
 struct UIDemoApp: App {
+    let themeManager: ThemeManager = ThemeManager(imageAssetBundle: .main)
     var body: some Scene {
         WindowGroup {
             ContentView()
+                .environmentObject(themeManager)
         }
     }
 }
