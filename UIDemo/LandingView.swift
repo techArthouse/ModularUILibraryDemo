@@ -43,38 +43,6 @@ struct LandingView: View {
     }
 }
 
-
-
-
-//    struct RecipesView: View {
-//        @EnvironmentObject var themeManager: ThemeManager
-//    //    @ObservedObject private var nav: AppNavigation = .shared
-//        @State var size: CGFloat
-//
-//        var body: some View {
-//            List(Recipe.allFromJSON(using: .good), id: \ .id) { recipe in
-//                NavigationLink(value: Route.recipeDetail(recipe)) {
-//                    FeatureItem(
-//                        title: recipe.name,
-//                        description: recipe.cuisine,
-//                        leading: {
-//                            ImageContainer(
-//                                           size: $size,
-//                                           accessibilityId: recipe.id.uuidString)
-//                        }
-//                    )
-//                    .frame(maxHeight: 100)
-//                }
-//                .listRowInsets(.init())
-//            }
-//            .listStyle(.plain)
-//            .refreshable {
-//                FetchCache.shared.refresh()
-//            }
-//            .navigationTitle("Recipes")
-//        }
-//    }
-
 @MainActor
 class RecipesViewModel: ObservableObject {
     @Published var items: [RecipeItem] = []
