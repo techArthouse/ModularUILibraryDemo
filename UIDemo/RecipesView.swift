@@ -26,48 +26,7 @@ struct RecipesView: View {
     
     var body: some View {
         List(vm.items, id: \.id) { item in
-            HStack(spacing: 0) {
-//                Group {
-//                    if let image = item.image {
-                        VStack {
-                            
-                            item.image
-//                                .image
-                                .resizable()
-                                .aspectRatio(contentMode: .fill)
-                                .frame(width: 40, height: 40)
-//                                .foregroundStyle(.black)
-                            
-                                .task {
-                                    print("qqqqqqqqqqqq for: \(item.id)")
-//                                    var r = item.wrappedValue
-                                    var o = Image(systemName: "heart.fill")
-//                                    item.image = o // = Image(systemName: "heart.fill")
-                                    print("qqqqqqqqqqqq.....end for \(item.id)")
-//                                    item.image.wrappedValue = Image(systemName: "heart.fill")
-//                                    r.image = o
-//                                    try? await Task.sleep(nanoseconds: 1_000_000_000) // 1 second
-                                    item.image = o
-                                }
-                        }
-                        .padding()
-//                        .background(.black)
-                        .onAppear {
-                            print("image vtack in place")
-                        }
-//                    }
-                Text("\(item.recipe)")
-                        .padding()
-                        .onAppear {
-                            print("well textbox shows")
-                        }
-//                }
-            }
-            .onTapGesture {
-                Task {
-                    FetchCache.shared.refresh()
-                }
-            }
+            RecipeRowView(item: item)
 //                    .padding(0)
 //                                    .frame(maxWidth: .infinity, maxHeight: .infinity)
 //            .background(.red)
@@ -78,6 +37,11 @@ struct RecipesView: View {
             print("list element appeared")
             vm.loadRecipes()
         }
+//        .onTapGesture {
+//            Task {
+//                FetchCache.shared.refresh()
+//            }
+//        }
 //        List(vm.items, id: \.id ) { recipeItem in
 //            
 //            recipeItem.daImage
@@ -169,6 +133,43 @@ struct RecipesView: View {
 //        .onAppear {
 //            vm.loadRecipes()
 //        }
+    }
+    
+    struct RecipeRowView: View {
+        // Suppose the parent passed us a Binding<RecipeItem>:
+        @ObservedObject var item: RecipeItem
+
+        var body: some View {
+            HStack(spacing: 0) {
+//                Group {
+//                    if let image = item.image {
+                        VStack {
+                            item.image
+//                                .image
+                                .resizable()
+                                .aspectRatio(contentMode: .fill)
+                                .frame(width: 40, height: 40)
+                                .task {
+                                    print("// Write through the binding:")
+                                    try? await Task.sleep(nanoseconds: 1_000_000_000) // 1 second
+                                    print("asdfasdfasdfasdfasdfasdfasdfasdfasdfasdfasdfa")
+                                    item.image = Image(systemName: "heart.fill")
+                                }
+                        }
+                        .padding()
+//                        .background(.black)
+                        .onAppear {
+                            print("image vtack in place")
+                        }
+//                    }
+                Text("\(item.name)")
+                        .padding()
+                        .onAppear {
+                            print("well textbox shows")
+                        }
+//                }
+            }
+        }
     }
 }
 
