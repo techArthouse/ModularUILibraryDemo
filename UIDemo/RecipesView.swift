@@ -44,6 +44,7 @@ struct RecipesView: View {
     struct RecipeRowView: View {
         // Suppose the parent passed us a Binding<RecipeItem>:
         @ObservedObject var item: RecipeItem
+        @State var image: Image?
 
         var body: some View {
             
@@ -51,15 +52,31 @@ struct RecipesView: View {
                 title: item.name,
                 description: item.cuisine,
                 leading: {
-                    ImageContainer(image: item.image, accessibilityId: item.id)
+                    ImageContainer(image: image, accessibilityId: item.id)
                 })
             .task {
-                try? await Task.sleep(nanoseconds: 1_000_000_000) // 1 second
-                item.image = Image(systemName: "heart.fill")
+                do {
+                    guard let url = item.smallImageURL else {
+                        throw URLError(.badURL)
+                    }
+                    print(item.id)
+                    if let i = try await FetchCache.shared.getImageFor(url: url) {
+                        image = i
+                    }
+                } catch {
+                    print(error.localizedDescription)
+                }
+                // we make it here then we never got an image
+                image = Image("imageNotFound")
+            }
+            .onAppear {
+                image = nil // right now i think that by having this here we can always show a progressview when we
+                // return to this item cell in case it was canceled before the image return the first time.
             }
         }
     }
 }
+
 
 #if DEBUG
 struct RecipesView_Previews: PreviewProvider {

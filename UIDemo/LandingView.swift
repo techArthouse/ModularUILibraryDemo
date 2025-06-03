@@ -57,6 +57,21 @@ class RecipesViewModel: ObservableObject {
 //        FetchCache.shared.loadIfNeeded()
         
     }
+    
+    #if DEBUG
+    /// Load and wrap your recipes in order
+    func loadRecipes(from url: URL? = nil) {
+        let recipes = Recipe.allFromJSON(using: .good) // Network call
+        self.items.append(contentsOf: recipes.map ({ recipe in
+            RecipeItem(recipe: recipe)
+        }))
+//        self.items = recipes.map ({ recipe in
+//            RecipeItem(recipe: recipe)
+//        })
+        print("Asdfasdfsdf...return")
+        return
+    }
+    #else
     /// Load and wrap your recipes in order
     func loadRecipes(from url: URL? = nil) {
 //        FetchCache.shared.load()
@@ -72,6 +87,8 @@ class RecipesViewModel: ObservableObject {
         print("Asdfasdfsdf...return")
         return
     }
+    
+#endif
     
     func getRecipeImage(for recipeItem: Binding<RecipeItem>) async  {
 //        guard let url = recipeItem.smallImageURL else { return }
@@ -114,7 +131,7 @@ struct RecipeDetailView: View {
 @MainActor
 class RecipeItem: ObservableObject, Identifiable {
     @Published var recipe: Recipe
-    @Published var image: Image = Image(systemName: "circle.fill")
+    @Published var image: Image?
     let id: String
 
     init(recipe: Recipe) {
@@ -122,28 +139,28 @@ class RecipeItem: ObservableObject, Identifiable {
         self.id = recipe.uuidString
     }
 
-    /// Call once (e.g. in .task) to lazily fill in the image
-    func loadImage() async {
-        // early exit if already loaded
-//        guard image == nil else { return }
-
-        // 1) missing URL → show “not found”
-        guard let url = recipe.largeImageURL else {
-//            self.image = theme
-//              .imageAssetManager
-//              .getImage(imageIdentifier: .preset(.imageNotFound))
-            return
-        }
-
-        // 2) fetch via your shared cache
-        let fetchedImage = await FetchCache.shared.getImageFor(url: url) // {
-        self.image = fetchedImage
-//        } else {
+//    /// Call once (e.g. in .task) to lazily fill in the image
+//    func loadImage() async {
+//        // early exit if already loaded
+////        guard image == nil else { return }
+//
+//        // 1) missing URL → show “not found”
+//        guard let url = recipe.largeImageURL else {
 ////            self.image = theme
 ////              .imageAssetManager
 ////              .getImage(imageIdentifier: .preset(.imageNotFound))
+//            return
 //        }
-    }
+//
+//        // 2) fetch via your shared cache
+//        let fetchedImage = await FetchCache.shared.getImageFor(url: url) // {
+//        self.image = fetchedImage
+////        } else {
+//////            self.image = theme
+//////              .imageAssetManager
+//////              .getImage(imageIdentifier: .preset(.imageNotFound))
+////        }
+//    }
 }
 
 // MARK: - Convenience accessors for recipe data.

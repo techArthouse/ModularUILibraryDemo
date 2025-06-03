@@ -14,7 +14,7 @@ final class NetworkService {
     private init() { }
     
     /// throws custom NetworkError for more control and relevant info to caller
-    func requestData(from url: URL, using method: HTTPMethodType = .get ) async throws -> Data {
+    func requestData(from url: URL, using method: HTTPMethodType = .get ) async throws(NetworkError) -> Data {
         do {
             var request = URLRequest(url: url)
             request.httpMethod = method.rawValue
