@@ -101,8 +101,9 @@ extension Recipe {
             self.rawValue
         }
     }
+    
     /// Load all recipes from the bundled recipes.json
-    static func allFromJSON(using testCase: TestCase) -> [Recipe] {
+    static func allFromJSON(using testCase: TestCase) async -> [Recipe] {
         do {
             let url = Bundle.main.url(
                 forResource: testCase.jsonFileName,

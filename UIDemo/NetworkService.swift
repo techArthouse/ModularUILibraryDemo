@@ -20,7 +20,7 @@ final class NetworkService {
             request.httpMethod = method.rawValue
             
             print("image network requested")
-            try await Task.sleep(for: .seconds(3))
+//            try await Task.sleep(for: .seconds(3))
             
             let (data, response): (Data, URLResponse) = try await URLSession.shared.data(for: request)
             

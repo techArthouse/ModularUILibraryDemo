@@ -55,23 +55,30 @@ class RecipesViewModel: ObservableObject {
         }
 //        // if user suplied valid string for a URL then let's load it
 //        FetchCache.shared.loadIfNeeded()
-        
+    }
+    
+    /// Start FetchCache using pathComponent.
+    /// Succeeds unless any error occurs in the cache initialization procees. throws a verbose error if fails.
+    /// the error
+    func startCache(path: String) throws(FetchCacheError) {
+        try FetchCache.shared.openCacheDirectoryWithPath(path: path)
     }
     
     #if DEBUG
+    
     /// Load and wrap your recipes in order
-    func loadRecipes(from url: URL? = nil) {
-        let recipes = Recipe.allFromJSON(using: .good) // Network call
+    func loadRecipes(from url: URL? = nil) async {
+        let recipes = await Recipe.allFromJSON(using: .good) // Network call
         self.items.append(contentsOf: recipes.map ({ recipe in
             RecipeItem(recipe: recipe)
         }))
-//        self.items = recipes.map ({ recipe in
-//            RecipeItem(recipe: recipe)
-//        })
+        
         print("Asdfasdfsdf...return")
         return
     }
+    
     #else
+    
     /// Load and wrap your recipes in order
     func loadRecipes(from url: URL? = nil) {
 //        FetchCache.shared.load()
@@ -88,7 +95,7 @@ class RecipesViewModel: ObservableObject {
         return
     }
     
-#endif
+    #endif
     
     func getRecipeImage(for recipeItem: Binding<RecipeItem>) async  {
 //        guard let url = recipeItem.smallImageURL else { return }
@@ -96,12 +103,12 @@ class RecipesViewModel: ObservableObject {
     }
 
     /// Drop both image memory & disk caches, and clear each item’s image
-    func refreshAll() {
-        FetchCache.shared.refresh()
-        for item in items {
-            item.image = Image(systemName: "heart")
-        }
-    }
+//    func refreshAll() {
+//        FetchCache.shared.refresh()
+//        for item in items {
+//            item.image = Image(systemName: "heart")
+//        }
+//    }
 }
 
 

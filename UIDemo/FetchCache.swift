@@ -12,201 +12,198 @@ import Foundation
 @MainActor
 class FetchCache: ObservableObject {
     static let shared = FetchCache()
-//    @State var isLoaded: Bool = false
     
     private var memoryCache = [String: Image]() //  in‐memory cache
     private var diskMemoryURL: URL? // directory on disk via URL
+    /// Track when each URL was last fetched (in-memory or on-disk).
+    private var lastFetchDates = [String: Date]()
     
-    private init() {
-        print("loading cache first time")
-        loadIfNeeded()
-    }
+    private init() { }
     
-    private func loadIfNeeded() {
-        guard diskMemoryURL == nil else { return }
-        do {
-            try initializeDiskMemory() // maybe make it a optional init if folder fails to start?
-        } catch {
-            print(error.localizedDescription)
-            
+    /// Helper Method to open the cacheDirectory for FetchCache. If cache already has an open directory then error is thrown.
+    func openCacheDirectoryWithPath(path: String) throws(FetchCacheError) {
+        if let diskMemoryCacheURL = diskMemoryCacheAlreadyExists() {
+            throw FetchCacheError.directoryAlreadyOpenWithPathComponent(diskMemoryCacheURL.lastPathComponent)
         }
-        print("done loading")
+        try initializeDiskMemory(with: path)
     }
     
-    private func initializeDiskMemory() throws {
+    /// if FetchCache diskmemoryurl already exists then the url is returned. nil if it does not exist.
+    private func diskMemoryCacheAlreadyExists() -> URL? {
+        do {
+            guard let url = diskMemoryURL else {
+                return nil
+            }
+            if FileManager.default.fileExists(atPath: url.path()) {
+                return url
+            } else {
+                return nil
+            }
+        }
+    }
+    
+    var isDiskMemoryCacheURLSet: Bool {
+        guard self.diskMemoryURL != nil else {
+            return false
+        }
+        return true
+    }
+    
+    private func baseDirectoryURLForDomainCache() throws(FetchCacheError) -> URL {
         let cachesDirectory = FileManager.SearchPathDirectory.cachesDirectory
         guard let cachesBase = FileManager.default
-                .urls(for: cachesDirectory, in: .userDomainMask)
-                .first
+            .urls(for: cachesDirectory, in: .userDomainMask)
+            .first
         else {
             throw FetchCacheError.noURLsFoundInDirectory(cachesDirectory)
         }
-
-        // Pick the correct folder name:
-        #if DEBUG
-        let cacheDirectoryURL = cachesBase.appendingPathComponent(
-            "DevelopmentFetchImageCache",
-            isDirectory: true
-        )
-        #else
-        let cacheDirectoryURL = cachesBase.appendingPathComponent(
-            "FetchImageCache",
-            isDirectory: true
-        )
-        #endif
-
-        // cache path exists or else create it.
-        if FileManager.default.fileExists(atPath: cacheDirectoryURL.path)
-            || (try? FileManager.default.createDirectory(
-                   at: cacheDirectoryURL,
-                   withIntermediateDirectories: true
-               )) != nil
-        {
+        return cachesBase
+    }
+    
+    fileprivate func loadCacheDirectory(at cacheDirectoryURL: URL) throws(FetchCacheError) {
+        do {
+            try FileManager.default.createDirectory(at: cacheDirectoryURL, withIntermediateDirectories: true)
             diskMemoryURL = cacheDirectoryURL
-            print("Cache folder ready at \(cacheDirectoryURL.absoluteString)")
-        } else {
-            throw FetchCacheError.failedToInitializeDiskMemory
+        } catch {
+            throw FetchCacheError.fileManagerError(withURL: cacheDirectoryURL)
+        }
+    }
+    
+    private func initializeDiskMemory(with pathComponent: String) throws(FetchCacheError) {
+        guard pathComponent.isContiguousUTF8 else {
+            throw FetchCacheError.invalidPathForCacheURL(pathComponent)
+        }
+        
+        do {
+            let cacheDomainBaseURL = try baseDirectoryURLForDomainCache()
+            let cacheDirectoryURL = cacheDomainBaseURL.appendingPathComponent(
+                pathComponent,
+                isDirectory: true
+            )
+            
+            try loadCacheDirectory(at: cacheDirectoryURL)
+        } catch {
+            throw FetchCacheError.failedToInitializeDiskMemory(withError: error)
         }
     }
     
     
     /// Creates an encoded string from the sourceURL and appends it to cacheDirectoryURL that results local file url.
-    func getElementDiskMemoryURL(using elementSourceURL: URL) throws(FetchCacheError) -> URL {
+    /// Can throw `FetchCacheError` of types: `cachedDirectoryURLisNil` or `failedToAppendEncodedRemoteURLToCacheDirectoryURL`
+    private func generateElementURLFromDiskMemoryURL(using elementSourceURL: URL) throws(FetchCacheError) -> URL {
         guard let cacheDirectoryURL = diskMemoryURL
         else {
             throw FetchCacheError.cachedDirectoryURLisNil
         }
         
-        guard let pathAddress = elementSourceURL.absoluteString.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed)
+        guard let pathAddress = elementSourceURL.absoluteString.addingPercentEncoding(withAllowedCharacters: .alphanumerics)
         else {
             throw FetchCacheError.failedToAppendEncodedRemoteURLToCacheDirectoryURL(remoteURL: elementSourceURL, cacheDirectoryURL: cacheDirectoryURL)
         }
-        
-        return cacheDirectoryURL.appendingPathComponent(pathAddress, conformingTo: .jpeg)
+//        print("elementsourceurl.path() encoded: \(elementSourceURL.path())")
+//        print("elementsourceurl.path() not encoded: \(elementSourceURL.path(percentEncoded: false))")
+//        print("elementsourceurl.absolutString: \(elementSourceURL.absoluteString)")
+//        print("elementsourceurl.absolutString.addingPercentEncoding(withAllowedCharacters: .alphanumerics): \(elementSourceURL.absoluteString.addingPercentEncoding(withAllowedCharacters: .alphanumerics) ?? "wtfhappened")")
+//        let pathAddress = elementSourceURL.path(percentEncoded: false)
+//        print("path address is: \(pathAddress), and cachedDir is \(cacheDirectoryURL.absoluteString)")
+        let url = cacheDirectoryURL.appendingPathComponent(pathAddress, isDirectory: false)
+        return url
     }
     
-    func getImageFor(url networkSourceURL: URL) async throws -> Image? {
+    /// returns image from source or
+    func getImageFor(url networkSourceURL: URL) async throws(FetchCacheError) -> Image? {
         do {
-            let localFileURL = try getElementDiskMemoryURL(using: networkSourceURL) // the url tied to this remote source and used as key to store and lookup
+            try? await Task.sleep(for: .seconds(3)) // for testing purposes to visually see the loads
             
-            loadIfNeeded() // follow from here and ask why it always request from network even after previously loading
             if let image = checkLocalMemory(using: networkSourceURL) { // if in local memory then we've already saved to disk
                 return image
-            } else if let image = try await checkDiskMemory(localFileURL: localFileURL) {  // if in disk, lets load to localmemory
-                memoryCache[networkSourceURL.absoluteString] = image // at to mem
-                return image
-            } else { // if nil then lets ask network for new image and save (implicity overwrite source in disk if exists)
-                let image = try await requestImageFromNetwork(at: networkSourceURL, saveTo: localFileURL, using: .get)
-                memoryCache[networkSourceURL.absoluteString] = image
-                return image
+            } else {
+                let localFileURL = try generateElementURLFromDiskMemoryURL(using: networkSourceURL) // the url tied to this remote source and used as key to store and lookup
+                if let image = try await checkDiskMemory(localFileURL: localFileURL) { // if in disk, lets load to localmemory
+                    memoryCache[networkSourceURL.absoluteString] = image // at to mem
+                    return image
+                } else { // if nil then lets ask network for new image and save (implicity overwrite source in disk if exists)
+                    let image = try await requestImageFromNetwork(at: networkSourceURL, saveTo: localFileURL, using: .get)
+                    memoryCache[networkSourceURL.absoluteString] = image
+                    return image
+                }
             }
-            
         } catch {
-//            switch e {
-//            case .failedToGetImageFromNetworkRequest(_):
-//                <#code#>
-//            case .failedToConvertDataBlobToImage(sourceURL: let sourceURL, blob: let blob, sourceLocation: let sourceLocation):
-//                <#code#>
-//            case .failedToGetDataFromContentsOf(sourceURL: let sourceURL, sourceLocation: let sourceLocation):
-//                <#code#>
-//            default:
-//                
-//            }
             // if we ould not retrieve an image then we'll log whatever the error is and default to callers logic where no image can get retrieved
             print("\(error.localizedDescription)")
-            return nil
+            
+            switch error {
+            case .failedToWriteImageDataToDisk(image: let image, _):
+                // still save it to cache for curret instance.
+                memoryCache[networkSourceURL.absoluteString] = image
+                return image
+            case .cachedDirectoryURLisNil: // this error might be good to restart from the client since it's the base requirement to not have non existant cache
+                throw FetchCacheError.failedToFetchImageFrom(source: networkSourceURL, withError: error)
+            case .failedToAppendEncodedRemoteURLToCacheDirectoryURL: // this one might be worth catching at client so they can validate they are passing correct string
+                throw FetchCacheError.failedToFetchImageFrom(source: networkSourceURL, withError: error)
+            case .failedToGetDataFromContentsOf, .failedToConvertDataBlobToImage, .failedToGetImageFromNetworkRequest: // these are fatal since process seems corrupted
+                throw FetchCacheError.failedToFetchImageFrom(source: networkSourceURL, withError: error)
+            default:
+                throw FetchCacheError.failedToFetchImageFrom(source: networkSourceURL, withError: error) // unless i expanbd on the previous cases maybe they should default to throw original error only .failedToWriteImageDataToDisk would still give us an image we can send back.
+            }
         }
     }
-    
-//    func getImageFor(url sourceURL: URL) async throws -> Image {
-//        do {
-//            let localFileURL = getElementDiskMemoryURL(using: sourceURL) // the url tied to this remote source and used as key to store and lookup
-//            if let image = try await loadImageFromSystemMemory(using: sourceURL) {
-//                print("loadImageFromSystemMemory loadImageFromSystemMemory loadImageFromSystemMemory loadImageFromSystemMemory")
-//                return image
-//            } else {
-//                // This can throw FetchCacheError (or, if something slips through, another Error).
-//                return try await requestImageFromNetwork(at: sourceURL, using: .get)
-//            }
-//        } catch let e as FetchCacheError {
-//            switch e {
-//            case .failedToFindImageFromSystemMemoryBanks:
-//                <#code#>
-//            case .failedToInitializeDiskMemory:
-//                <#code#>
-//            case .failedToGetImageFromNetworkRequest(_):
-//                <#code#>
-//            case .failedToWriteImageDataToDisk(let image, _):
-//                // Although we failed the logic in the throw happens aftger we successfully built an image
-//                // from the net data but your disk image failed. hence, we still have an image we can display.
-//                return image
-//            case .dataConversionToImageFailed(_):
-//                <#code#>
-//            case .noURLsFoundInDirectory(_):
-//                <#code#>
-//            }
-//            print("womp womp womp womp womp womp womp womp womp womp womp womp womp womp womp womp womp womp womp ")
-//            // If requestImageFromNetwork threw any FetchCacheError, show placeholder
-//            return Image("imageNotFound")
-//        } catch {
-//            // This catches *all other* Errors that might slip out unexpectedly.
-//            print("pmow pmow pmow pmow pmow pmow pmow pmow pmow pmow pmow pmow pmow pmow pmow pmow pmow pmow pmow ")
-//            return Image("placeHolder")
-//        }
-//    }
-    
-    // note now that I specivied systemmemory i need to create a method for network but i think requestImageFromNetwork will do
-    // use this to first try to load locally when you get each recipe. if it doesn't find it it will load from network.
-    // if all fail without an error then we could not load the image
-//    func loadImageFromSystemMemory(using imageSourceURL: URL) async -> Image? {
-//        loadIfNeeded() // follow from here and ask why it always request from network even after previously loading
-//        if let image = checkLocalMemory(url: imageSourceURL) { // if in local memory then we've already saved to disk
-//            return image
-//        } else if let image = await checkDiskMemory(using: imageSourceURL) { // if in disk, lets load to localmemory
-//            memoryCache[imageSourceURL.absoluteString] = image // at to mem
-//            return image
-//        } else {
-//            return nil
-//        }
-//    }
     
     /// throws FetchCacheError if failure, otherwise returns image found
-    func requestImageFromNetwork(at networkSourceURL: URL, saveTo localFileURL: URL, using method: NetworkService.HTTPMethodType = .get ) async throws -> Image {
+    private func requestImageFromNetwork(at networkSourceURL: URL, saveTo localFileURL: URL, using method: NetworkService.HTTPMethodType = .get ) async throws(FetchCacheError) -> Image {
+        var imageDataBlob: Data
         do {
-            let imageDataBlob = try await NetworkService.shared.requestData(from: networkSourceURL, using: method) // may throw NetworkError
-            
-            // image will be nil only if .imageIfImageData fails to load data as Image
-            if let image = imageDataBlob.imageIfImageData {
-                do {
-                    // save data to disk directory using local file url
-                    try imageDataBlob.write(to: localFileURL, options: .atomic)
-                    print("Successfully wrote image to disk at \(localFileURL).  Cache size: \(memoryCache.count)")
-                } catch {
-                    print("\(error.localizedDescription)")
-                    // fallthrough sincew we have an image to send back.
-                    // throw FetchCacheError.failedToWriteImageDataToDisk(image: image, error: error)
-                }
-                return image
-            } else {
-                throw FetchCacheError.failedToConvertDataBlobToImage(sourceURL: networkSourceURL, blob: imageDataBlob, sourceLocation: .remote)
-            }
-        } catch let e as NetworkError {
+            imageDataBlob = try await NetworkService.shared.requestData(from: networkSourceURL, using: method) // may throw NetworkError
+        } catch let e {
             print("FetchCache - NetworkError: \(e.localizedDescription)")
             throw FetchCacheError.failedToGetImageFromNetworkRequest(e)
-        } catch let e as FetchCacheError {
-            throw e
+        }
+        
+        // image will be nil only if .imageIfImageData fails to load data as Image
+        if let image = imageDataBlob.imageIfImageData {
+            do {
+                // save data to disk directory using local file url
+                try imageDataBlob.write(to: localFileURL, options: .atomic)
+                print("Successfully wrote image to disk at \(localFileURL).  Cache size: \(memoryCache.count)")
+            } catch {
+                print("\(error.localizedDescription)")
+                throw FetchCacheError.failedToWriteImageDataToDisk(image: image, error: error)
+            }
+            return image
+        } else {
+            throw FetchCacheError.failedToConvertDataBlobToImage(sourceURL: networkSourceURL, blob: imageDataBlob, sourceLocation: .remote)
         }
     }
     
-    func refresh() {
-        deleteDiskMemory()
-        deleteLocalMemory()
+    private func loadIfNeeded() {
+        guard let cacheDirectoryURLPath = diskMemoryCacheAlreadyExists()?.lastPathComponent else {
+            return
+        }
         
-        // reset directoryurl to remove stale path
-        diskMemoryURL = nil
-        print("i feel fresh and diskMemURL is nil: \(diskMemoryURL == nil)")
-        loadIfNeeded()
-//        objectWillChange.send()
+        do {
+            try initializeDiskMemory(with: cacheDirectoryURLPath) // maybe make it a optional init if folder fails to start?
+        } catch {
+            /// TODO: In the future we should thow the error so caller can make informed step.
+            print(error.localizedDescription)
+        }
+        print("done loading after need.")
+    }
+    
+    func refresh() async {
+        guard let diskMemoryCacheURLPath = diskMemoryCacheAlreadyExists()?.lastPathComponent else {
+            return
+        }
+        
+        deleteLocalMemory()
+        deleteDiskMemory()
+        print("refresh delete diskandlocal mem")
+        
+        do {
+            try initializeDiskMemory(with: diskMemoryCacheURLPath) // maybe make it a optional init if folder fails to start?
+        } catch {
+            /// TODO: In the future we should thow the error so caller can make informed step.
+            print(error.localizedDescription)
+        }
     }
     
     // MARK: - Delete Operations
@@ -215,6 +212,7 @@ class FetchCache: ObservableObject {
         guard let diskMemoryURL = diskMemoryURL else { return }
         do {
             try FileManager.default.removeItem(at: diskMemoryURL) // delete system app mem
+            self.diskMemoryURL = nil
         } catch {
             print(error.localizedDescription)
         }
@@ -230,26 +228,25 @@ class FetchCache: ObservableObject {
 // MARK: - methods for local fetches of images/data
 
 extension FetchCache {
-    func checkLocalMemory(using remoteSourceURL: URL) -> Image? {
+    private func checkLocalMemory(using remoteSourceURL: URL) -> Image? {
         memoryCache[remoteSourceURL.absoluteString] // simple check for element. subscript safely returns nil if optional force unwrap fails.
     }
     
-    func checkDiskMemory(localFileURL: URL) async throws(FetchCacheError) -> Image? {
-        // if the left chec passes, but the second one does then all we can do is try the network call to see if we can get a new valid image
-        guard FileManager.default.fileExists(atPath: localFileURL.path()), let data = try? Data(contentsOf: localFileURL) else {
+    //
+    private func checkDiskMemory(localFileURL: URL) async throws(FetchCacheError) -> Image? {
+        guard FileManager.default.fileExists(atPath: localFileURL.path()) else {
             return nil
         }
-        if let image = data.imageIfImageData { // if data fails cause url can't be read or an error threw, return nil otherwise element.
-            return image
-        } else {
-            throw FetchCacheError.failedToConvertDataBlobToImage(sourceURL: localFileURL, blob: data, sourceLocation: .local)
+        guard let data = try? Data(contentsOf: localFileURL) else {
+            throw FetchCacheError.failedToGetDataFromContentsOf(sourceURL: localFileURL, sourceLocation: .local)
         }
+        return data.imageIfImageData
     }
 }
 
-enum FetchCacheError: Error {
+indirect enum FetchCacheError: Error {
     case failedToFindImageFromSystemMemoryBanks
-    case failedToInitializeDiskMemory
+    case failedToFetchImageFrom(source: URL, withError: FetchCacheError)
     case failedToGetImageFromNetworkRequest(NetworkError)
     case failedToGetDataFromContentsOf(sourceURL: URL, sourceLocation: URLSource)
     case failedToWriteImageDataToDisk(image: Image, error: Error)
@@ -263,7 +260,13 @@ enum FetchCacheError: Error {
         sourceLocation: URLSource
     )
     case cachedDirectoryURLisNil
+    
+    // following errors are related. our use is that when we catch `failedToInitializeDiskMemory` it will nest a more verbose error
+    case failedToInitializeDiskMemory(withError: FetchCacheError) // root error for any but usually one of the following
     case noURLsFoundInDirectory(FileManager.SearchPathDirectory)
+    case invalidPathForCacheURL(String)
+    case directoryAlreadyOpenWithPathComponent(String)
+    case fileManagerError(withURL: URL)
 
     enum URLSource {
         case local
@@ -287,8 +290,8 @@ extension FetchCacheError: LocalizedError {
         case .failedToFindImageFromSystemMemoryBanks:
             return "Failed to find image in memory cache."
 
-        case .failedToInitializeDiskMemory:
-            return "Could not initialize disk cache directory."
+        case .failedToInitializeDiskMemory(let error):
+            return "Could not initialize disk cache directory with error: \(error.localizedDescription)"
 
         case .failedToGetImageFromNetworkRequest(let networkError):
             // Use the underlying NetworkError’s localizedDescription.
@@ -331,6 +334,14 @@ extension FetchCacheError: LocalizedError {
 
         case .noURLsFoundInDirectory(let searchPath):
             return "No valid URLs found for directory \(searchPath)."
+        case .invalidPathForCacheURL(let path):
+            return "Cannot create disk system URL with invalid path component: \(path)"
+        case .directoryAlreadyOpenWithPathComponent(let path):
+            return "a cachDirectory with path \(path) is already open"
+        case .fileManagerError(let url):
+            return "File Manager Error: `createDirectory` failed at: \(url.absoluteString)"
+        case .failedToFetchImageFrom(source: let source, withError: let withError):
+            return "failed to fetch image for \(source.absoluteString) with error: \(withError.localizedDescription)"
         }
     }
 }

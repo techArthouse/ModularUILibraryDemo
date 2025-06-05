@@ -12,15 +12,10 @@ import ModularUILibrary
 // MARK: - Recipes List View
 struct RecipesView: View {
     @ObservedObject private var vm: RecipesViewModel
-//    @State var imageSize: Constants.ImageSize
-    //    @EnvironmentObject private var themeManager: ThemeManager
     
     init(defaultSize: Constants.ImageSize = .medium,
          vm: RecipesViewModel
     ) {
-//        _ = FetchCache.shared
-//        self.imageSize = defaultSize
-        _ = FetchCache.shared
         self.vm = vm
     }
     
@@ -33,11 +28,23 @@ struct RecipesView: View {
         .listRowSpacing(10)
         .navigationTitle("Recipes")
         .refreshable {
-            FetchCache.shared.refresh()
+            await FetchCache.shared.refresh()
         }
-        .onAppear {
+        .task {
             print("list element appeared")
-            vm.loadRecipes()
+            
+            do {
+                // Pick the correct folder name: "DevelopmentFetchImageCache" "FetchImageCache"
+            #if DEBUG
+                try vm.startCache(path: "DevelopmentFetchImageCache")
+            #else
+                try vm.startCache(path: "FetchImageCache")
+            #endif
+            } catch {
+                return
+                // failed to start cache. what do i do here? is vm.items = [] appropriate?
+            }
+            await vm.loadRecipes()
         }
     }
     
@@ -62,6 +69,7 @@ struct RecipesView: View {
                     print(item.id)
                     if let i = try await FetchCache.shared.getImageFor(url: url) {
                         image = i
+                        return // our only safe exit
                     }
                 } catch {
                     print(error.localizedDescription)
@@ -80,6 +88,8 @@ struct RecipesView: View {
 
 #if DEBUG
 struct RecipesView_Previews: PreviewProvider {
+    @State var strring = "https%3A//d3jbb8n5wk0qxi.cloudfront.net/photos/.../small.jpg"
+    
     static var previews: some View {
         @StateObject var vm = RecipesViewModel()
         let themeManager: ThemeManager = ThemeManager()
