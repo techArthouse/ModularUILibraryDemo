@@ -266,13 +266,11 @@ struct YouTubePlayerView: UIViewRepresentable {
     init?(videoID: String, isLoading: Binding<Bool>) {
         guard let url = URL(string: "https://www.youtube.com/embed/\(videoID)") else { return nil }
         self.init(url: url, isLoading: isLoading)
-//        self._isLoading = isLoading
     }
     
     init(url: URL, isLoading: Binding<Bool>){
         self.url = url
         self.isLoading = isLoading
-//        self.isLoading = isLoading
         
     }
     
@@ -322,10 +320,5 @@ struct YouTubePlayerView: UIViewRepresentable {
                     }
                 }
             }
-        }
-
-        class ViewModel: ObservableObject {
-            @Published var progress: Double = 0.0
-            @Published var isLoading: Bool = false
         }
 }
