@@ -22,6 +22,7 @@
 		71E7CD3E2DEA70EB0075C883 /* NetworkService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 71E7CD3D2DEA70EB0075C883 /* NetworkService.swift */; };
 		71E7CD7A2DFBA5740075C883 /* Modifiers.swift in Sources */ = {isa = PBXBuildFile; fileRef = 71E7CD792DFBA5740075C883 /* Modifiers.swift */; };
 		71E7CD7C2DFBA5C00075C883 /* CustomErrors.swift in Sources */ = {isa = PBXBuildFile; fileRef = 71E7CD7B2DFBA5C00075C883 /* CustomErrors.swift */; };
+		71E7CD7E2DFBD9400075C883 /* RecipeDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 71E7CD7D2DFBD9400075C883 /* RecipeDetailView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -40,6 +41,7 @@
 		71E7CD3D2DEA70EB0075C883 /* NetworkService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NetworkService.swift; sourceTree = "<group>"; };
 		71E7CD792DFBA5740075C883 /* Modifiers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Modifiers.swift; sourceTree = "<group>"; };
 		71E7CD7B2DFBA5C00075C883 /* CustomErrors.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomErrors.swift; sourceTree = "<group>"; };
+		71E7CD7D2DFBD9400075C883 /* RecipeDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecipeDetailView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -73,6 +75,7 @@
 		71D5EE072B8D407D004DE667 /* UIDemo */ = {
 			isa = PBXGroup;
 			children = (
+				71E7CD7D2DFBD9400075C883 /* RecipeDetailView.swift */,
 				71E7CD7B2DFBA5C00075C883 /* CustomErrors.swift */,
 				71E7CD792DFBA5740075C883 /* Modifiers.swift */,
 				71E7CD3D2DEA70EB0075C883 /* NetworkService.swift */,
@@ -187,6 +190,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				71E7CD2F2DEA13C10075C883 /* LandingView.swift in Sources */,
+				71E7CD7E2DFBD9400075C883 /* RecipeDetailView.swift in Sources */,
 				71E7CD7C2DFBA5C00075C883 /* CustomErrors.swift in Sources */,
 				71D5EE0B2B8D407D004DE667 /* ContentView.swift in Sources */,
 				71E7CD3E2DEA70EB0075C883 /* NetworkService.swift in Sources */,

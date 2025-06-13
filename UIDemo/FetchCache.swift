@@ -100,7 +100,7 @@ class FetchCache: ObservableObject {
     /// returns image from source or
     func getImageFor(url networkSourceURL: URL) async throws(FetchCacheError) -> Image {
         do {
-            try? await Task.sleep(for: .seconds(3)) // for testing purposes to visually see the loads
+//            try? await Task.sleep(for: .seconds(3)) // for testing purposes to visually see the loads
             
             if let image = checkLocalMemory(using: networkSourceURL) { // if in local memory then we've already saved to disk
                 return image

@@ -55,7 +55,7 @@ struct Recipe: Decodable, Identifiable, Hashable {
     private let sourceUrl:     String?
     private let youtubeUrl:    String?
     
-    enum CodingKeys: String, CodingKey {
+    enum CodingKeys: String, CodingKey, CaseIterable {
         case cuisine, name, uuid
         case photoUrlSmall = "photo_url_small"
         case photoUrlLarge = "photo_url_large"
@@ -117,6 +117,21 @@ extension Recipe {
             return []
         }
     }
+    
+    static func recipePreview(using testCase: TestCase) -> Recipe? {
+        do {
+            let url = Bundle.main.url(
+                forResource: testCase.jsonFileName,
+                withExtension: "json"
+            )!
+            let data = try Data(contentsOf: url)
+            let list = try JSONDecoder().decode(RecipeList.self, from: data)
+            return list.recipes.first
+        } catch {
+            assertionFailure("🔴 Failed to load \(testCase.jsonFileName).json: \(error)")
+            return nil
+        }
+    }
 }
 
 /// Convenience props for URLS that return URL if it exists.
@@ -140,4 +155,81 @@ extension Recipe {
         guard let s = youtubeUrl else { return nil }
         return URL(string: s)
     }
+}
+
+extension DynamicTypeSize {
+    typealias size = ImageSize
+    var photoDimension: CGFloat {
+        switch self {
+        case .xSmall, .small:
+            size.small.size
+        case .medium, .large, .xLarge:
+            size.medium.size
+        case .xxLarge, .xxxLarge, .accessibility1, .accessibility2, .accessibility3, .accessibility4, .accessibility5:
+            size.large.size
+        @unknown default:
+            fatalError()
+        }
+    }
+}
+
+public enum ImageSize: Identifiable {
+    public var id: CGFloat {
+        self.rawValue
+    }
+    
+    case small
+    case medium
+    case large
+    case custom(CGFloat)
+    
+    public var size: CGFloat {
+        switch self {
+        case .small:
+            return 24.0
+        case .medium:
+            return 48.0
+        case .large:
+            return 72.0
+        case .custom(let value):
+            return value
+        }
+    }
+    
+    var nextSize: ImageSize {
+        switch self {
+        case .small:
+            return .medium
+        case .medium:
+            return .large
+        case .large:
+            return .small
+        case .custom: // if we cycle from custom we go to defaults.
+            return .medium
+        }
+    }
+    
+//        var rawValue: String {
+//            switch self {
+//            case .small:
+//                return ".medium"
+//            case .medium:
+//                return "large"
+//            case .large:
+//                return "small"
+//            case .custom: // if we cycle from custom we go to defaults.
+//                return "medium"
+//            }
+//        }
+}
+extension ImageSize: RawRepresentable {
+    public typealias RawValue = CGFloat
+    
+    /// Checks we have a acceptable value within default range 1 - 100.// This checks we have a acceptable value within default range 1 - 100.
+    public init?(rawValue: CGFloat) {
+        guard rawValue.isLessThanOrEqualTo(100), !rawValue.isLessThanOrEqualTo(0) else { return nil }
+        self = .custom(rawValue)
+    }
+
+    public var rawValue: RawValue { return self.size }
 }

@@ -12,10 +12,9 @@ import ModularUILibrary
 // MARK: - Recipes List View
 struct RecipesView: View {
     @ObservedObject private var vm: RecipesViewModel
+    @EnvironmentObject private var nav: AppNavigation
     
-    init(defaultSize: Constants.ImageSize = .medium,
-         vm: RecipesViewModel
-    ) {
+    init(defaultSize: ImageSize = .medium, vm: RecipesViewModel) {
         self.vm = vm
     }
     
@@ -51,22 +50,27 @@ struct RecipesView: View {
     struct RecipeRowView: View {
         // Suppose the parent passed us a Binding<RecipeItem>:
         @ObservedObject var item: RecipeItem
-        @State var image: Image?
+//        @State var image: Image?
+        @EnvironmentObject private var nav: AppNavigation
+        @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
         var body: some View {
             
             FeatureItem(
                 title: item.name,
                 description: item.cuisine,
+                action: {
+                    nav.path.append(.recipeDetail(item.recipe))
+                },
                 leading: {
-                    ImageContainer(image: image, accessibilityId: item.id)
+                    ImageContainer(image: $item.image, size: dynamicTypeSize.photoDimension, accessibilityId: item.id)
                 })
             .task {
                 do {
                     guard let url = item.smallImageURL else {
                         throw URLError(.badURL)
                     }
-                    image = try await FetchCache.shared.getImageFor(url: url)
+                    item.image = try await FetchCache.shared.getImageFor(url: url)
                 } catch let e as FetchCacheError {
                     switch e {
                     case .taskCancelled:
@@ -77,19 +81,19 @@ struct RecipesView: View {
                     default:
                         // Any other error that would suggest we are still viewing the row but an error occured
                         print("Image load failed: \(e.localizedDescription)")
-                        image = Image("imageNotFound")
+                        item.image = Image("imageNotFound")
                     }
                 } catch let e {
                     // Any error we haven't anticipated
                     // (but it's not likely to happen since the methods define the throw type)
                     print("Error in row task. error: \(e.localizedDescription)")
-                    image = Image("placeHolder")
+                    item.image = Image("placeHolder")
                 }
             }
             .onAppear {
                 // By having this here we can always show a progressview whenever
                 // we return to this item cell.
-                image = nil
+                item.image = nil
             }
         }
     }
