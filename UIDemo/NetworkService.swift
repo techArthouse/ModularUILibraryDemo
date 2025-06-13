@@ -14,31 +14,31 @@ final class NetworkService {
     private init() { }
     
     /// throws custom NetworkError for more control and relevant info to caller
-    func requestData(from url: URL, using method: HTTPMethodType = .get ) async throws(NetworkError) -> Data {
+    func requestData(from url: URL, using method: HTTPMethodType = .get) async throws(NetworkError) -> Data {
         do {
+            // Before you do anything, respect any pending cancellation:
+            try Task.checkCancellation()
+            
             var request = URLRequest(url: url)
             request.httpMethod = method.rawValue
+            let (data, response) = try await URLSession.shared.data(for: request)
             
-            print("image network requested")
-//            try await Task.sleep(for: .seconds(3))
-            
-            let (data, response): (Data, URLResponse) = try await URLSession.shared.data(for: request)
-            
-            if let httpResponse = response as? HTTPURLResponse {
-                if statusCodeSuccessRange.contains(httpResponse.statusCode) {
-                    return data
-                } else {
-                    throw NetworkError.statusCodeFailure(httpResponse.statusCode)
-                }
-            } else {
+            guard let http = response as? HTTPURLResponse else {
                 throw NetworkError.malformedHTTPResponse
             }
-        } catch let e as NetworkError {
-            throw e
-        } catch let e as URLError {
+            guard statusCodeSuccessRange.contains(http.statusCode) else {
+                throw NetworkError.statusCodeFailure(http.statusCode)
+            }
+            return data
+            
+        } catch is CancellationError { // Throw cancelled error so callers can catch it explicitly
+            throw NetworkError.taskCancelled(url)
+        } catch let e as URLError { // Any error that comes from urlsession operation
             throw NetworkError.generalURLError(e)
-        } catch {
-            throw NetworkError.unkownError(error)
+        } catch let e as NetworkError { // a catch all for errors we throw.
+            throw e
+        } catch { // Any other error we don't catch and throw ourselves
+            throw NetworkError.unknownError(error)
         }
     }
     

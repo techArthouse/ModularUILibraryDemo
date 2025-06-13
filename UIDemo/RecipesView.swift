@@ -66,20 +66,30 @@ struct RecipesView: View {
                     guard let url = item.smallImageURL else {
                         throw URLError(.badURL)
                     }
-                    print(item.id)
-                    if let i = try await FetchCache.shared.getImageFor(url: url) {
-                        image = i
-                        return // our only safe exit
+                    image = try await FetchCache.shared.getImageFor(url: url)
+                } catch let e as FetchCacheError {
+                    switch e {
+                    case .taskCancelled:
+                        // We anticipate to fall here with a CancellationError as that is what's thrown when `task
+                        // cancels a network call. but we wrap it in our own error.
+                        // In our case we scrolled and the row running the request disappeared.
+                        return
+                    default:
+                        // Any other error that would suggest we are still viewing the row but an error occured
+                        print("Image load failed: \(e.localizedDescription)")
+                        image = Image("imageNotFound")
                     }
-                } catch {
-                    print(error.localizedDescription)
+                } catch let e {
+                    // Any error we haven't anticipated
+                    // (but it's not likely to happen since the methods define the throw type)
+                    print("Error in row task. error: \(e.localizedDescription)")
+                    image = Image("placeHolder")
                 }
-                // we make it here then we never got an image
-                image = Image("imageNotFound")
             }
             .onAppear {
-                image = nil // right now i think that by having this here we can always show a progressview when we
-                // return to this item cell in case it was canceled before the image return the first time.
+                // By having this here we can always show a progressview whenever
+                // we return to this item cell.
+                image = nil
             }
         }
     }

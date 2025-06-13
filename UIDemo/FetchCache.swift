@@ -42,13 +42,6 @@ class FetchCache: ObservableObject {
         }
     }
     
-    var isDiskMemoryCacheURLSet: Bool {
-        guard self.diskMemoryURL != nil else {
-            return false
-        }
-        return true
-    }
-    
     private func baseDirectoryURLForDomainCache() throws(FetchCacheError) -> URL {
         let cachesDirectory = FileManager.SearchPathDirectory.cachesDirectory
         guard let cachesBase = FileManager.default
@@ -60,7 +53,7 @@ class FetchCache: ObservableObject {
         return cachesBase
     }
     
-    fileprivate func loadCacheDirectory(at cacheDirectoryURL: URL) throws(FetchCacheError) {
+    private func loadCacheDirectory(at cacheDirectoryURL: URL) throws(FetchCacheError) {
         do {
             try FileManager.default.createDirectory(at: cacheDirectoryURL, withIntermediateDirectories: true)
             diskMemoryURL = cacheDirectoryURL
@@ -74,19 +67,14 @@ class FetchCache: ObservableObject {
             throw FetchCacheError.invalidPathForCacheURL(pathComponent)
         }
         
-        do {
-            let cacheDomainBaseURL = try baseDirectoryURLForDomainCache()
-            let cacheDirectoryURL = cacheDomainBaseURL.appendingPathComponent(
-                pathComponent,
-                isDirectory: true
-            )
-            
-            try loadCacheDirectory(at: cacheDirectoryURL)
-        } catch {
-            throw FetchCacheError.failedToInitializeDiskMemory(withError: error)
-        }
+        let cacheDomainBaseURL = try baseDirectoryURLForDomainCache()
+        let cacheDirectoryURL = cacheDomainBaseURL.appendingPathComponent(
+            pathComponent,
+            isDirectory: true
+        )
+        
+        try loadCacheDirectory(at: cacheDirectoryURL)
     }
-    
     
     /// Creates an encoded string from the sourceURL and appends it to cacheDirectoryURL that results local file url.
     /// Can throw `FetchCacheError` of types: `cachedDirectoryURLisNil` or `failedToAppendEncodedRemoteURLToCacheDirectoryURL`
@@ -111,7 +99,7 @@ class FetchCache: ObservableObject {
     }
     
     /// returns image from source or
-    func getImageFor(url networkSourceURL: URL) async throws(FetchCacheError) -> Image? {
+    func getImageFor(url networkSourceURL: URL) async throws(FetchCacheError) -> Image {
         do {
             try? await Task.sleep(for: .seconds(3)) // for testing purposes to visually see the loads
             
@@ -143,6 +131,8 @@ class FetchCache: ObservableObject {
                 throw FetchCacheError.failedToFetchImageFrom(source: networkSourceURL, withError: error)
             case .failedToGetDataFromContentsOf, .failedToConvertDataBlobToImage, .failedToGetImageFromNetworkRequest: // these are fatal since process seems corrupted
                 throw FetchCacheError.failedToFetchImageFrom(source: networkSourceURL, withError: error)
+            case .taskCancelled:
+                throw FetchCacheError.taskCancelled
             default:
                 throw FetchCacheError.failedToFetchImageFrom(source: networkSourceURL, withError: error) // unless i expanbd on the previous cases maybe they should default to throw original error only .failedToWriteImageDataToDisk would still give us an image we can send back.
             }
@@ -150,13 +140,22 @@ class FetchCache: ObservableObject {
     }
     
     /// throws FetchCacheError if failure, otherwise returns image found
-    private func requestImageFromNetwork(at networkSourceURL: URL, saveTo localFileURL: URL, using method: NetworkService.HTTPMethodType = .get ) async throws(FetchCacheError) -> Image {
+    private func requestImageFromNetwork(
+        at networkSourceURL: URL,
+        saveTo localFileURL: URL,
+        using method: NetworkService.HTTPMethodType = .get)
+    async throws(FetchCacheError) -> Image {
         var imageDataBlob: Data
         do {
             imageDataBlob = try await NetworkService.shared.requestData(from: networkSourceURL, using: method) // may throw NetworkError
         } catch let e {
             print("FetchCache - NetworkError: \(e.localizedDescription)")
-            throw FetchCacheError.failedToGetImageFromNetworkRequest(e)
+            switch e {
+            case .taskCancelled:
+                throw FetchCacheError.taskCancelled
+            default:
+                throw FetchCacheError.failedToGetImageFromNetworkRequest(e)
+            }
         }
         
         // image will be nil only if .imageIfImageData fails to load data as Image
@@ -173,20 +172,6 @@ class FetchCache: ObservableObject {
         } else {
             throw FetchCacheError.failedToConvertDataBlobToImage(sourceURL: networkSourceURL, blob: imageDataBlob, sourceLocation: .remote)
         }
-    }
-    
-    private func loadIfNeeded() {
-        guard let cacheDirectoryURLPath = diskMemoryCacheAlreadyExists()?.lastPathComponent else {
-            return
-        }
-        
-        do {
-            try initializeDiskMemory(with: cacheDirectoryURLPath) // maybe make it a optional init if folder fails to start?
-        } catch {
-            /// TODO: In the future we should thow the error so caller can make informed step.
-            print(error.localizedDescription)
-        }
-        print("done loading after need.")
     }
     
     func refresh() async {
@@ -260,6 +245,7 @@ indirect enum FetchCacheError: Error {
         sourceLocation: URLSource
     )
     case cachedDirectoryURLisNil
+    case taskCancelled
     
     // following errors are related. our use is that when we catch `failedToInitializeDiskMemory` it will nest a more verbose error
     case failedToInitializeDiskMemory(withError: FetchCacheError) // root error for any but usually one of the following
@@ -331,7 +317,8 @@ extension FetchCacheError: LocalizedError {
 
         case .cachedDirectoryURLisNil:
             return "Cache directory URL was unexpectedly nil."
-
+        case .taskCancelled:
+            return "Call to network was cancelled"
         case .noURLsFoundInDirectory(let searchPath):
             return "No valid URLs found for directory \(searchPath)."
         case .invalidPathForCacheURL(let path):
@@ -355,7 +342,25 @@ enum NetworkError: Error {
     case statusCodeFailure(Int)
     case malformedHTTPResponse
     case generalURLError(URLError)
-    case unkownError(Error)
+    case unknownError(Error)
+    case taskCancelled(URL)
+}
+
+extension NetworkError: LocalizedError {
+    var errorDescription: String? {
+        switch self {
+        case .statusCodeFailure(let code):
+            return "Server returned an unexpected status code: \(code)."
+        case .malformedHTTPResponse:
+            return "The server response was not a valid HTTP response."
+        case .generalURLError(let urlError):
+            return urlError.localizedDescription
+        case .unknownError(let error):
+            return "An unknown network error occurred: \(error.localizedDescription)"
+        case .taskCancelled(let url):
+            return "Task was cancelled for url request. Address: \(url.absoluteString)"
+        }
+    }
 }
 
 extension Data {
