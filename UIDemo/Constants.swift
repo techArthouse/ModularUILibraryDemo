@@ -7,6 +7,7 @@
 
 import SwiftUI
 import Foundation
+import ModularUILibrary
 // MARK: - global constants
 
 //struct Constants {
@@ -232,4 +233,19 @@ extension ImageSize: RawRepresentable {
     }
 
     public var rawValue: RawValue { return self.size }
+}
+
+enum AssetIdentifier: CustomImageIdentifierProtocol {
+    case speakerOff
+    case collapseArrow
+    
+    
+    var rawValue: String {
+        switch self {
+        case .speakerOff:
+            "speakerOffIcon"
+        case .collapseArrow:
+            "collapseArrowIcon"
+        }
+    }
 }

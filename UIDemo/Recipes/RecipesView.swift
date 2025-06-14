@@ -50,20 +50,48 @@ struct RecipesView: View {
     struct RecipeRowView: View {
         // Suppose the parent passed us a Binding<RecipeItem>:
         @ObservedObject var item: RecipeItem
-//        @State var image: Image?
+        //        @State var image: Image?
         @EnvironmentObject private var nav: AppNavigation
         @Environment(\.dynamicTypeSize) private var dynamicTypeSize
-
+//        @EnvironmentObject var memoryStore: RecipeDataSource
+        
+//        @Binding var recipeMemory: Bool {
+//            bindingFor(memoryStore.getMemory(for: item.sourceURL!))
+//        }
+        
         var body: some View {
             
             FeatureItem(
                 title: item.name,
                 description: item.cuisine,
                 action: {
+                    print("action fire for item")
                     nav.path.append(.recipeDetail(item.recipe))
                 },
                 leading: {
                     ImageContainer(image: $item.image, size: dynamicTypeSize.photoDimension, accessibilityId: item.id)
+                },
+                trailing: {
+                    //                        let memory = $memoryStore.memories[url.absoluteString]
+                    ToggleIconButton(
+                        iconOn: .system("star"),
+                        iconOff: .system("star.fill"),
+                        isDisabled: .constant(false),
+                        isSelected: $item.isFavorite)
+                    .asStandardIconButtonStyle(withColor: .yellow)
+                    .accessibilityLabel(Text("ToggleIconButton: \(item.id)"))
+                    
+                    
+                    //                    VStack {
+                    //                        if let url = item.sourceURL, memoryStore.getMemory(for: url).isFavorite {
+                    //                            Image(systemName: "star.fill")
+                    //                                .foregroundColor(.yellow)
+                    //                        } else {
+                    //                            Image(systemName: "star.fill")
+                    //                                .foregroundColor(.black.opacity(0.4))
+                    //                        }
+                    //                    }
+                    //                    .simultaneousGesture(newGesture, including: .all)
                 })
             .task {
                 do {
@@ -96,6 +124,23 @@ struct RecipesView: View {
                 item.image = nil
             }
         }
+        
+//        func bindingFor(_ item: Bool) -> Binding<Bool> {
+//            Binding<Bool>(
+//                get: {
+//                    // read from your store
+//                    item.isFavorite
+////                    memoryStore.getMemory(for: url).isFavorite
+//                },
+//                set: { newValue in
+//                    
+//                    print("this is where i thought it would \(newValue)")
+//                    item.isFavorite = newValue
+//                    // write *that* back into the store
+////                                    memoryStore.setFavorite(newValue, for: url)
+//                }
+//            )
+//        }
     }
 }
 
@@ -106,12 +151,18 @@ struct RecipesView_Previews: PreviewProvider {
     
     static var previews: some View {
         @StateObject var vm = RecipesViewModel()
-        let themeManager: ThemeManager = ThemeManager()
+        @StateObject var nav = AppNavigation.shared
+        
+//        @StateObject var memoryStore = RecipeDataSource.shared
+        
+        @StateObject var themeManager: ThemeManager = ThemeManager()
         // TODO: Test resizing here later.
         
         NavigationStack {
             RecipesView(vm: vm)
                 .environmentObject(themeManager)
+//                .environmentObject(memoryStore)
+//                .environmentObject(nav)
         }
     }
 }

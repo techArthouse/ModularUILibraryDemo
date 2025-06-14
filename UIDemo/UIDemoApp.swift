@@ -10,11 +10,14 @@ import ModularUILibrary
 
 @main
 struct UIDemoApp: App {
-    let themeManager: ThemeManager = ThemeManager(imageAssetBundle: .main)
+    @StateObject var themeManager: ThemeManager = ThemeManager()
+    @StateObject var memoryStore = RecipeDataSource.shared
+    
     var body: some Scene {
         WindowGroup {
             ContentView()
                 .environmentObject(themeManager)
+                .environmentObject(memoryStore)
         }
     }
 }
