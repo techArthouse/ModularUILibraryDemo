@@ -9,7 +9,7 @@ import SwiftUI
 
 @MainActor
 final class RecipeDataSource: ObservableObject {
-    @Published var memories: [String:RecipeMemory] = [:]
+    private(set) var memories: [String:RecipeMemory] = [:]
     private let key = "RecipeMemories"
 
     static let shared = RecipeDataSource()
@@ -44,13 +44,11 @@ final class RecipeDataSource: ObservableObject {
 
     func getMemory(for url: URL) -> RecipeMemory {
         let id = url.absoluteString
-        print("well what is it: \(memories[id])")
         if let res = memories[id] {
             return res
         } else {
             return RecipeMemory(isFavorite: false, notes: [])
         }
-//        return memories[id] ?? RecipeMemory(isFavorite: false, notes: [])
     }
 
     // MARK: – Persistence
