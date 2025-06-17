@@ -40,29 +40,11 @@ struct RecipeDetailView: View {
                     .padding(.top)
                 
                 // MARK: — Image + Cuisine
-                HStack(spacing: 16) {
-                    ImageContainer(image: $image, size: 150)
-                        .cornerRadius(12).shadow(radius: 4)
-                        .task {
-                            image = try? await FetchCache.shared
-                                .getImageFor(url: recipe.smallImageURL!)
-                        }
-                    
-                    Spacer()
-                    
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text("Cuisine")
-                            .font(.headline).foregroundColor(.secondary)
-                        Text(recipe.cuisine)
-                            .font(.title3)
+                ImageCard(image: $image, size: nil, title: recipe.name, description: recipe.cuisine)
+                    .task {
+                        image = try? await FetchCache.shared
+                            .getImageFor(url: recipe.smallImageURL!)
                     }
-                    
-                    Spacer()
-                }
-                .padding()
-                .background(.secondary.opacity(0.15))
-                .cornerRadius(16)
-                .padding(.horizontal)
                 
                 // MARK: — Buttons
                 VStack(spacing: 12) {
@@ -122,6 +104,7 @@ struct RecipeDetailView: View {
             .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
     }
+    
 
     // Simple SafariView wrapper
     struct SafariView: UIViewControllerRepresentable {

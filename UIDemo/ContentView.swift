@@ -11,7 +11,6 @@ struct ContentView: View {
             // 1) Home tab: recipe list + detail navigation
             NavigationStack(path: $nav.path) {
                 RecipesView(vm: vm)
-                    .navigationTitle("Recipes")
                     .navigationDestination(for: Route.self) { recipe in
                         switch recipe {
                         case .recipeDetail(let recipe):
