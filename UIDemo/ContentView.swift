@@ -3,13 +3,24 @@ import ModularUILibrary
 
 struct ContentView: View {
     @StateObject private var vm: RecipesViewModel
+    @StateObject private var vm2: FavoriteRecipesViewModel
+    
+    @StateObject private var recipeStore: RecipeStore = RecipeStore()
     @StateObject private var nav: AppNavigation = .shared
     @EnvironmentObject private var themeManager: ThemeManager
     
     init() {
+        let store = RecipeStore()
+        _recipeStore = StateObject(wrappedValue: store)
         _vm = StateObject(wrappedValue: RecipesViewModel(
             cache: FetchCache.shared,
-            memoryStore: RecipeDataSource.shared))
+            memoryStore: RecipeDataSource.shared,
+            recipeStore: store))
+        
+        _vm2 = StateObject(wrappedValue: FavoriteRecipesViewModel(
+            cache: FetchCache.shared,
+            memoryStore: RecipeDataSource.shared,
+            recipeStore: store))
     }
 
     var body: some View {
@@ -42,7 +53,7 @@ struct ContentView: View {
             
             // 2) Favorites tab—placeholder for now
             NavigationStack(path: $nav.path2) {
-                FavoriteRecipesView(vm: vm)
+                FavoriteRecipesView(vm: vm2)
                     .navigationDestination(for: Route.self) { recipe in
                         switch recipe {
                         case .recipeDetail(let uuid):
@@ -50,11 +61,11 @@ struct ContentView: View {
                                 RecipeDetailView(item: item, onToggleFavorite: {
                                     print("toggling")
                                     withAnimation {
-                                        vm.toggleFavorite(recipeUUID: item.id)
+                                        vm2.toggleFavorite(recipeUUID: item.id)
                                     }
                                 },
                                                  onSubmitNote: { note in
-                                    vm.addNote(note, for: item.id)
+                                    vm2.addNote(note, for: item.id)
                                 })
                             }
                         default:

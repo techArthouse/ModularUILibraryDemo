@@ -81,12 +81,13 @@ extension RecipeDataSource: RecipeMemoryStoreProtocol {
         getMemory(for: recipeUUID).notes
     }
     
-    func addNote(_ text: String, for recipeUUID: UUID) {
-        guard var mem = memories[recipeUUID], mem.isFavorite else { return }
+    func addNote(_ text: String, for recipeUUID: UUID) -> RecipeNote? {
+        guard var mem = memories[recipeUUID], mem.isFavorite else { return nil }
         let note = RecipeNote(id: UUID(), text: text, date: Date())
         mem.notes.append(note)
         memories[recipeUUID] = mem
         save()
+        return note
     }
     
     func deleteNotes(for recipeUUID: UUID) {

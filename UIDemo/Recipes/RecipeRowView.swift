@@ -9,7 +9,8 @@
 import SwiftUI
 import ModularUILibrary
     
-    struct RecipeRowView: View {
+struct RecipeRowView: View {
+    
         // Suppose the parent passed us a Binding<RecipeItem>:
         @ObservedObject var item: RecipeItem
         let onToggleFavorite: () -> Void

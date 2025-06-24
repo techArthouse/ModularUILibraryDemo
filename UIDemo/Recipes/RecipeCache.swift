@@ -6,6 +6,6 @@
 //
 
 protocol RecipeCacheProtocol {
-    func openCacheDirectoryWithPath(path: String) throws
+    func openCacheDirectoryWithPath(path: String) throws(FetchCacheError)
     func refresh() async
 }

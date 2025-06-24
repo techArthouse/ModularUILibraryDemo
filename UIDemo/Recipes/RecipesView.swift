@@ -33,6 +33,7 @@ struct RecipesView: View {
                 }
             }
         }
+        .animation(.easeInOut, value: vm.items)
         .listStyle(.insetGrouped)
         .navigationTitle("Recipes")
         .refreshable {
@@ -45,11 +46,11 @@ struct RecipesView: View {
 #else
                 try vm.startCache(path: "FetchImageCache")
 #endif
+                await vm.loadRecipes()
             } catch {
                 print("Cache failed to start")
                 return
             }
-            await vm.loadRecipes()
         }
         .toolbar {
             ToolbarItem(placement: .navigationBarTrailing) {
@@ -74,16 +75,12 @@ struct RecipesView: View {
                 model: model,
                 selectedCuisine: vm.selectedCuisine,
                 onSelect: { cuisine in
-                    withAnimation {
-                        vm.selectedCuisine = cuisine
-                    }
-                    vm.searchModel = nil
+                        vm.searchModel = nil
+                    vm.selectedCuisine = cuisine
                 },
                 onReset: {
-                    withAnimation {
-                        vm.selectedCuisine = nil
-                    }
                     vm.searchModel = nil
+                    vm.selectedCuisine = nil
                 }
             )
         }
@@ -115,7 +112,8 @@ struct RecipesView_Previews: PreviewProvider {
     @State var strring = "https%3A//d3jbb8n5wk0qxi.cloudfront.net/photos/.../small.jpg"
     
     static var previews: some View {
-        @StateObject var vm = RecipesViewModel(cache: FetchCache.shared, memoryStore: RecipeDataSource.shared)
+        @StateObject var recipeStore = RecipeStore()
+        @StateObject var vm = RecipesViewModel(cache: FetchCache.shared, memoryStore: RecipeDataSource.shared, recipeStore: recipeStore)
         @StateObject var nav = AppNavigation.shared
         
 //        @StateObject var memoryStore = RecipeDataSource.shared
@@ -124,7 +122,7 @@ struct RecipesView_Previews: PreviewProvider {
         // TODO: Test resizing here later.
         
         NavigationStack {
-            FavoriteRecipesView(vm: vm)
+            RecipesView(vm: vm)
                 .environmentObject(themeManager)
                 .environmentObject(nav)
         }
@@ -135,21 +133,20 @@ struct RecipesView_Previews: PreviewProvider {
 
 // MARK: - Recipes List View
 struct FavoriteRecipesView: View {
-    @ObservedObject private var vm: RecipesViewModel
+    @ObservedObject private var vm: FavoriteRecipesViewModel
     @EnvironmentObject private var nav: AppNavigation
     
-    init(defaultSize: ImageSize = .medium, vm: RecipesViewModel) {
+    init(defaultSize: ImageSize = .medium, vm: FavoriteRecipesViewModel) {
         self.vm = vm
     }
     
     var body: some View {
         List {
             Section(header: searchHeaderView) {
-                ForEach(vm.favorites, id: \.id) { item in
+                ForEach(vm.items, id: \.id) { item in
                     RecipeRowView(item: item, onToggleFavorite: {
                         withAnimation {
                             vm.toggleFavorite(recipeUUID: item.id)
-                            vm.setFavorites()
                         }
                     }) {
                         nav.path2.append(.recipeDetail(item.id))
@@ -158,26 +155,31 @@ struct FavoriteRecipesView: View {
                 }
             }
         }
+        .animation(.easeInOut, value: vm.items)
         .listStyle(.insetGrouped)
-        .navigationTitle("Recipes")
+        .navigationTitle("Favorites")
         .refreshable {
             await FetchCache.shared.refresh()
         }
-        .onAppear() {
-            vm.setFavorites()
+        .task {
+            do {
+#if DEBUG
+                try vm.startCache(path: "DevelopmentFetchImageCache")
+#else
+                try vm.startCache(path: "FetchImageCache")
+#endif
+                await vm.loadRecipes()
+            } catch let error as FetchCacheError {
+                switch error {
+                case .directoryAlreadyOpenWithPathComponent:
+                    print("Cache already exists")
+                default:
+                    break
+                }
+            } catch {
+                
+            }
         }
-//        .task {
-//            do {
-//#if DEBUG
-//                try vm.startCache(path: "DevelopmentFetchImageCache")
-//#else
-//                try vm.startCache(path: "FetchImageCache")
-//#endif
-//            } catch {
-//                print("Cache already exists")
-//            }
-//            await vm.loadRecipes()
-//        }
         .toolbar {
             ToolbarItem(placement: .navigationBarTrailing) {
                 IconButton(
@@ -201,16 +203,12 @@ struct FavoriteRecipesView: View {
                 model: model,
                 selectedCuisine: vm.selectedCuisine,
                 onSelect: { cuisine in
-                    withAnimation {
-                        vm.selectedCuisine = cuisine
-                    }
-                    vm.searchModel = nil
+                        vm.searchModel = nil
+                    vm.selectedCuisine = cuisine
                 },
                 onReset: {
-                    withAnimation {
-                        vm.selectedCuisine = nil
-                    }
                     vm.searchModel = nil
+                    vm.selectedCuisine = nil
                 }
             )
         }

@@ -10,6 +10,7 @@ import SwiftUI
 /// A little view-model for each recipe row
 @MainActor
 class RecipeItem: ObservableObject, Identifiable {
+    
     @Published var recipe: Recipe
     @Published var image: Image?
     @Published var isFavorite: Bool = false
@@ -74,4 +75,14 @@ extension RecipeItem {
 //    var daImage: Image {
 //        self.image ?? Image(systemName: "heart.circle")
 //    }
+}
+
+@MainActor
+extension RecipeItem: Equatable {
+    static func == (lhs: RecipeItem, rhs: RecipeItem) -> Bool {
+        return lhs.id == rhs.id
+    }
+//    func hash(into hasher: inout Hasher) {
+//                 hasher.combine(id)
+//            }
 }

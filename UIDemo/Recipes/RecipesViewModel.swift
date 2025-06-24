@@ -9,46 +9,45 @@ import SwiftUI
 import Combine
 
 @MainActor
-class RecipesViewModel: ObservableObject, CanFavorite {
+class RecipesViewModel: ObservableObject {
     @Published var items: [RecipeItem] = []
+    private var cancellables = Set<AnyCancellable>()
+    
     @Published var searchQuery: String = ""
     @Published var selectedCuisine: String?
-    @Published var searchModel: SearchViewModel? /// TODO: - track this var to implement how to apply filters. 
-    
-    private var allItems: [RecipeItem] = []
-    private var cancellables = Set<AnyCancellable>()
+    @Published var searchModel: SearchViewModel? /// TODO: - track this var to implement how to apply filters.
     
     private let cache: RecipeCacheProtocol
     private let memoryStore: RecipeMemoryStoreProtocol
+    @ObservedObject var recipeStore: RecipeStore
     
     // MARK: - Init
     
-    init(cache: RecipeCacheProtocol, memoryStore: RecipeMemoryStoreProtocol) {
+    init(cache: RecipeCacheProtocol, memoryStore: RecipeMemoryStoreProtocol, recipeStore: RecipeStore) {
         self.cache = cache
         self.memoryStore = memoryStore
-
-        Publishers.CombineLatest(
-            $searchQuery.debounce(for: .milliseconds(300), scheduler: RunLoop.main),
+        
+        self.recipeStore = recipeStore
+        
+        Publishers.CombineLatest3(
+            self.recipeStore.itemsPublisher,
             $selectedCuisine
+                .debounce(for: .milliseconds(500), scheduler: RunLoop.main),
+            $searchQuery
+                .debounce(for: .milliseconds(300), scheduler: RunLoop.main)
         )
-        .sink { [weak self] query, cuisine in
-            self?.applyFilters(query: query, cuisine: cuisine)
+        .map { items, cuisine, query in
+            var filtered = items
+            if let cuisine = cuisine {
+                filtered = filtered.filter { $0.cuisine.lowercased() == cuisine.lowercased() }
+            }
+            if !query.isEmpty {
+                filtered = filtered.filter { $0.name.localizedCaseInsensitiveContains(query) }
+            }
+            return filtered
         }
-        .store(in: &cancellables)
-    }
-    
-    // MARK: - Filter Logic
-    private func applyFilters(query: String, cuisine: String?) {
-        var filtered = allItems
-
-        if let cuisine = cuisine {
-            filtered = filtered.filter { $0.cuisine.lowercased() == cuisine.lowercased() }
-        }
-        if !query.isEmpty {
-            filtered = filtered.filter { $0.name.localizedCaseInsensitiveContains(query) }
-        }
-
-        items = filtered
+        .receive(on: RunLoop.main)
+        .assign(to: &$items)
     }
     
     // MARK: - Public API
@@ -61,79 +60,85 @@ class RecipesViewModel: ObservableObject, CanFavorite {
         try cache.openCacheDirectoryWithPath(path: path)
     }
     
-    func syncRecipeMemoryStore(item: RecipeItem) {
-//        items = items.map { item in
-//            var decorated = item
-//            decorated.isFavorite = memoryStore.isFavorite(for: item.id)
-//            decorated.notes = memoryStore.notes(for: item.id)
-//            return decorated
-//        }
-        
-        print("syncRecipeMemoryStore: \(memoryStore.isFavorite(for: item.id))")
-        item.isFavorite = memoryStore.isFavorite(for: item.id)
-        item.notes = memoryStore.notes(for: item.id)
-    }
-    
-    func isFavorite(recipeUUID: UUID) -> Bool {
-        memoryStore.isFavorite(for: recipeUUID)
-    }
-    
-    func toggleFavorite(recipeUUID: UUID) {
-        print("is favorite beggining: \(memoryStore.isFavorite(for: recipeUUID))")
-        memoryStore.toggleFavorite(recipeUUID: recipeUUID)
-        if !memoryStore.isFavorite(for: recipeUUID) {
-            print("it's not favorite")
-            memoryStore.deleteNotes(for: recipeUUID)
-        }
-        
-            
-        if var item = items.first(where: { $0.id == recipeUUID }) {
-            print("is favorite beggining end: \(memoryStore.isFavorite(for: recipeUUID))")
-            syncRecipeMemoryStore(item: item)
-//            item.isFavorite = memoryStore.isFavorite(for: recipeUUID)
-//            allItems.first(where: { $0.id == recipeUUID})?.isFavorite = memoryStore.isFavorite(for: recipeUUID)
-//            items = allItems
-        }
-    }
-    
     func addNote(_ text: String, for recipeUUID: UUID) {
-        memoryStore.addNote(text, for: recipeUUID)
-        if let item = items.first(where: { $0.id == recipeUUID }) {
-            item.notes = memoryStore.notes(for: recipeUUID)
+        guard memoryStore.isFavorite(for: recipeUUID) else { return }
+        if let note = memoryStore.addNote(text, for: recipeUUID) {
+            recipeStore.addNote(note, for: recipeUUID)
         }
     }
     
     var cusineCategories: [String] {
         var categories = Set<String>()
-        for item in allItems {
+        for item in items {
             categories.insert(item.cuisine)
         }
         return Array(categories)
     }
+}
+
+@MainActor
+protocol CanFavorite {
+    var favorites: [RecipeItem] { get }
+    func setFavorites()
+}
+
+struct SearchViewModel: Identifiable {
+    var id: String { text }
+    var text: String
+    var categories: [String] = []
+}
+
+@MainActor
+class RecipeStore: ObservableObject {
+    @Published private(set) var allItems: [RecipeItem] = []
     
-    // MARK: - CanFavorite conformance
-    
-    @Published var favorites: [RecipeItem] = []
-    func setFavorites() {
-        favorites = allItems.filter { recipeItem in
-            recipeItem.isFavorite
-        }
+    var itemsPublisher: AnyPublisher<[RecipeItem], Never> {
+        $allItems.eraseToAnyPublisher()
     }
+
+    func toggleFavorite(_ id: UUID) {
+        guard let index = allItems.firstIndex(where: { $0.id == id }) else { return }
+        allItems[index].isFavorite.toggle()
+        allItems = allItems // triggers Combine update
+    }
+
+    func loadRecipes(recipes: [RecipeItem]) {
+        allItems = recipes
+    }
+    
+    func deleteNotes(for id: UUID) {
+        guard let index = allItems.firstIndex(where: { $0.id == id }) else { return }
+        allItems[index].notes.removeAll()
+    }
+    
+    func addNote(_ note: RecipeNote, for id: UUID) {
+        guard let index = allItems.firstIndex(where: { $0.id == id }) else { return }
+        allItems[index].notes.append(note)
+    }
+}
+
+@MainActor
+protocol RecipeDataConsumer {
+    var items: [RecipeItem] { get }
+    var recipeStore: RecipeStore { get }
+    func toggleFavorite(recipeUUID: UUID)
+    func loadRecipes(from url: URL?) async
+}
+
+extension RecipesViewModel: RecipeDataConsumer {
+    
     
 #if DEBUG
     
     /// Load and wrap your recipes in order
     func loadRecipes(from url: URL? = nil) async {
         let recipes = await Recipe.allFromJSON(using: .good) // Network call
-        self.allItems.append(contentsOf: recipes.map ({ recipe in
+        recipeStore.loadRecipes(recipes: recipes.map ({ recipe in
             var recipeItem = RecipeItem(recipe: recipe)
-            syncRecipeMemoryStore(item: recipeItem)
+            recipeItem.isFavorite = memoryStore.isFavorite(for: recipe.id)
+            recipeItem.notes = memoryStore.notes(for: recipe.id)
             return recipeItem
         }))
-        
-        items = allItems
-        
-        print("loadRecipes...return")
         return
     }
     
@@ -157,16 +162,137 @@ class RecipesViewModel: ObservableObject, CanFavorite {
     
 #endif
     
+    
+    func toggleFavorite(recipeUUID: UUID) {
+        print("is favorite beggining: \(memoryStore.isFavorite(for: recipeUUID))")
+        memoryStore.toggleFavorite(recipeUUID: recipeUUID)
+        recipeStore.toggleFavorite(recipeUUID)
+        if !memoryStore.isFavorite(for: recipeUUID) {
+            print("it's not favorite")
+            memoryStore.deleteNotes(for: recipeUUID)
+            recipeStore.deleteNotes(for: recipeUUID)
+        }
+    }
 }
+
 
 @MainActor
-protocol CanFavorite {
-    var favorites: [RecipeItem] { get }
-    func setFavorites()
+class FavoriteRecipesViewModel: ObservableObject {
+    @Published var items: [RecipeItem] = []
+    private var cancellables = Set<AnyCancellable>()
+    
+    @Published var searchQuery: String = ""
+    @Published var selectedCuisine: String?
+    @Published var searchModel: SearchViewModel? /// TODO: - track this var to implement how to apply filters.
+    
+    private let cache: RecipeCacheProtocol
+    private let memoryStore: RecipeMemoryStoreProtocol
+    @ObservedObject var recipeStore: RecipeStore
+    
+    // MARK: - Init
+    
+    init(cache: RecipeCacheProtocol, memoryStore: RecipeMemoryStoreProtocol, recipeStore: RecipeStore) {
+        self.cache = cache
+        self.memoryStore = memoryStore
+        
+        self.recipeStore = recipeStore
+        
+        Publishers.CombineLatest3(
+            self.recipeStore.itemsPublisher,
+            $selectedCuisine
+                .debounce(for: .milliseconds(300), scheduler: RunLoop.main),
+            $searchQuery
+                .debounce(for: .milliseconds(300), scheduler: RunLoop.main)
+        )
+        .map { items, cuisine, query in
+            var filtered = items.filter({ $0.isFavorite })
+            if let cuisine = cuisine {
+                filtered = filtered.filter { $0.cuisine.lowercased() == cuisine.lowercased() }
+            }
+            if !query.isEmpty {
+                filtered = filtered.filter { $0.name.localizedCaseInsensitiveContains(query) }
+            }
+            return filtered
+        }
+        .receive(on: RunLoop.main)
+        .assign(to: &$items)
+    }
+    
+    // MARK: - Public API
+    
+    /// Start FetchCache using pathComponent.
+    /// Succeeds unless any error occurs in the cache initialization procees. throws a verbose error if fails.
+    /// the error
+    func startCache(path: String) throws(FetchCacheError) {
+        print("Starting cache at path: \(path)")
+        try cache.openCacheDirectoryWithPath(path: path)
+    }
+    
+    func addNote(_ text: String, for recipeUUID: UUID) {
+        guard memoryStore.isFavorite(for: recipeUUID) else { return }
+        if let note = memoryStore.addNote(text, for: recipeUUID) {
+            recipeStore.addNote(note, for: recipeUUID)
+        }
+    }
+    
+    var cusineCategories: [String] {
+        var categories = Set<String>()
+        for item in items {
+            categories.insert(item.cuisine)
+        }
+        return Array(categories)
+    }
 }
 
-struct SearchViewModel: Identifiable {
-    var id: String { text }
-    var text: String
-    var categories: [String] = []
+
+extension FavoriteRecipesViewModel: RecipeDataConsumer {
+    
+    
+#if DEBUG
+    
+    /// Load and wrap your recipes in order
+    func loadRecipes(from url: URL? = nil) async {
+        if recipeStore.allItems.isEmpty {
+            let recipes = await Recipe.allFromJSON(using: .good) // Network call
+            recipeStore.loadRecipes(recipes: recipes.map ({ recipe in
+                var recipeItem = RecipeItem(recipe: recipe)
+                recipeItem.isFavorite = memoryStore.isFavorite(for: recipe.id)
+                recipeItem.notes = memoryStore.notes(for: recipe.id)
+                return recipeItem
+            }))
+        }
+        return
+    }
+    
+#else
+    
+    /// Load and wrap your recipes in order
+    func loadRecipes(from url: URL? = nil) {
+        //        FetchCache.shared.load()
+        //        let recipes =
+        print("Asdfasdfsdf")
+        let recipes = Recipe.allFromJSON(using: .good) // Network call
+        self.items.append(contentsOf: recipes.map ({ recipe in
+            RecipeItem(recipe: recipe)
+        }))
+        //        self.items = recipes.map ({ recipe in
+        //            RecipeItem(recipe: recipe)
+        //        })
+        print("Asdfasdfsdf...return")
+        return
+    }
+    
+#endif
+    
+    
+    func toggleFavorite(recipeUUID: UUID) {
+        print("is favorite beggining: \(memoryStore.isFavorite(for: recipeUUID))")
+        memoryStore.toggleFavorite(recipeUUID: recipeUUID)
+        recipeStore.toggleFavorite(recipeUUID)
+        if !memoryStore.isFavorite(for: recipeUUID) {
+            print("it's not favorite")
+            memoryStore.deleteNotes(for: recipeUUID)
+            recipeStore.deleteNotes(for: recipeUUID)
+        }
+    }
 }
