@@ -106,12 +106,32 @@ class RecipesViewModel: ObservableObject {
 //            decorated.notes = memoryStore.notes(for: item.id)
 //            return decorated
 //        }
+        
+        print("syncRecipeMemoryStore: \(memoryStore.isFavorite(for: item.id))")
         item.isFavorite = memoryStore.isFavorite(for: item.id)
         item.notes = memoryStore.notes(for: item.id)
     }
     
+    func isFavorite(recipeUUID: UUID) -> Bool {
+        memoryStore.isFavorite(for: recipeUUID)
+    }
+    
     func toggleFavorite(recipeUUID: UUID) {
+        print("is favorite beggining: \(memoryStore.isFavorite(for: recipeUUID))")
         memoryStore.toggleFavorite(recipeUUID: recipeUUID)
+        if !memoryStore.isFavorite(for: recipeUUID) {
+            print("it's not favorite")
+            memoryStore.deleteNotes(for: recipeUUID)
+        }
+        
+            
+        if var item = items.first(where: { $0.id == recipeUUID }) {
+            print("is favorite beggining end: \(memoryStore.isFavorite(for: recipeUUID))")
+            syncRecipeMemoryStore(item: item)
+//            item.isFavorite = memoryStore.isFavorite(for: recipeUUID)
+//            allItems.first(where: { $0.id == recipeUUID})?.isFavorite = memoryStore.isFavorite(for: recipeUUID)
+//            items = allItems
+        }
     }
     
     func addNote(_ text: String, for recipeUUID: UUID) {

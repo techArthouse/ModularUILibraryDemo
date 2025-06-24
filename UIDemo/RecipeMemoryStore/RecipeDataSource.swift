@@ -89,6 +89,14 @@ extension RecipeDataSource: RecipeMemoryStoreProtocol {
         save()
     }
     
+    func deleteNotes(for recipeUUID: UUID) {
+        if var mem = memories[recipeUUID] {
+            mem.notes.removeAll()
+            memories[recipeUUID] = mem
+            save()
+        }
+    }
+    
     func toggleFavorite(recipeUUID: UUID) {
         if var mem = memories[recipeUUID] {
             mem.isFavorite.toggle()

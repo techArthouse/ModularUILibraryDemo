@@ -56,11 +56,14 @@ struct RecipeDetailView: View {
                             Spacer()
                             VStack {
                                 ToggleIconButton(
-                                    iconOn: .system("star"),
-                                    iconOff: .system("star.fill"),
+                                    iconOn: .system("star.fill"),
+                                    iconOff: .system("star"),
                                     isDisabled: .constant(false),
                                     isSelected: $item.isFavorite) {
-                                        onToggleFavorite()
+                                        
+                                            withAnimation {
+                                                self.onToggleFavorite()
+                                            }
                                     }
                                     .asStandardIconButtonStyle(withColor: .yellow)
                                     .accessibilityLabel(Text("ToggleIconButton: \(item.id.uuidString)"))
@@ -88,6 +91,7 @@ struct RecipeDetailView: View {
                         }
                     }
                 }
+                
                 // MARK: — Notes Section
                 VStack(alignment: .leading, spacing: 12) {
                     VStack {
@@ -124,30 +128,35 @@ struct RecipeDetailView: View {
                                 }
                             }
                     }
- else {
-                        CTAButton(title: "Add Note") {
-                            withAnimation {
-                                isAddingNote = true
+                    else {
+                        if item.isFavorite {
+                            CTAButton(title: "Add Note") {
+                                withAnimation {
+                                    isAddingNote = true
+                                }
                             }
+                            .asBorderlessButton(padding: .manualPadding)
+                            .transition(.scale.combined(with: .opacity))
+                        } else {
+                            CTAButton(title: "Add Recipe to Favorites to Add Notes") {
+                                withAnimation {
+                                    self.onToggleFavorite()
+                                }
+                            }
+                            .asBorderlessButton(padding: .manualPadding)
+                            .padding(.horizontal, 10)
+                            .transition(.scale.combined(with: .opacity))
                         }
-                        .asBorderlessButton(padding: .manualPadding)
-                        .transition(.scale.combined(with: .opacity))
                     }
                 }
-                
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
-
                 .clipShape(RoundedRectangle(cornerRadius: 16))
-//                .shadow(radius: 8)
                 .background(
                     RoundedRectangle(cornerRadius: 16)
                         .fill(Color.white)
                         .shadow(color: .black.opacity(0.1), radius: 8, x: 0, y: -1) // lifts up
                 )
                 .padding()
-
-                
-//                Spacer(minLength: 40)
             }
         }
         .navigationTitle(item.name)
@@ -218,7 +227,14 @@ struct RecipeDetailView: View {
     let recipe = Recipe.recipePreview(using: .good)
     var recipeItem = RecipeItem(recipe: recipe!)
     
-    RecipeDetailView(item: recipeItem, onToggleFavorite: {}, onSubmitNote: {_ in })
+    RecipeDetailView(item: recipeItem, onToggleFavorite: {
+        print(recipeItem.isFavorite)
+        if !recipeItem.isFavorite {
+//            recipeItem.isFavorite.toggle()
+        }
+    }, onSubmitNote: { note in
+        recipeItem.notes.append(RecipeNote(id: UUID(), text: note, date: Date()))
+    })
         .task {
             
                 do {
@@ -234,8 +250,8 @@ struct RecipeDetailView: View {
                 }
         }
         .environmentObject(ThemeManager())
-        .onAppear {
-            
-            recipeItem.notes.append( contentsOf: [RecipeNote(id: UUID(), text: "first note", date: Date()), RecipeNote(id: UUID(), text: "second note", date: Date())])
-        }
+//        .onAppear {
+//            recipeItem.isFavorite = true
+//            recipeItem.notes.append( contentsOf: [RecipeNote(id: UUID(), text: "first note", date: Date()), RecipeNote(id: UUID(), text: "second note", date: Date())])
+//        }
 }

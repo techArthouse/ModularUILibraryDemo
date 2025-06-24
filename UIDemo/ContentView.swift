@@ -22,7 +22,10 @@ struct ContentView: View {
                         case .recipeDetail(let uuid):
                             if let item = vm.items.first(where: { $0.id == uuid }) {
                                 RecipeDetailView(item: item, onToggleFavorite: {
-                                    vm.toggleFavorite(recipeUUID: item.id)
+                                    print("toggling")
+                                    withAnimation {
+                                        vm.toggleFavorite(recipeUUID: item.id)
+                                    }
                                 },
                                                  onSubmitNote: { note in
                                     vm.addNote(note, for: item.id)

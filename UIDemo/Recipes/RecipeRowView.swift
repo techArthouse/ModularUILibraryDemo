@@ -41,8 +41,8 @@ import ModularUILibrary
                 trailing: {
                     //                        let memory = $memoryStore.memories[url.absoluteString]
                     ToggleIconButton(
-                        iconOn: .system("star"),
-                        iconOff: .system("star.fill"),
+                        iconOn: .system("star.fill"),
+                        iconOff: .system("star"),
                         isDisabled: .constant(false),
                         isSelected: $item.isFavorite) {
                             onToggleFavorite()
