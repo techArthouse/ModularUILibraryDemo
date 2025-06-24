@@ -14,6 +14,7 @@ import ModularUILibrary
         @ObservedObject var item: RecipeItem
         //        @State var image: Image?
         @EnvironmentObject private var nav: AppNavigation
+        @EnvironmentObject private var recipeMemory: RecipeDataSource
         @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 //        @EnvironmentObject var memoryStore: RecipeDataSource
         
@@ -32,6 +33,10 @@ import ModularUILibrary
                 },
                 leading: {
                     ImageContainer(image: $item.image, size: dynamicTypeSize.photoDimension, accessibilityId: item.id)
+                        .equatable()
+                        .onAppear{
+                            print("i appear imagecontainer with image \(item.image != nil)")
+                        }
                 },
                 trailing: {
                     //                        let memory = $memoryStore.memories[url.absoluteString]
@@ -39,7 +44,9 @@ import ModularUILibrary
                         iconOn: .system("star"),
                         iconOff: .system("star.fill"),
                         isDisabled: .constant(false),
-                        isSelected: $item.isFavorite)
+                        isSelected: $item.isFavorite) {
+//                            recipeMemory.toggleFavorite(url: <#T##URL#>)
+                        }
                     .asStandardIconButtonStyle(withColor: .yellow)
                     .accessibilityLabel(Text("ToggleIconButton: \(item.id)"))
                     
@@ -56,9 +63,15 @@ import ModularUILibrary
                     //                    .simultaneousGesture(newGesture, including: .all)
                 })
             .task {
+                print("ran task")
                 do {
                     guard let url = item.smallImageURL else {
                         throw URLError(.badURL)
+                    }
+                    guard item.image == nil else {
+                        
+                        print("not equal to nil")
+                        return
                     }
                     item.image = try await FetchCache.shared.getImageFor(url: url)
                 } catch let e as FetchCacheError {
@@ -81,6 +94,7 @@ import ModularUILibrary
                 }
             }
             .onAppear {
+                print("were appearing oh yeah")
                 // By having this here we can always show a progressview whenever
                 // we return to this item cell.
                 item.image = nil

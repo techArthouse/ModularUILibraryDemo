@@ -28,16 +28,16 @@ class FetchCache: ObservableObject {
     }
     
     /// if FetchCache diskmemoryurl already exists then the url is returned. nil if it does not exist.
+    /// NOTE: - Apple docs suggest not using filemanager `fileExists` method. "Attempting to predicate behavior based on the
+    /// current state of the file system or a particular file on the file system is not recommended."
     private func diskMemoryCacheAlreadyExists() -> URL? {
         do {
             guard let url = diskMemoryURL else {
+                print("diskMemoryCacheAlreadyExists Not")
                 return nil
             }
-            if FileManager.default.fileExists(atPath: url.path()) {
-                return url
-            } else {
-                return nil
-            }
+            print("diskMemoryCacheAlreadyExists")
+            return url
         }
     }
     

@@ -13,8 +13,7 @@ import ModularUILibrary
 struct RecipesView: View {
     @ObservedObject private var vm: RecipesViewModel
     @EnvironmentObject private var nav: AppNavigation
-    
-    @State private var searchModel: SearchViewModel?
+
     @State private var bold = false
     @State private var italic = false
     
@@ -28,7 +27,7 @@ struct RecipesView: View {
     var body: some View {
         List(vm.items, id: \.id) { item in
             RecipeRowView(item: item)
-            .listRowInsets(EdgeInsets())
+                .listRowInsets(EdgeInsets())
         }
         .listStyle(.automatic)
         .listRowSpacing(10)
@@ -47,6 +46,7 @@ struct RecipesView: View {
                 try vm.startCache(path: "FetchImageCache")
             #endif
             } catch {
+                print("it was the cache")
                 return
                 // failed to start cache. what do i do here? is vm.items = [] appropriate?
             }
@@ -55,19 +55,17 @@ struct RecipesView: View {
         .toolbar {
             ToolbarItem(placement: .navigationBarTrailing) {
                 IconButton(icon: .system("magnifyingglass"), isDisabled: .constant(false)) {
-                    searchModel = SearchViewModel(text: "Search")
+                    vm.selectedCuisine = "british"
                 }
                 .asStandardIconButtonStyle()
             }
         }
-        .popover(item: $searchModel) { model in
-            
+        .popover(item: $vm.searchModel) { model in
+            Button(action: {
+                vm.selectedCuisine = "british"
+                
+            }, label: {Text("filter")})
         }
-    }
-    
-    struct SearchViewModel: Identifiable {
-        var id: String { text }
-        var text: String
     }
 }
 
