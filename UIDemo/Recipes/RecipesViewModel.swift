@@ -9,7 +9,7 @@ import SwiftUI
 import Combine
 
 @MainActor
-class RecipesViewModel: ObservableObject {
+class RecipesViewModel: ObservableObject, CanFavorite {
     @Published var items: [RecipeItem] = []
     @Published var searchQuery: String = ""
     @Published var selectedCuisine: String?
@@ -21,45 +21,7 @@ class RecipesViewModel: ObservableObject {
     private let cache: RecipeCacheProtocol
     private let memoryStore: RecipeMemoryStoreProtocol
     
-    // We want the vm to always instantiate to not break consumers, but we should also allow for default no action and later load based on new urlString
-//    init() {
-//        Publishers.CombineLatest(
-//            $searchQuery
-//                .prepend("") // ensure searchQuery emits immediately
-//                .debounce(for: .milliseconds(300), scheduler: RunLoop.main),
-//            $selectedCuisine
-//        )
-//        .sink { [weak self] (query, cuisine) in
-//            print("Filters updated query: \(query), cuisine: \(cuisine)")
-//            self?.applyFilters(query: query, cuisine: cuisine)
-//        }
-//        .store(in: &cancellables)
-//        $selectedCuisine
-//            .sink { [weak self] cuisine in
-//                print("Selected cuisine: \(cuisine ?? "nil")")
-//                self?.applyFilters(query: self?.searchQuery ?? "", cuisine: cuisine)
-//            }
-//            .store(in: &cancellables)
-//        
-//    }
-    
     // MARK: - Init
-//    init(cache: RecipeCacheProtocol, memoryStore: RecipeMemoryStoreProtocol) {
-//        self.cache = cache
-//        self.memoryStore = memoryStore
-//        
-//        $selectedCuisine
-//            .sink { [weak self] cuisine in
-//                guard let strongSelf = self else { return }
-//                print("Selected cuisine: \(cuisine ?? "nil")")
-//                if let cuisine = cuisine {
-//                    strongSelf.applyFilters(query: strongSelf.searchQuery, cuisine: cuisine)
-//                } else {
-//                    strongSelf.items = strongSelf.allItems
-//                }
-//            }
-//            .store(in: &cancellables)
-//    }
     
     init(cache: RecipeCacheProtocol, memoryStore: RecipeMemoryStoreProtocol) {
         self.cache = cache
@@ -149,6 +111,15 @@ class RecipesViewModel: ObservableObject {
         return Array(categories)
     }
     
+    // MARK: - CanFavorite conformance
+    
+    @Published var favorites: [RecipeItem] = []
+    func setFavorites() {
+        favorites = allItems.filter { recipeItem in
+            recipeItem.isFavorite
+        }
+    }
+    
 #if DEBUG
     
     /// Load and wrap your recipes in order
@@ -188,7 +159,11 @@ class RecipesViewModel: ObservableObject {
     
 }
 
-
+@MainActor
+protocol CanFavorite {
+    var favorites: [RecipeItem] { get }
+    func setFavorites()
+}
 
 struct SearchViewModel: Identifiable {
     var id: String { text }

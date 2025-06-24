@@ -39,13 +39,33 @@ struct ContentView: View {
             .tabItem {
                 Label("Home", systemImage: "house.fill")
             }
-
+            
             // 2) Favorites tab—placeholder for now
-            Text("Favorites")
-                .tabItem {
-                    Label("Favorites", systemImage: "star.fill")
-                }
-
+            NavigationStack(path: $nav.path2) {
+                FavoriteRecipesView(vm: vm)
+                    .navigationDestination(for: Route.self) { recipe in
+                        switch recipe {
+                        case .recipeDetail(let uuid):
+                            if let item = vm.items.first(where: { $0.id == uuid }) {
+                                RecipeDetailView(item: item, onToggleFavorite: {
+                                    print("toggling")
+                                    withAnimation {
+                                        vm.toggleFavorite(recipeUUID: item.id)
+                                    }
+                                },
+                                                 onSubmitNote: { note in
+                                    vm.addNote(note, for: item.id)
+                                })
+                            }
+                        default:
+                            EmptyView()
+                        }
+                    }
+            }
+            .tabItem {
+                Label("Favorites", systemImage: "star.fill")
+            }
+            
             // 3) Profile tab
             Text("Profile")
                 .tabItem {
@@ -61,6 +81,7 @@ final class AppNavigation: ObservableObject {
     static let shared = AppNavigation()
     
     @Published var path: [Route] = []
+    @Published var path2: [Route] = []
     @Published var selectedTab: Tab = .home
     
     private init() {

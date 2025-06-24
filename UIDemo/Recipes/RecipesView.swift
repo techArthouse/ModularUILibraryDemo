@@ -22,10 +22,12 @@ struct RecipesView: View {
         List {
             Section(header: searchHeaderView) {
                 ForEach(vm.items, id: \.id) { item in
-                    RecipeRowView(item: item) {
+                    RecipeRowView(item: item, onToggleFavorite: {
                         withAnimation {
                             vm.toggleFavorite(recipeUUID: item.id)
                         }
+                    }) {
+                        nav.path.append(.recipeDetail(item.id))
                     }
                     .listRowInsets(EdgeInsets())
                 }
@@ -122,10 +124,114 @@ struct RecipesView_Previews: PreviewProvider {
         // TODO: Test resizing here later.
         
         NavigationStack {
-            RecipesView(vm: vm)
+            FavoriteRecipesView(vm: vm)
                 .environmentObject(themeManager)
                 .environmentObject(nav)
         }
     }
 }
 #endif
+
+
+// MARK: - Recipes List View
+struct FavoriteRecipesView: View {
+    @ObservedObject private var vm: RecipesViewModel
+    @EnvironmentObject private var nav: AppNavigation
+    
+    init(defaultSize: ImageSize = .medium, vm: RecipesViewModel) {
+        self.vm = vm
+    }
+    
+    var body: some View {
+        List {
+            Section(header: searchHeaderView) {
+                ForEach(vm.favorites, id: \.id) { item in
+                    RecipeRowView(item: item, onToggleFavorite: {
+                        withAnimation {
+                            vm.toggleFavorite(recipeUUID: item.id)
+                            vm.setFavorites()
+                        }
+                    }) {
+                        nav.path2.append(.recipeDetail(item.id))
+                    }
+                    .listRowInsets(EdgeInsets())
+                }
+            }
+        }
+        .listStyle(.insetGrouped)
+        .navigationTitle("Recipes")
+        .refreshable {
+            await FetchCache.shared.refresh()
+        }
+        .onAppear() {
+            vm.setFavorites()
+        }
+//        .task {
+//            do {
+//#if DEBUG
+//                try vm.startCache(path: "DevelopmentFetchImageCache")
+//#else
+//                try vm.startCache(path: "FetchImageCache")
+//#endif
+//            } catch {
+//                print("Cache already exists")
+//            }
+//            await vm.loadRecipes()
+//        }
+        .toolbar {
+            ToolbarItem(placement: .navigationBarTrailing) {
+                IconButton(
+                    icon: .system("line.3.horizontal.decrease.circle\(vm.selectedCuisine != nil ? ".fill" : "")"),
+                    isDisabled: .constant(false)
+                ) {
+                    withAnimation(.spring()) {
+                        vm.searchModel = SearchViewModel(
+                            text: vm.searchQuery,
+                            categories: vm.cusineCategories
+                        )
+                    }
+                }
+                .asStandardIconButtonStyle(withColor: vm.selectedCuisine != nil ? .blue : .gray)
+                .rotationEffect(.degrees(vm.selectedCuisine != nil ? 90 : 0))
+                .scaleEffect(vm.selectedCuisine != nil ? 1.2 : 1.0)
+            }
+        }
+        .sheet(item: $vm.searchModel) { model in
+            RecipeSearchFilterSheet(
+                model: model,
+                selectedCuisine: vm.selectedCuisine,
+                onSelect: { cuisine in
+                    withAnimation {
+                        vm.selectedCuisine = cuisine
+                    }
+                    vm.searchModel = nil
+                },
+                onReset: {
+                    withAnimation {
+                        vm.selectedCuisine = nil
+                    }
+                    vm.searchModel = nil
+                }
+            )
+        }
+    }
+    
+    private var searchHeaderView: some View {
+        HStack(spacing: 8) {
+            Image(systemName: "magnifyingglass")
+                .foregroundColor(.gray)
+            TextField("Search recipes", text: $vm.searchQuery)
+                .autocapitalization(.none)
+                .disableAutocorrection(true)
+            if !vm.searchQuery.isEmpty {
+                Button(action: { vm.searchQuery = "" }) {
+                    Image(systemName: "xmark.circle.fill")
+                        .foregroundColor(.gray)
+                }
+            }
+        }
+        .padding(8)
+        .background(Color(.systemGray6))
+        .cornerRadius(10)
+    }
+}

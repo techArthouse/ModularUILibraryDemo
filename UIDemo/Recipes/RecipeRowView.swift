@@ -13,6 +13,7 @@ import ModularUILibrary
         // Suppose the parent passed us a Binding<RecipeItem>:
         @ObservedObject var item: RecipeItem
         let onToggleFavorite: () -> Void
+        let onSelectRow: () -> Void
         //        @State var image: Image?
         @EnvironmentObject private var nav: AppNavigation
         @Environment(\.dynamicTypeSize) private var dynamicTypeSize
@@ -29,7 +30,7 @@ import ModularUILibrary
                 description: item.cuisine,
                 action: {
                     print("action fire for item")
-                    nav.path.append(.recipeDetail(item.id))
+                    onSelectRow()
                 },
                 leading: {
                     ImageContainer(image: $item.image, size: dynamicTypeSize.photoDimension, accessibilityId: item.id.uuidString)
