@@ -13,10 +13,13 @@ import SafariServices
 struct RecipeDetailView: View {
     @ObservedObject var item: RecipeItem
     let onToggleFavorite: () -> Void
+    let onSubmitNote: (String) -> Void
     @State private var image: Image?
     @State private var source: URLType? = nil
     @State private var isLoading: Bool = false
-    
+    @State private var isAddingNote = false
+    @State private var newNoteText = ""
+
     enum URLType: Identifiable {
         public var id: URL {
             switch self {
@@ -34,12 +37,12 @@ struct RecipeDetailView: View {
             VStack(spacing: 20) {
                 
                 // MARK: — Title
-                    Text(item.name)
-                        .font(.largeTitle)
-                        .bold()
-                        .multilineTextAlignment(.center)
-                        .lineLimit(2)
-                        .padding(.vertical)
+                Text(item.name)
+                    .font(.largeTitle)
+                    .bold()
+                    .multilineTextAlignment(.center)
+                    .lineLimit(2)
+                    .padding(.vertical)
                 
                 // MARK: — Image + Cuisine + favorite
                 ZStack {
@@ -48,20 +51,22 @@ struct RecipeDetailView: View {
                             image = try? await FetchCache.shared
                                 .getImageFor(url: item.smallImageURL!)
                         }
-                    HStack(alignment: .top) {
-                        Spacer()
-                        VStack {
-                            ToggleIconButton(
-                                iconOn: .system("star"),
-                                iconOff: .system("star.fill"),
-                                isDisabled: .constant(false),
-                                isSelected: $item.isFavorite) {
-                                    onToggleFavorite()
-                                }
-                                .asStandardIconButtonStyle(withColor: .yellow)
-                                .accessibilityLabel(Text("ToggleIconButton: \(item.id.uuidString)"))
-                                .padding(.trailing)
+                    ZStack {
+                        HStack(alignment: .top) {
                             Spacer()
+                            VStack {
+                                ToggleIconButton(
+                                    iconOn: .system("star"),
+                                    iconOff: .system("star.fill"),
+                                    isDisabled: .constant(false),
+                                    isSelected: $item.isFavorite) {
+                                        onToggleFavorite()
+                                    }
+                                    .asStandardIconButtonStyle(withColor: .yellow)
+                                    .accessibilityLabel(Text("ToggleIconButton: \(item.id.uuidString)"))
+                                    .padding(.trailing)
+                                Spacer()
+                            }
                         }
                     }
                 }
@@ -83,8 +88,66 @@ struct RecipeDetailView: View {
                         }
                     }
                 }
+                // MARK: — Notes Section
+                VStack(alignment: .leading, spacing: 12) {
+                    VStack {
+                        Text("Notes")
+                            .font(.headline)
+                            .frame(maxWidth: .infinity, alignment: .center)
+                    }
+                    .padding(.vertical, 5)
+                    .background( isAddingNote ? .white : .yellow.opacity(0.4))
+                    
+                    ForEach(item.notes) { note in
+                        Text(note.text)
+                            .padding(.leading, 10)
+                            .cornerRadius(8)
+                            .transition(.opacity)
+                        Divider()
+                            .frame(height: 1)
+                            .background(.black.opacity(0.5))
+                    }
+                    
+                    if isAddingNote {
+                        TextField("Write your note...", text: $newNoteText)
+                            .padding(10)
+                            .background(Color.yellow.opacity(0.4))
+                            .cornerRadius(8)
+                            .overlay(RoundedRectangle(cornerRadius: 8).stroke(Color.gray.opacity(0.6)))
+                            .transition(.move(edge: .bottom).combined(with: .opacity)).onSubmit {
+                                if !newNoteText.trimmingCharacters(in: .whitespaces).isEmpty {
+                                    onSubmitNote(newNoteText.trimmingCharacters(in: .whitespaces))
+                                    withAnimation {
+                                        isAddingNote = false
+                                        newNoteText = ""
+                                    }
+                                }
+                            }
+                    }
+ else {
+                        CTAButton(title: "Add Note") {
+                            withAnimation {
+                                isAddingNote = true
+                            }
+                        }
+                        .asBorderlessButton(padding: .manualPadding)
+                        .transition(.scale.combined(with: .opacity))
+                    }
+                }
                 
-                Spacer(minLength: 40)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+
+                .clipShape(RoundedRectangle(cornerRadius: 16))
+//                .shadow(radius: 8)
+                .background(
+                    RoundedRectangle(cornerRadius: 16)
+                        .fill(Color.white)
+                        .shadow(color: .black.opacity(0.1), radius: 8, x: 0, y: -1) // lifts up
+                )
+                .padding()
+
+                
+//                Spacer(minLength: 40)
             }
         }
         .navigationTitle(item.name)
@@ -153,7 +216,9 @@ struct RecipeDetailView: View {
 
 #Preview {
     let recipe = Recipe.recipePreview(using: .good)
-    RecipeDetailView(item: RecipeItem(recipe: recipe!), onToggleFavorite: {})
+    var recipeItem = RecipeItem(recipe: recipe!)
+    
+    RecipeDetailView(item: recipeItem, onToggleFavorite: {}, onSubmitNote: {_ in })
         .task {
             
                 do {
@@ -169,4 +234,8 @@ struct RecipeDetailView: View {
                 }
         }
         .environmentObject(ThemeManager())
+        .onAppear {
+            
+            recipeItem.notes.append( contentsOf: [RecipeNote(id: UUID(), text: "first note", date: Date()), RecipeNote(id: UUID(), text: "second note", date: Date())])
+        }
 }

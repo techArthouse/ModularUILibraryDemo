@@ -13,62 +13,97 @@ import ModularUILibrary
 struct RecipesView: View {
     @ObservedObject private var vm: RecipesViewModel
     @EnvironmentObject private var nav: AppNavigation
-
-    @State private var bold = false
-    @State private var italic = false
-    
-    @State private var fontSize = 12.0
-    @State private var searchPresented = false
     
     init(defaultSize: ImageSize = .medium, vm: RecipesViewModel) {
         self.vm = vm
     }
     
     var body: some View {
-        List(vm.items, id: \.id) { item in
-            RecipeRowView(item: item) {
-                vm.toggleFavorite(recipeUUID: item.id)
+        List {
+            Section(header: searchHeaderView) {
+                ForEach(vm.items, id: \.id) { item in
+                    RecipeRowView(item: item) {
+                        withAnimation {
+                            vm.toggleFavorite(recipeUUID: item.id)
+                        }
+                    }
+                    .listRowInsets(EdgeInsets())
+                }
             }
-            .listRowInsets(EdgeInsets())
         }
-        .listStyle(.automatic)
-        .listRowSpacing(10)
+        .listStyle(.insetGrouped)
         .navigationTitle("Recipes")
         .refreshable {
             await FetchCache.shared.refresh()
         }
         .task {
-            print("list element appeared")
-            
             do {
-                // Pick the correct folder name: "DevelopmentFetchImageCache" "FetchImageCache"
-            #if DEBUG
+#if DEBUG
                 try vm.startCache(path: "DevelopmentFetchImageCache")
-            #else
+#else
                 try vm.startCache(path: "FetchImageCache")
-            #endif
+#endif
             } catch {
-                print("it was the cache")
+                print("Cache failed to start")
                 return
-                // failed to start cache. what do i do here? is vm.items = [] appropriate?
             }
             await vm.loadRecipes()
-            
         }
         .toolbar {
             ToolbarItem(placement: .navigationBarTrailing) {
-                IconButton(icon: .system("magnifyingglass"), isDisabled: .constant(false)) {
-                    vm.selectedCuisine = "british"
+                IconButton(
+                    icon: .system("line.3.horizontal.decrease.circle\(vm.selectedCuisine != nil ? ".fill" : "")"),
+                    isDisabled: .constant(false)
+                ) {
+                    withAnimation(.spring()) {
+                        vm.searchModel = SearchViewModel(
+                            text: vm.searchQuery,
+                            categories: vm.cusineCategories
+                        )
+                    }
                 }
-                .asStandardIconButtonStyle()
+                .asStandardIconButtonStyle(withColor: vm.selectedCuisine != nil ? .blue : .gray)
+                .rotationEffect(.degrees(vm.selectedCuisine != nil ? 90 : 0))
+                .scaleEffect(vm.selectedCuisine != nil ? 1.2 : 1.0)
             }
         }
-        .popover(item: $vm.searchModel) { model in
-            Button(action: {
-                vm.selectedCuisine = "british"
-                
-            }, label: {Text("filter")})
+        .sheet(item: $vm.searchModel) { model in
+            RecipeSearchFilterSheet(
+                model: model,
+                selectedCuisine: vm.selectedCuisine,
+                onSelect: { cuisine in
+                    withAnimation {
+                        vm.selectedCuisine = cuisine
+                    }
+                    vm.searchModel = nil
+                },
+                onReset: {
+                    withAnimation {
+                        vm.selectedCuisine = nil
+                    }
+                    vm.searchModel = nil
+                }
+            )
         }
+    }
+    
+    private var searchHeaderView: some View {
+        HStack(spacing: 8) {
+            Image(systemName: "magnifyingglass")
+                .foregroundColor(.gray)
+            TextField("Search recipes", text: $vm.searchQuery)
+                .autocapitalization(.none)
+                .disableAutocorrection(true)
+            if !vm.searchQuery.isEmpty {
+                Button(action: { vm.searchQuery = "" }) {
+                    Image(systemName: "xmark.circle.fill")
+                        .foregroundColor(.gray)
+                }
+            }
+        }
+        .padding(8)
+        .background(Color(.systemGray6))
+        .cornerRadius(10)
     }
 }
 

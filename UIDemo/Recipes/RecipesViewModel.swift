@@ -44,36 +44,49 @@ class RecipesViewModel: ObservableObject {
 //    }
     
     // MARK: - Init
+//    init(cache: RecipeCacheProtocol, memoryStore: RecipeMemoryStoreProtocol) {
+//        self.cache = cache
+//        self.memoryStore = memoryStore
+//        
+//        $selectedCuisine
+//            .sink { [weak self] cuisine in
+//                guard let strongSelf = self else { return }
+//                print("Selected cuisine: \(cuisine ?? "nil")")
+//                if let cuisine = cuisine {
+//                    strongSelf.applyFilters(query: strongSelf.searchQuery, cuisine: cuisine)
+//                } else {
+//                    strongSelf.items = strongSelf.allItems
+//                }
+//            }
+//            .store(in: &cancellables)
+//    }
+    
     init(cache: RecipeCacheProtocol, memoryStore: RecipeMemoryStoreProtocol) {
         self.cache = cache
         self.memoryStore = memoryStore
-        
-        $selectedCuisine
-            .sink { [weak self] cuisine in
-                print("Selected cuisine: \(cuisine ?? "nil")")
-                self?.applyFilters(query: self?.searchQuery ?? "", cuisine: cuisine)
-            }
-            .store(in: &cancellables)
+
+        Publishers.CombineLatest(
+            $searchQuery.debounce(for: .milliseconds(300), scheduler: RunLoop.main),
+            $selectedCuisine
+        )
+        .sink { [weak self] query, cuisine in
+            self?.applyFilters(query: query, cuisine: cuisine)
+        }
+        .store(in: &cancellables)
     }
     
     // MARK: - Filter Logic
     private func applyFilters(query: String, cuisine: String?) {
-        guard cuisine != nil else {
-            return
+        var filtered = allItems
+
+        if let cuisine = cuisine {
+            filtered = filtered.filter { $0.cuisine.lowercased() == cuisine.lowercased() }
+        }
+        if !query.isEmpty {
+            filtered = filtered.filter { $0.name.localizedCaseInsensitiveContains(query) }
         }
 
-        var result = allItems
-        if !query.isEmpty {
-            result = result.filter { $0.name.localizedCaseInsensitiveContains(query) }
-        }
-        if let cuisine = cuisine {
-            items = result.filter {
-                let include = $0.cuisine.lowercased() == cuisine.lowercased()
-                print("Matched \(include): \($0.name)")
-                return include
-            }
-        }
-        searchModel = nil
+        items = filtered
     }
     
     // MARK: - Public API
@@ -94,11 +107,26 @@ class RecipesViewModel: ObservableObject {
 //            return decorated
 //        }
         item.isFavorite = memoryStore.isFavorite(for: item.id)
-        item.notes =  memoryStore.notes(for: item.id)
+        item.notes = memoryStore.notes(for: item.id)
     }
     
     func toggleFavorite(recipeUUID: UUID) {
         memoryStore.toggleFavorite(recipeUUID: recipeUUID)
+    }
+    
+    func addNote(_ text: String, for recipeUUID: UUID) {
+        memoryStore.addNote(text, for: recipeUUID)
+        if let item = items.first(where: { $0.id == recipeUUID }) {
+            item.notes = memoryStore.notes(for: recipeUUID)
+        }
+    }
+    
+    var cusineCategories: [String] {
+        var categories = Set<String>()
+        for item in allItems {
+            categories.insert(item.cuisine)
+        }
+        return Array(categories)
     }
     
 #if DEBUG
@@ -145,4 +173,5 @@ class RecipesViewModel: ObservableObject {
 struct SearchViewModel: Identifiable {
     var id: String { text }
     var text: String
+    var categories: [String] = []
 }

@@ -20,14 +20,6 @@ final class RecipeDataSource: ObservableObject {
 
     // MARK: – Public API
 
-    func addNote(_ text: String, for recipeUUID: UUID) {
-        guard var mem = memories[recipeUUID], mem.isFavorite else { return }
-        let note = RecipeNote(id: UUID(), text: text, date: Date())
-        mem.notes.append(note)
-        memories[recipeUUID] = mem
-        save()
-    }
-
     func getMemory(for recipeUUID: UUID) -> RecipeMemory {
         if let res = memories[recipeUUID] {
             return res
@@ -87,6 +79,14 @@ extension RecipeDataSource: RecipeMemoryStoreProtocol {
 
     func notes(for recipeUUID: UUID) -> [RecipeNote] {
         getMemory(for: recipeUUID).notes
+    }
+    
+    func addNote(_ text: String, for recipeUUID: UUID) {
+        guard var mem = memories[recipeUUID], mem.isFavorite else { return }
+        let note = RecipeNote(id: UUID(), text: text, date: Date())
+        mem.notes.append(note)
+        memories[recipeUUID] = mem
+        save()
     }
     
     func toggleFavorite(recipeUUID: UUID) {
