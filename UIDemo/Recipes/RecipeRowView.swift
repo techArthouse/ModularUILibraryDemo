@@ -12,9 +12,9 @@ import ModularUILibrary
     struct RecipeRowView: View {
         // Suppose the parent passed us a Binding<RecipeItem>:
         @ObservedObject var item: RecipeItem
+        let onToggleFavorite: () -> Void
         //        @State var image: Image?
         @EnvironmentObject private var nav: AppNavigation
-        @EnvironmentObject private var recipeMemory: RecipeDataSource
         @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 //        @EnvironmentObject var memoryStore: RecipeDataSource
         
@@ -29,10 +29,10 @@ import ModularUILibrary
                 description: item.cuisine,
                 action: {
                     print("action fire for item")
-                    nav.path.append(.recipeDetail(item.recipe))
+                    nav.path.append(.recipeDetail(item.id))
                 },
                 leading: {
-                    ImageContainer(image: $item.image, size: dynamicTypeSize.photoDimension, accessibilityId: item.id)
+                    ImageContainer(image: $item.image, size: dynamicTypeSize.photoDimension, accessibilityId: item.id.uuidString)
                         .equatable()
                         .onAppear{
                             print("i appear imagecontainer with image \(item.image != nil)")
@@ -45,10 +45,10 @@ import ModularUILibrary
                         iconOff: .system("star.fill"),
                         isDisabled: .constant(false),
                         isSelected: $item.isFavorite) {
-//                            recipeMemory.toggleFavorite(url: <#T##URL#>)
+                            onToggleFavorite()
                         }
                     .asStandardIconButtonStyle(withColor: .yellow)
-                    .accessibilityLabel(Text("ToggleIconButton: \(item.id)"))
+                    .accessibilityLabel(Text("ToggleIconButton: \(item.id.uuidString)"))
                     
                     
                     //                    VStack {

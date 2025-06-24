@@ -17,7 +17,7 @@ enum Tab: Hashable {
 
 enum Route: Hashable {
     case recipes
-    case recipeDetail(Recipe)
+    case recipeDetail(UUID)
 }
 
 // MARK: - Landing Page

@@ -11,7 +11,8 @@ import ModularUILibrary
 import SafariServices
 
 struct RecipeDetailView: View {
-    let recipe: Recipe
+    @ObservedObject var item: RecipeItem
+    let onToggleFavorite: () -> Void
     @State private var image: Image?
     @State private var source: URLType? = nil
     @State private var isLoading: Bool = false
@@ -33,29 +34,48 @@ struct RecipeDetailView: View {
             VStack(spacing: 20) {
                 
                 // MARK: — Title
-                Text(recipe.name)
-                    .font(.largeTitle).bold()
-                    .multilineTextAlignment(.center)
-                    .lineLimit(2)
-                    .padding(.top)
+                    Text(item.name)
+                        .font(.largeTitle)
+                        .bold()
+                        .multilineTextAlignment(.center)
+                        .lineLimit(2)
+                        .padding(.vertical)
                 
-                // MARK: — Image + Cuisine
-                ImageCard(image: $image, size: nil, title: recipe.name, description: recipe.cuisine)
-                    .task {
-                        image = try? await FetchCache.shared
-                            .getImageFor(url: recipe.smallImageURL!)
+                // MARK: — Image + Cuisine + favorite
+                ZStack {
+                    ImageCard(image: $image, size: nil, title: item.name, description: item.cuisine)
+                        .task {
+                            image = try? await FetchCache.shared
+                                .getImageFor(url: item.smallImageURL!)
+                        }
+                    HStack(alignment: .top) {
+                        Spacer()
+                        VStack {
+                            ToggleIconButton(
+                                iconOn: .system("star"),
+                                iconOff: .system("star.fill"),
+                                isDisabled: .constant(false),
+                                isSelected: $item.isFavorite) {
+                                    onToggleFavorite()
+                                }
+                                .asStandardIconButtonStyle(withColor: .yellow)
+                                .accessibilityLabel(Text("ToggleIconButton: \(item.id.uuidString)"))
+                                .padding(.trailing)
+                            Spacer()
+                        }
                     }
+                }
                 
                 // MARK: — Buttons
                 VStack(spacing: 12) {
                     CTAButtonStack(.vertical) {
-                        if let url = recipe.youtubeVideoURL {
+                        if let url = item.videoURL {
                             CTAButton(title: "Watch Video") {
                                 //                                    showVideoSheet = true
                                 source = .video(url)
                             }.asPrimaryButton(padding: .stacked)
                         }
-                        if let sourceURL = recipe.sourceWebsiteURL {
+                        if let sourceURL = item.sourceURL {
                             CTAButton(title: "View Full Recipe") {
                                 //                                showSourceSheet = true
                                 source = .webPage(sourceURL)
@@ -67,7 +87,7 @@ struct RecipeDetailView: View {
                 Spacer(minLength: 40)
             }
         }
-        .navigationTitle(recipe.name)
+        .navigationTitle(item.name)
         .navigationBarTitleDisplayMode(.inline)
         // YouTube sheet
         .sheet(item: $source) { source in
@@ -76,7 +96,7 @@ struct RecipeDetailView: View {
                 case .video(let url):
                     if let videoID = extractStringAfterV(from: url.absoluteString) {
                         // MARK: — Title
-                        Text(recipe.name)
+                        Text(item.name)
                             .font(.largeTitle).bold()
                             .multilineTextAlignment(.center)
                             .lineLimit(2)
@@ -133,7 +153,7 @@ struct RecipeDetailView: View {
 
 #Preview {
     let recipe = Recipe.recipePreview(using: .good)
-    RecipeDetailView(recipe: recipe!)
+    RecipeDetailView(item: RecipeItem(recipe: recipe!), onToggleFavorite: {})
         .task {
             
                 do {

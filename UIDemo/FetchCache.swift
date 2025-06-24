@@ -8,6 +8,7 @@
 import SwiftUI
 import UIKit
 
+
 @MainActor
 class FetchCache: ObservableObject {
     static let shared = FetchCache()
@@ -173,8 +174,9 @@ class FetchCache: ObservableObject {
         }
     }
     
-    func refresh() async {
+    func refresh() async { /// TODO: - refresh is not done needs to load recipememorystore
         guard let diskMemoryCacheURLPath = diskMemoryCacheAlreadyExists()?.lastPathComponent else {
+            assertionFailure("refresh() failed as lastpathcompoent didn't return")
             return
         }
         
@@ -227,3 +229,5 @@ extension FetchCache {
         return data.imageIfImageData
     }
 }
+
+extension FetchCache: RecipeCacheProtocol { }

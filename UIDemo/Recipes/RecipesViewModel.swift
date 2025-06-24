@@ -13,34 +13,16 @@ class RecipesViewModel: ObservableObject {
     @Published var items: [RecipeItem] = []
     @Published var searchQuery: String = ""
     @Published var selectedCuisine: String?
-    
-    @Published var searchModel: SearchViewModel?
+    @Published var searchModel: SearchViewModel? /// TODO: - track this var to implement how to apply filters. 
     
     private var allItems: [RecipeItem] = []
     private var cancellables = Set<AnyCancellable>()
-//    var items: [RecipeItem] {
-//            var result = allItems
-//            
-//            if !searchQuery.isEmpty {
-//                result = result.filter {
-//                    $0.name.localizedCaseInsensitiveContains(searchQuery)
-//                }
-//            }
-//            
-//            if let cuisine = selectedCuisine {
-//                result = result.filter {
-//                    $0.cuisine == cuisine
-//                }
-//            }
-//            
-//            return result
-//        }
     
-    @Published var currentPageURL: URL? = nil
-//    @EnvironmentObject var dataSource: RecipeDataSource // = RecipeDataSource.shared
+    private let cache: RecipeCacheProtocol
+    private let memoryStore: RecipeMemoryStoreProtocol
     
     // We want the vm to always instantiate to not break consumers, but we should also allow for default no action and later load based on new urlString
-    init() {
+//    init() {
 //        Publishers.CombineLatest(
 //            $searchQuery
 //                .prepend("") // ensure searchQuery emits immediately
@@ -52,46 +34,71 @@ class RecipesViewModel: ObservableObject {
 //            self?.applyFilters(query: query, cuisine: cuisine)
 //        }
 //        .store(in: &cancellables)
+//        $selectedCuisine
+//            .sink { [weak self] cuisine in
+//                print("Selected cuisine: \(cuisine ?? "nil")")
+//                self?.applyFilters(query: self?.searchQuery ?? "", cuisine: cuisine)
+//            }
+//            .store(in: &cancellables)
+//        
+//    }
+    
+    // MARK: - Init
+    init(cache: RecipeCacheProtocol, memoryStore: RecipeMemoryStoreProtocol) {
+        self.cache = cache
+        self.memoryStore = memoryStore
+        
         $selectedCuisine
             .sink { [weak self] cuisine in
                 print("Selected cuisine: \(cuisine ?? "nil")")
                 self?.applyFilters(query: self?.searchQuery ?? "", cuisine: cuisine)
             }
             .store(in: &cancellables)
-        
     }
     
-    
+    // MARK: - Filter Logic
     private func applyFilters(query: String, cuisine: String?) {
-//        guard cuisine != nil else {
-//            assertionFailure("waht in the actual fak")
-//            return
-//        }
-//        items = []
-//        objectWillChange.send()
+        guard cuisine != nil else {
+            return
+        }
+
         var result = allItems
-//        if !query.isEmpty {
-//            result = result.filter { $0.name.localizedCaseInsensitiveContains(query) }
-//        }
+        if !query.isEmpty {
+            result = result.filter { $0.name.localizedCaseInsensitiveContains(query) }
+        }
         if let cuisine = cuisine {
-            print("oh yes hunny yes")
             items = result.filter {
                 let include = $0.cuisine.lowercased() == cuisine.lowercased()
-                print("\(include)")
+                print("Matched \(include): \($0.name)")
                 return include
             }
         }
-//        items = result
-//        objectWillChange.send()
-//        searchModel = nil
+        searchModel = nil
     }
+    
+    // MARK: - Public API
     
     /// Start FetchCache using pathComponent.
     /// Succeeds unless any error occurs in the cache initialization procees. throws a verbose error if fails.
     /// the error
-    func startCache(path: String) throws(FetchCacheError) {
-        print("its trying to start cache \(path)")
-        try FetchCache.shared.openCacheDirectoryWithPath(path: path)
+    func startCache(path: String) throws {
+        print("Starting cache at path: \(path)")
+        try cache.openCacheDirectoryWithPath(path: path)
+    }
+    
+    func syncRecipeMemoryStore(item: RecipeItem) {
+//        items = items.map { item in
+//            var decorated = item
+//            decorated.isFavorite = memoryStore.isFavorite(for: item.id)
+//            decorated.notes = memoryStore.notes(for: item.id)
+//            return decorated
+//        }
+        item.isFavorite = memoryStore.isFavorite(for: item.id)
+        item.notes =  memoryStore.notes(for: item.id)
+    }
+    
+    func toggleFavorite(recipeUUID: UUID) {
+        memoryStore.toggleFavorite(recipeUUID: recipeUUID)
     }
     
 #if DEBUG
@@ -100,16 +107,14 @@ class RecipesViewModel: ObservableObject {
     func loadRecipes(from url: URL? = nil) async {
         let recipes = await Recipe.allFromJSON(using: .good) // Network call
         self.allItems.append(contentsOf: recipes.map ({ recipe in
-             return RecipeItem(recipe: recipe)
-//            if let url = recipe.sourceWebsiteURL {
-//                recipeItem.isFavorite = true // dataSource.getMemory(for: url).isFavorite
-//            }
-//            return recipeItem
+            var recipeItem = RecipeItem(recipe: recipe)
+            syncRecipeMemoryStore(item: recipeItem)
+            return recipeItem
         }))
         
         items = allItems
         
-        print("Asdfasdfsdf...return")
+        print("loadRecipes...return")
         return
     }
     

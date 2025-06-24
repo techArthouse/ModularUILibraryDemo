@@ -13,11 +13,12 @@ class RecipeItem: ObservableObject, Identifiable {
     @Published var recipe: Recipe
     @Published var image: Image?
     @Published var isFavorite: Bool = false
-    let id: String
+    @Published var notes: [RecipeNote] = []
+    let id: UUID
 
     init(recipe: Recipe) {
         self.recipe = recipe
-        self.id = recipe.uuidString
+        self.id = recipe.id
     }
 
 //    /// Call once (e.g. in .task) to lazily fill in the image
@@ -64,6 +65,10 @@ extension RecipeItem {
     
     var sourceURL: URL? {
         recipe.sourceWebsiteURL
+    }
+    
+    var videoURL: URL? {
+        recipe.youtubeVideoURL
     }
     
 //    var daImage: Image {

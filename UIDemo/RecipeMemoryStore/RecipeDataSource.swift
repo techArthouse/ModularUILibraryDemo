@@ -9,7 +9,7 @@ import SwiftUI
 
 @MainActor
 final class RecipeDataSource: ObservableObject {
-    private(set) var memories: [String:RecipeMemory] = [:]
+    private(set) var memories: [UUID: RecipeMemory] = [:]
     private let key = "RecipeMemories"
 
     static let shared = RecipeDataSource()
@@ -20,31 +20,16 @@ final class RecipeDataSource: ObservableObject {
 
     // MARK: – Public API
 
-    func toggleFavorite(url: URL) {
-        let id = url.absoluteString
-        if var mem = memories[id] {
-            mem.isFavorite.toggle()
-            // if unfavoriting, you might choose to drop notes
-            // mem.notes.removeAll()
-            memories[id] = mem
-        } else {
-            memories[id] = RecipeMemory(isFavorite: true, notes: [])
-        }
-        save()
-    }
-
-    func addNote(_ text: String, for url: URL) {
-        let id = url.absoluteString
-        guard var mem = memories[id], mem.isFavorite else { return }
+    func addNote(_ text: String, for recipeUUID: UUID) {
+        guard var mem = memories[recipeUUID], mem.isFavorite else { return }
         let note = RecipeNote(id: UUID(), text: text, date: Date())
         mem.notes.append(note)
-        memories[id] = mem
+        memories[recipeUUID] = mem
         save()
     }
 
-    func getMemory(for url: URL) -> RecipeMemory {
-        let id = url.absoluteString
-        if let res = memories[id] {
+    func getMemory(for recipeUUID: UUID) -> RecipeMemory {
+        if let res = memories[recipeUUID] {
             return res
         } else {
             return RecipeMemory(isFavorite: false, notes: [])
@@ -56,7 +41,7 @@ final class RecipeDataSource: ObservableObject {
     private func load() {
         guard
           let data = UserDefaults.standard.data(forKey: key),
-          let decoded = try? JSONDecoder().decode([String:RecipeMemory].self, from: data)
+          let decoded = try? JSONDecoder().decode([UUID: RecipeMemory].self, from: data)
         else { return }
         memories = decoded
     }
@@ -68,16 +53,15 @@ final class RecipeDataSource: ObservableObject {
     }
     
     // Explicitly set value for favorite
-    func setFavorite(_ favorite: Bool, for url: URL) {
-        let id = url.absoluteString
-        if var mem = memories[id] {
-          mem.isFavorite = favorite
-          memories[id] = mem
+    func setFavorite(_ favorite: Bool, for recipeUUID: UUID) {
+        if var mem = memories[recipeUUID] {
+            mem.isFavorite = favorite
+            memories[recipeUUID] = mem
         } else if favorite {
-          memories[id] = RecipeMemory(isFavorite: true, notes: [])
+            memories[recipeUUID] = RecipeMemory(isFavorite: true, notes: [])
         }
         save()
-      }
+    }
 }
 
 struct RecipeNote: Identifiable, Codable {
@@ -96,7 +80,24 @@ class RecipeMemory: Codable, ObservableObject {
     }
 }
 
-//struct RecipeMemory: Codable {
-//    var isFavorite: Bool
-//    var notes: [RecipeNote]
-//}
+extension RecipeDataSource: RecipeMemoryStoreProtocol {
+    func isFavorite(for recipeUUID: UUID) -> Bool {
+        getMemory(for: recipeUUID).isFavorite
+    }
+
+    func notes(for recipeUUID: UUID) -> [RecipeNote] {
+        getMemory(for: recipeUUID).notes
+    }
+    
+    func toggleFavorite(recipeUUID: UUID) {
+        if var mem = memories[recipeUUID] {
+            mem.isFavorite.toggle()
+            // if unfavoriting, you might choose to drop notes
+            // mem.notes.removeAll()
+            memories[recipeUUID] = mem
+        } else {
+            memories[recipeUUID] = RecipeMemory(isFavorite: true, notes: [])
+        }
+        save()
+    }
+}

@@ -26,8 +26,10 @@ struct RecipesView: View {
     
     var body: some View {
         List(vm.items, id: \.id) { item in
-            RecipeRowView(item: item)
-                .listRowInsets(EdgeInsets())
+            RecipeRowView(item: item) {
+                vm.toggleFavorite(recipeUUID: item.id)
+            }
+            .listRowInsets(EdgeInsets())
         }
         .listStyle(.automatic)
         .listRowSpacing(10)
@@ -51,6 +53,7 @@ struct RecipesView: View {
                 // failed to start cache. what do i do here? is vm.items = [] appropriate?
             }
             await vm.loadRecipes()
+            
         }
         .toolbar {
             ToolbarItem(placement: .navigationBarTrailing) {
@@ -75,7 +78,7 @@ struct RecipesView_Previews: PreviewProvider {
     @State var strring = "https%3A//d3jbb8n5wk0qxi.cloudfront.net/photos/.../small.jpg"
     
     static var previews: some View {
-        @StateObject var vm = RecipesViewModel()
+        @StateObject var vm = RecipesViewModel(cache: FetchCache.shared, memoryStore: RecipeDataSource.shared)
         @StateObject var nav = AppNavigation.shared
         
 //        @StateObject var memoryStore = RecipeDataSource.shared
@@ -86,8 +89,7 @@ struct RecipesView_Previews: PreviewProvider {
         NavigationStack {
             RecipesView(vm: vm)
                 .environmentObject(themeManager)
-//                .environmentObject(memoryStore)
-//                .environmentObject(nav)
+                .environmentObject(nav)
         }
     }
 }
