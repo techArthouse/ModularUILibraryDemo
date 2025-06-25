@@ -230,7 +230,6 @@ struct RecipeDetailView: View {
     RecipeDetailView(item: recipeItem, onToggleFavorite: {
         print(recipeItem.isFavorite)
         if !recipeItem.isFavorite {
-//            recipeItem.isFavorite.toggle()
         }
     }, onSubmitNote: { note in
         recipeItem.notes.append(RecipeNote(id: UUID(), text: note, date: Date()))

@@ -13,6 +13,7 @@ import ModularUILibrary
 struct RecipesView: View {
     @ObservedObject private var vm: RecipesViewModel
     @EnvironmentObject private var nav: AppNavigation
+    @State private var errorLoading: Bool = false
     
     init(defaultSize: ImageSize = .medium, vm: RecipesViewModel) {
         self.vm = vm
@@ -21,15 +22,27 @@ struct RecipesView: View {
     var body: some View {
         List {
             Section(header: searchHeaderView) {
-                ForEach(vm.items, id: \.id) { item in
-                    RecipeRowView(item: item, onToggleFavorite: {
-                        withAnimation {
-                            vm.toggleFavorite(recipeUUID: item.id)
+                if !errorLoading {
+                    ForEach(vm.items, id: \.id) { item in
+                        RecipeRowView(item: item, onToggleFavorite: {
+                            withAnimation {
+                                vm.toggleFavorite(recipeUUID: item.id)
+                            }
+                        }) {
+                            nav.path.append(.recipeDetail(item.id))
                         }
-                    }) {
-                        nav.path.append(.recipeDetail(item.id))
+                        .listRowInsets(EdgeInsets())
                     }
-                    .listRowInsets(EdgeInsets())
+                } else {
+                    VStack {
+                        Text("There was an error loading. Pull to refresh and try again.")
+                            .font(.robotoMono.regular(size: 25.0))
+                            .multilineTextAlignment(.center)
+                            .bold()
+                            .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    }
+                    .background(.red.opacity(0.3))
+                    .clipShape(RoundedRectangle(cornerRadius: 16))
                 }
             }
         }
@@ -46,7 +59,11 @@ struct RecipesView: View {
 #else
                 try vm.startCache(path: "FetchImageCache")
 #endif
-                await vm.loadRecipes()
+                if await vm.loadRecipes() {
+                    print("task finished RecipesView")
+                } else {
+                    
+                }
             } catch {
                 print("Cache failed to start")
                 return
@@ -113,14 +130,14 @@ struct RecipesView_Previews: PreviewProvider {
     
     static var previews: some View {
         @StateObject var recipeStore = RecipeStore()
-        @StateObject var vm = RecipesViewModel(memoryStore: RecipeDataSource.shared, recipeStore: recipeStore, filterStrategy: FavoriteRecipesFilter())
+        @StateObject var vm = RecipesViewModel(memoryStore: RecipeDataSource.shared, recipeStore: recipeStore, filterStrategy: AllRecipesFilter())
         @StateObject var nav = AppNavigation.shared
         
         @StateObject var themeManager: ThemeManager = ThemeManager()
         // TODO: Test resizing here later.
         
         NavigationStack {
-            FavoriteRecipesView(vm: vm)
+            RecipesView(vm: vm)
                 .environmentObject(themeManager)
                 .environmentObject(nav)
         }

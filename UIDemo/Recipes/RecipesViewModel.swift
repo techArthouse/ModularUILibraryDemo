@@ -19,6 +19,7 @@ class RecipesViewModel: ObservableObject {
     private let memoryStore: RecipeMemoryStoreProtocol
     private let filterStrategy: RecipeFilterStrategy
     private var cancellables = Set<AnyCancellable>()
+    let filterTrigger = PassthroughSubject<Void, Never>()
     
     // MARK: - Init
     
@@ -26,6 +27,21 @@ class RecipesViewModel: ObservableObject {
         self.memoryStore = memoryStore
         self.recipeStore = recipeStore
         self.filterStrategy = filterStrategy
+        
+//        filterTrigger
+//            .flatMap { _ in
+//                print("filtertriggered")
+//                return Publishers.CombineLatest3(
+//                    recipeStore.itemsPublisher,
+//                    self.$selectedCuisine,
+//                    self.$searchQuery
+//                )
+//            }
+//            .map { items, cuisine, query in
+//                filterStrategy.filter(items, cuisine: cuisine, query: query)
+//            }
+//            .receive(on: RunLoop.main)
+//            .assign(to: &$items)
         
         Publishers.CombineLatest3(
             recipeStore.itemsPublisher,
@@ -46,6 +62,16 @@ class RecipesViewModel: ObservableObject {
     func startCache(path: String) throws {
         print("Starting cache at path: \(path)")
         try FetchCache.shared.openCacheDirectoryWithPath(path: path)
+    }
+    
+    /// resets fields to reload again
+    func reload() async -> Bool {
+        self.items.removeAll()
+        self.searchQuery = ""
+        self.selectedCuisine = nil
+        self.searchModel = nil
+        
+        return await loadRecipes()
     }
     
     func addNote(_ text: String, for recipeUUID: UUID) {
@@ -104,7 +130,7 @@ protocol RecipeDataConsumer {
     var items: [RecipeItem] { get }
     var recipeStore: RecipeStore { get }
     func toggleFavorite(recipeUUID: UUID)
-    func loadRecipes(from url: URL?) async
+    func loadRecipes(from url: URL?) async -> Bool
 }
 
 extension RecipesViewModel: RecipeDataConsumer {
@@ -112,16 +138,22 @@ extension RecipesViewModel: RecipeDataConsumer {
     
 #if DEBUG
     
-    /// Load and wrap your recipes in order
-    func loadRecipes(from url: URL? = nil) async {
-        let recipes = await Recipe.allFromJSON(using: .malformed) // Network call
-        recipeStore.loadRecipes(recipes: recipes.map ({ recipe in
-            var recipeItem = RecipeItem(recipe: recipe)
-            recipeItem.isFavorite = memoryStore.isFavorite(for: recipe.id)
-            recipeItem.notes = memoryStore.notes(for: recipe.id)
-            return recipeItem
-        }))
-        return
+    /// Load recipes and update listeners through `RecipeStore`
+    /// Returns true if parsing succeeded, false otherwise.
+    func loadRecipes(from url: URL? = nil) async -> Bool {
+        do {
+            let recipes = try await Recipe.allFromJSON(using: .good) // Network call
+            recipeStore.loadRecipes(recipes: recipes.map ({ recipe in
+                var recipeItem = RecipeItem(recipe: recipe)
+                recipeItem.isFavorite = memoryStore.isFavorite(for: recipe.id)
+                recipeItem.notes = memoryStore.notes(for: recipe.id)
+                return recipeItem
+            }))
+            filterSend()
+        } catch is RecipeDecodeError {
+            return false
+        }
+        return true
     }
     
 #else
@@ -157,6 +189,12 @@ extension RecipesViewModel: RecipeDataConsumer {
     }
 }
 
+extension RecipesViewModel: Filterable {
+    func filterSend() {
+        filterTrigger.send()
+    }
+}
+
 @MainActor
 protocol RecipeFilterStrategy {
     func filter(_ items: [RecipeItem], cuisine: String?, query: String?) -> [RecipeItem]
@@ -189,3 +227,6 @@ struct FavoriteRecipesFilter: RecipeFilterStrategy {
     }
 }
     
+protocol Filterable {
+    func filterSend()
+}
