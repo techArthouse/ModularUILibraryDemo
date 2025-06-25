@@ -64,6 +64,10 @@ extension RecipeItem {
         recipe.smallImageURL
     }
     
+    var largeImageURL: URL? {
+        recipe.largeImageURL
+    }
+    
     var sourceURL: URL? {
         recipe.sourceWebsiteURL
     }

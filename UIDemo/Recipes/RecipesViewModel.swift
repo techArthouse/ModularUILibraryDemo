@@ -11,42 +11,30 @@ import Combine
 @MainActor
 class RecipesViewModel: ObservableObject {
     @Published var items: [RecipeItem] = []
-    private var cancellables = Set<AnyCancellable>()
-    
     @Published var searchQuery: String = ""
     @Published var selectedCuisine: String?
-    @Published var searchModel: SearchViewModel? /// TODO: - track this var to implement how to apply filters.
-    
-    private let cache: RecipeCacheProtocol
-    private let memoryStore: RecipeMemoryStoreProtocol
+    @Published var searchModel: SearchViewModel?
+
     @ObservedObject var recipeStore: RecipeStore
+    private let memoryStore: RecipeMemoryStoreProtocol
+    private let filterStrategy: RecipeFilterStrategy
+    private var cancellables = Set<AnyCancellable>()
     
     // MARK: - Init
     
-    init(cache: RecipeCacheProtocol, memoryStore: RecipeMemoryStoreProtocol, recipeStore: RecipeStore) {
-        self.cache = cache
+    init(memoryStore: RecipeMemoryStoreProtocol, recipeStore: RecipeStore, filterStrategy: RecipeFilterStrategy) {
         self.memoryStore = memoryStore
-        
         self.recipeStore = recipeStore
+        self.filterStrategy = filterStrategy
         
         Publishers.CombineLatest3(
-            self.recipeStore.itemsPublisher,
-            $selectedCuisine
-                .debounce(for: .milliseconds(500), scheduler: RunLoop.main),
-            $searchQuery
-                .debounce(for: .milliseconds(300), scheduler: RunLoop.main)
+            recipeStore.itemsPublisher,
+            $selectedCuisine.debounce(for: .milliseconds(300), scheduler: RunLoop.main),
+            $searchQuery.debounce(for: .milliseconds(300), scheduler: RunLoop.main)
         )
         .map { items, cuisine, query in
-            var filtered = items
-            if let cuisine = cuisine {
-                filtered = filtered.filter { $0.cuisine.lowercased() == cuisine.lowercased() }
-            }
-            if !query.isEmpty {
-                filtered = filtered.filter { $0.name.localizedCaseInsensitiveContains(query) }
-            }
-            return filtered
+            filterStrategy.filter(items, cuisine: cuisine, query: query)
         }
-        .receive(on: RunLoop.main)
         .assign(to: &$items)
     }
     
@@ -57,7 +45,7 @@ class RecipesViewModel: ObservableObject {
     /// the error
     func startCache(path: String) throws {
         print("Starting cache at path: \(path)")
-        try cache.openCacheDirectoryWithPath(path: path)
+        try FetchCache.shared.openCacheDirectoryWithPath(path: path)
     }
     
     func addNote(_ text: String, for recipeUUID: UUID) {
@@ -74,12 +62,6 @@ class RecipesViewModel: ObservableObject {
         }
         return Array(categories)
     }
-}
-
-@MainActor
-protocol CanFavorite {
-    var favorites: [RecipeItem] { get }
-    func setFavorites()
 }
 
 struct SearchViewModel: Identifiable {
@@ -175,124 +157,35 @@ extension RecipesViewModel: RecipeDataConsumer {
     }
 }
 
-
 @MainActor
-class FavoriteRecipesViewModel: ObservableObject {
-    @Published var items: [RecipeItem] = []
-    private var cancellables = Set<AnyCancellable>()
-    
-    @Published var searchQuery: String = ""
-    @Published var selectedCuisine: String?
-    @Published var searchModel: SearchViewModel? /// TODO: - track this var to implement how to apply filters.
-    
-    private let cache: RecipeCacheProtocol
-    private let memoryStore: RecipeMemoryStoreProtocol
-    @ObservedObject var recipeStore: RecipeStore
-    
-    // MARK: - Init
-    
-    init(cache: RecipeCacheProtocol, memoryStore: RecipeMemoryStoreProtocol, recipeStore: RecipeStore) {
-        self.cache = cache
-        self.memoryStore = memoryStore
-        
-        self.recipeStore = recipeStore
-        
-        Publishers.CombineLatest3(
-            self.recipeStore.itemsPublisher,
-            $selectedCuisine
-                .debounce(for: .milliseconds(300), scheduler: RunLoop.main),
-            $searchQuery
-                .debounce(for: .milliseconds(300), scheduler: RunLoop.main)
-        )
-        .map { items, cuisine, query in
-            var filtered = items.filter({ $0.isFavorite })
-            if let cuisine = cuisine {
-                filtered = filtered.filter { $0.cuisine.lowercased() == cuisine.lowercased() }
-            }
-            if !query.isEmpty {
-                filtered = filtered.filter { $0.name.localizedCaseInsensitiveContains(query) }
-            }
-            return filtered
+protocol RecipeFilterStrategy {
+    func filter(_ items: [RecipeItem], cuisine: String?, query: String?) -> [RecipeItem]
+}
+
+struct AllRecipesFilter: RecipeFilterStrategy {
+    func filter(_ items: [RecipeItem], cuisine: String?, query: String?) -> [RecipeItem] {
+        var filtered = items
+        if let cuisine = cuisine {
+            filtered = filtered.filter { $0.cuisine.lowercased() == cuisine.lowercased() }
         }
-        .receive(on: RunLoop.main)
-        .assign(to: &$items)
-    }
-    
-    // MARK: - Public API
-    
-    /// Start FetchCache using pathComponent.
-    /// Succeeds unless any error occurs in the cache initialization procees. throws a verbose error if fails.
-    /// the error
-    func startCache(path: String) throws(FetchCacheError) {
-        print("Starting cache at path: \(path)")
-        try cache.openCacheDirectoryWithPath(path: path)
-    }
-    
-    func addNote(_ text: String, for recipeUUID: UUID) {
-        guard memoryStore.isFavorite(for: recipeUUID) else { return }
-        if let note = memoryStore.addNote(text, for: recipeUUID) {
-            recipeStore.addNote(note, for: recipeUUID)
+        if let query = query, !query.isEmpty {
+            filtered = filtered.filter { $0.name.localizedCaseInsensitiveContains(query) }
         }
-    }
-    
-    var cusineCategories: [String] {
-        var categories = Set<String>()
-        for item in items {
-            categories.insert(item.cuisine)
-        }
-        return Array(categories)
+        return filtered
     }
 }
 
 
-extension FavoriteRecipesViewModel: RecipeDataConsumer {
-    
-    
-#if DEBUG
-    
-    /// Load and wrap your recipes in order
-    func loadRecipes(from url: URL? = nil) async {
-        if recipeStore.allItems.isEmpty {
-            let recipes = await Recipe.allFromJSON(using: .good) // Network call
-            recipeStore.loadRecipes(recipes: recipes.map ({ recipe in
-                var recipeItem = RecipeItem(recipe: recipe)
-                recipeItem.isFavorite = memoryStore.isFavorite(for: recipe.id)
-                recipeItem.notes = memoryStore.notes(for: recipe.id)
-                return recipeItem
-            }))
+struct FavoriteRecipesFilter: RecipeFilterStrategy {
+    func filter(_ items: [RecipeItem], cuisine: String?, query: String?) -> [RecipeItem] {
+        var filtered = items.filter({ $0.isFavorite })
+        if let cuisine = cuisine {
+            filtered = filtered.filter { $0.cuisine.lowercased() == cuisine.lowercased() }
         }
-        return
-    }
-    
-#else
-    
-    /// Load and wrap your recipes in order
-    func loadRecipes(from url: URL? = nil) {
-        //        FetchCache.shared.load()
-        //        let recipes =
-        print("Asdfasdfsdf")
-        let recipes = Recipe.allFromJSON(using: .good) // Network call
-        self.items.append(contentsOf: recipes.map ({ recipe in
-            RecipeItem(recipe: recipe)
-        }))
-        //        self.items = recipes.map ({ recipe in
-        //            RecipeItem(recipe: recipe)
-        //        })
-        print("Asdfasdfsdf...return")
-        return
-    }
-    
-#endif
-    
-    
-    func toggleFavorite(recipeUUID: UUID) {
-        print("is favorite beggining: \(memoryStore.isFavorite(for: recipeUUID))")
-        memoryStore.toggleFavorite(recipeUUID: recipeUUID)
-        recipeStore.toggleFavorite(recipeUUID)
-        if !memoryStore.isFavorite(for: recipeUUID) {
-            print("it's not favorite")
-            memoryStore.deleteNotes(for: recipeUUID)
-            recipeStore.deleteNotes(for: recipeUUID)
+        if let query = query, !query.isEmpty {
+            filtered = filtered.filter { $0.name.localizedCaseInsensitiveContains(query) }
         }
+        return filtered
     }
 }
+    

@@ -113,16 +113,14 @@ struct RecipesView_Previews: PreviewProvider {
     
     static var previews: some View {
         @StateObject var recipeStore = RecipeStore()
-        @StateObject var vm = RecipesViewModel(cache: FetchCache.shared, memoryStore: RecipeDataSource.shared, recipeStore: recipeStore)
+        @StateObject var vm = RecipesViewModel(memoryStore: RecipeDataSource.shared, recipeStore: recipeStore, filterStrategy: FavoriteRecipesFilter())
         @StateObject var nav = AppNavigation.shared
-        
-//        @StateObject var memoryStore = RecipeDataSource.shared
         
         @StateObject var themeManager: ThemeManager = ThemeManager()
         // TODO: Test resizing here later.
         
         NavigationStack {
-            RecipesView(vm: vm)
+            FavoriteRecipesView(vm: vm)
                 .environmentObject(themeManager)
                 .environmentObject(nav)
         }
@@ -133,30 +131,25 @@ struct RecipesView_Previews: PreviewProvider {
 
 // MARK: - Recipes List View
 struct FavoriteRecipesView: View {
-    @ObservedObject private var vm: FavoriteRecipesViewModel
+    @ObservedObject private var vm: RecipesViewModel
     @EnvironmentObject private var nav: AppNavigation
     
-    init(defaultSize: ImageSize = .medium, vm: FavoriteRecipesViewModel) {
+    init(defaultSize: ImageSize = .medium, vm: RecipesViewModel) {
         self.vm = vm
     }
     
     var body: some View {
-        List {
+        ScrollView {
             Section(header: searchHeaderView) {
-                ForEach(vm.items, id: \.id) { item in
-                    RecipeRowView(item: item, onToggleFavorite: {
-                        withAnimation {
-                            vm.toggleFavorite(recipeUUID: item.id)
-                        }
-                    }) {
-                        nav.path2.append(.recipeDetail(item.id))
-                    }
-                    .listRowInsets(EdgeInsets())
+                ForEach($vm.items, id: \.id) { $item in
+                    FavoriteRecipeCard(item: $item.wrappedValue)
+                        .gesture(TapGesture().onEnded({
+                            nav.path2.append(.recipeDetail(item.id))
+                        }), including: .gesture)
                 }
             }
         }
         .animation(.easeInOut, value: vm.items)
-        .listStyle(.insetGrouped)
         .navigationTitle("Favorites")
         .refreshable {
             await FetchCache.shared.refresh()
@@ -231,5 +224,104 @@ struct FavoriteRecipesView: View {
         .padding(8)
         .background(Color(.systemGray6))
         .cornerRadius(10)
+    }
+}
+
+struct FavoriteRecipeCard: View {
+    @ObservedObject var item: RecipeItem
+    //    @Binding var image: Image
+    var body: some View {
+        //        ZStack {
+        Card(title: item.name ,hasBorder: true, hasShadow: false, leading: {
+            //                            Text("wowzers")
+            
+            ImageContainer(image: $item.image, size: CGFloat(150.0))
+                .cornerRadius(12)
+                .shadow(radius: 4)
+        }, trailing: {
+            // MARK: — Notes Section
+            HStack {
+                VStack(alignment: .leading, spacing: 0) {
+                    VStack(alignment: .leading) {
+                        VStack {
+                            Text("Notes")
+                                .font(.subheadline)
+                                .fontWeight(.semibold)
+                                .frame(maxWidth: .infinity, alignment: .center)
+                        }
+                        .padding(.top, 5)
+                        Group {
+                            Text("- Origin: \(item.cuisine)")
+                            ForEach(item.notes, id: \.id) { note in
+                                Text("- \(note.text)")
+                                    .fontWeight(.light)
+                            }
+                        }
+                        .lineLimit(1)
+                        .truncationMode(.tail)
+                        .font(.caption)
+                        .padding(.leading, 2)
+                        Spacer()
+                    }
+                    
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .background(.yellow.opacity(0.4))
+                    
+                    HStack {
+                        
+                        VStack(spacing: 0) {
+                            ToggleIconButton(
+                                iconOn: .system("star.fill"),
+                                iconOff: .system("star"),
+                                isDisabled: .constant(false),
+                                isSelected: $item.isFavorite) {
+                                }
+                                .asStandardIconButtonStyle(withColor: .yellow)
+                            Text("Favorite")
+                                .font(.footnote)
+                                .fontWeight(.regular)
+                                .padding(0)
+                        }
+                        if let videoURL = item.videoURL {
+                            Spacer()
+                            VStack(spacing: 0){
+                                IconButton(icon: .system("video.fill"), isDisabled: .constant(false)) {
+                                    
+                                }
+                                .asStandardIconButtonStyle(withColor: .green)
+                                Text("Youtube")
+                                    .font(.footnote)
+                                    .fontWeight(.regular)
+                                    .padding(0)
+                            }
+                        } else {
+                            Spacer()
+                        }
+                        
+                        if let sourceSite = item.sourceURL {
+                            
+                            Spacer()
+                            VStack(spacing: 0){
+                                IconButton(icon: .system("safari.fill"), isDisabled: .constant(false)) {
+                                    
+                                }
+                                .asStandardIconButtonStyle(withColor: .blue)
+                                Text("Web")
+                                    .font(.footnote)
+                                    .fontWeight(.regular)
+                                    .padding(0)
+                            }
+                        } else {
+                        }
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding(.horizontal, 10)
+                    
+                }
+                .disabled(true)
+                .clipShape(RoundedRectangle(cornerRadius: 16))
+                .padding(0)
+            }
+        })
     }
 }

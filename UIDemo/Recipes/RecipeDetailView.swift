@@ -76,7 +76,7 @@ struct RecipeDetailView: View {
                 
                 // MARK: — Buttons
                 VStack(spacing: 12) {
-                    CTAButtonStack(.vertical) {
+                    CTAButtonStack(.vertical()) {
                         if let url = item.videoURL {
                             CTAButton(title: "Watch Video") {
                                 //                                    showVideoSheet = true

@@ -3,7 +3,7 @@ import ModularUILibrary
 
 struct ContentView: View {
     @StateObject private var vm: RecipesViewModel
-    @StateObject private var vm2: FavoriteRecipesViewModel
+    @StateObject private var vm2: RecipesViewModel
     
     @StateObject private var recipeStore: RecipeStore = RecipeStore()
     @StateObject private var nav: AppNavigation = .shared
@@ -13,14 +13,14 @@ struct ContentView: View {
         let store = RecipeStore()
         _recipeStore = StateObject(wrappedValue: store)
         _vm = StateObject(wrappedValue: RecipesViewModel(
-            cache: FetchCache.shared,
             memoryStore: RecipeDataSource.shared,
-            recipeStore: store))
+            recipeStore: store,
+            filterStrategy: AllRecipesFilter()))
         
-        _vm2 = StateObject(wrappedValue: FavoriteRecipesViewModel(
-            cache: FetchCache.shared,
+        _vm2 = StateObject(wrappedValue: RecipesViewModel(
             memoryStore: RecipeDataSource.shared,
-            recipeStore: store))
+            recipeStore: store,
+            filterStrategy: FavoriteRecipesFilter()))
     }
 
     var body: some View {
