@@ -78,13 +78,13 @@ struct RecipeDetailView: View {
                 VStack(spacing: 12) {
                     CTAButtonStack(.vertical()) {
                         if let url = item.videoURL {
-                            CTAButton(title: "Watch Video") {
+                            CTAButton(title: "Watch Video", icon: .system("video.fill")) {
                                 //                                    showVideoSheet = true
                                 source = .video(url)
                             }.asPrimaryButton(padding: .stacked)
                         }
                         if let sourceURL = item.sourceURL {
-                            CTAButton(title: "View Full Recipe") {
+                            CTAButton(title: "View Full Recipe", icon: .system("safari.fill")) {
                                 //                                showSourceSheet = true
                                 source = .webPage(sourceURL)
                             }.asSecondaryButton(padding: .stacked)
