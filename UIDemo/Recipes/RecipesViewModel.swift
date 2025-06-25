@@ -114,7 +114,7 @@ extension RecipesViewModel: RecipeDataConsumer {
     
     /// Load and wrap your recipes in order
     func loadRecipes(from url: URL? = nil) async {
-        let recipes = await Recipe.allFromJSON(using: .good) // Network call
+        let recipes = await Recipe.allFromJSON(using: .malformed) // Network call
         recipeStore.loadRecipes(recipes: recipes.map ({ recipe in
             var recipeItem = RecipeItem(recipe: recipe)
             recipeItem.isFavorite = memoryStore.isFavorite(for: recipe.id)
