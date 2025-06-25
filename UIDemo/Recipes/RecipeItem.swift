@@ -21,36 +21,13 @@ class RecipeItem: ObservableObject, Identifiable {
         self.recipe = recipe
         self.id = recipe.id
     }
-
-//    /// Call once (e.g. in .task) to lazily fill in the image
-//    func loadImage() async {
-//        // early exit if already loaded
-////        guard image == nil else { return }
-//
-//        // 1) missing URL → show “not found”
-//        guard let url = recipe.largeImageURL else {
-////            self.image = theme
-////              .imageAssetManager
-////              .getImage(imageIdentifier: .preset(.imageNotFound))
-//            return
-//        }
-//
-//        // 2) fetch via your shared cache
-//        let fetchedImage = await FetchCache.shared.getImageFor(url: url) // {
-//        self.image = fetchedImage
-////        } else {
-//////            self.image = theme
-//////              .imageAssetManager
-//////              .getImage(imageIdentifier: .preset(.imageNotFound))
-////        }
-//    }
 }
 
 // MARK: - Convenience accessors for recipe data.
 
 extension RecipeItem {
     var uuidString: String {
-        recipe.uuidString
+        recipe.id.uuidString
     }
     var name: String {
         recipe.name
@@ -75,10 +52,6 @@ extension RecipeItem {
     var videoURL: URL? {
         recipe.youtubeVideoURL
     }
-    
-//    var daImage: Image {
-//        self.image ?? Image(systemName: "heart.circle")
-//    }
 }
 
 @MainActor
@@ -86,7 +59,4 @@ extension RecipeItem: Equatable {
     static func == (lhs: RecipeItem, rhs: RecipeItem) -> Bool {
         return lhs.id == rhs.id
     }
-//    func hash(into hasher: inout Hasher) {
-//                 hasher.combine(id)
-//            }
 }

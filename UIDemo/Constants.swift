@@ -41,15 +41,54 @@ import ModularUILibrary
 
 // MARK: - Recipes Data Models
 
-struct RecipeList: Decodable {
-  let recipes: [Recipe]
+protocol CanBeInvalid {
+    var isInvalid: Bool { get }
 }
 
-struct Recipe: Decodable, Identifiable, Hashable {
-    // Required Fields
-    let id: UUID
-    let cuisine: String
-    let name: String
+struct RecipeList: Decodable {
+    let recipes: [Recipe]
+    let invalidRecipes: [Recipe]
+    
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        guard let recipes = try? container.decode([Recipe].self, forKey: .recipes) else {
+            throw RecipeDecodeError.unexpectedErrorWithDataModel("Could not fine `recipes` in root structure.")
+        }
+        var invalidRecipes = [Recipe]()
+        var validRecipes = [Recipe]()
+        
+        for recipe in recipes {
+            if recipe.isInvalid {
+                invalidRecipes.append(recipe)
+            } else {
+                validRecipes.append(recipe)
+            }
+        }
+        
+        self.recipes = validRecipes
+        self.invalidRecipes = invalidRecipes
+    }
+    
+    enum CodingKeys: String, CodingKey {
+        case recipes
+    }
+}
+
+struct Recipe: Decodable, Identifiable, Hashable, CanBeInvalid {
+    var isInvalid: Bool {
+        _id == nil || _cuisine == nil || _name == nil
+    }
+    
+    // Required Fields. Note that they take their value from underlying assumptions that these are required.
+    var id: UUID { _id ?? UUID() }
+    var cuisine: String { _cuisine ?? "N/A" }
+    var name: String { _name ?? "N/A" }
+    
+    // Underlying required vars. We allow for the data model to not fail and still provide feedback on what failed.
+    let _id: UUID?
+    let _cuisine: String?
+    let _name: String?
+    let _uuidString: String? // The response model may have malformed uuid still.
     
     // Optional by API
     private let photoUrlSmall: String?
@@ -68,22 +107,13 @@ struct Recipe: Decodable, Identifiable, Hashable {
     init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
         
-        do {
-            // Required
-            cuisine = try c.decode(String.self, forKey: .cuisine)
-            name = try c.decode(String.self, forKey: .name)
-            let uuidString = try c.decode(String.self, forKey: .uuid)
-            guard let uuid = UUID(uuidString: uuidString) else {
-                throw DecodingError.dataCorruptedError(
-                    forKey: .uuid,
-                    in: c,
-                    debugDescription: "Invalid UUID string: \(uuidString)"
-                )
-            }
-            id = uuid
-        } catch {
-            print("Recipe Decode error for a required field: \(error)")
-            throw RecipeDecodeError.requiredFieldMissingOrMalformed(error, [:])
+        self._cuisine = try? c.decode(String.self, forKey: .cuisine)
+        self._name = try? c.decode(String.self, forKey: .name)
+        self._uuidString = try? c.decode(String.self, forKey: .uuid)
+        if let uuidString = self._uuidString {
+            self._id = UUID(uuidString: uuidString)
+        } else {
+            self._id = nil
         }
         
         // Optional
@@ -95,9 +125,6 @@ struct Recipe: Decodable, Identifiable, Hashable {
 }
 
 extension Recipe {
-    var uuidString: String {
-        id.uuidString // gets id from source so one source of truth.
-    }
     
     enum TestCase: String {
         case good = "recipesGood"
@@ -109,49 +136,20 @@ extension Recipe {
         }
     }
     
-//    /// Load all recipes from the bundled recipes.json
-//    static func allFromJSON(using testCase: TestCase) async -> [Recipe] {
-//        do {
-//            let url = Bundle.main.url(
-//                forResource: testCase.jsonFileName,
-//                withExtension: "json"
-//            )!
-//            let data = try Data(contentsOf: url)
-//            let list = try JSONDecoder().decode(RecipeList.self, from: data)
-//            return list.recipes
-//        } catch {
-//            assertionFailure("🔴 Failed to load \(testCase.jsonFileName).json: \(error)")
-//            return []
-//        }
-//    }
-    
     static func allFromJSON(using testCase: TestCase) async throws(RecipeDecodeError) -> [Recipe] {
         guard let url = Bundle.main.url(forResource: testCase.jsonFileName, withExtension: "json"),
               let data = try? Data(contentsOf: url) else {
             throw RecipeDecodeError.dataURLError
         }
         
-        var recipeLoadResults = Self.parseRecipes(data)
-        var validRecipes: [Recipe] = []
-        var errorCount = 0
-        print("Total number of asdfasdfasd")
-        for result in recipeLoadResults {
-            switch result {
-            case .valid(let recipe):
-                validRecipes.append(recipe)
-            case .invalid(let recipeDecodeError):
-                print(recipeDecodeError.localizedDescription)
-                errorCount += 1
-            }
+        do {
+            let list = try JSONDecoder().decode(RecipeList.self, from: data)
+            
+            return list.recipes
+        } catch {
+            throw RecipeDecodeError.unexpectedErrorWithDataModel("")
         }
-        
-        if errorCount > 0 {
-            print("Total number of errors decoding recipes: \(errorCount)")
-        }
-        print("Total number of \(recipeLoadResults.count)")
-        return validRecipes
     }
-
     
     static func recipePreview(using testCase: TestCase) -> Recipe? {
         do {
@@ -162,7 +160,10 @@ extension Recipe {
             let data = try Data(contentsOf: url)
             let list = try JSONDecoder().decode(RecipeList.self, from: data)
             return list.recipes.first
-        } catch {
+        } catch let error as RecipeDecodeError {
+            return nil
+        }
+        catch {
             assertionFailure("🔴 Failed to load \(testCase.jsonFileName).json: \(error)")
             return nil
         }
@@ -193,34 +194,6 @@ extension Recipe {
 }
 
 // MARK: - Serialization Helpers
-
-/// These methods help decode the recipe list gracefully such as to show what we can instead of disgard the whole list.
-/// We prioritize resilient architecture and user experience.
-extension Recipe {
-    enum RecipeLoadResult {
-        case valid(Recipe)
-        case invalid(RecipeDecodeError)
-    }
-
-    static func parseRecipes(_ data: Data) -> [RecipeLoadResult] {
-        guard let rawArray = try? JSONSerialization.jsonObject(with: data) as? [[String: Any]] else {
-            return []
-        }
-
-        return rawArray.map { dict in
-            guard JSONSerialization.isValidJSONObject(dict) else { // Check if each entry is valid serialized data
-                return .invalid(.invalidJsonObject(dict))
-            }
-            do {
-                let jsonData = try JSONSerialization.data(withJSONObject: dict)
-                let recipe = try JSONDecoder().decode(Recipe.self, from: jsonData)
-                return .valid(recipe)
-            } catch {
-                return .invalid(.requiredFieldMissingOrMalformed(error, dict))
-            }
-        }
-    }
-}
 
 extension DynamicTypeSize {
     typealias size = ImageSize
@@ -318,6 +291,7 @@ enum RecipeDecodeError: LocalizedError {
     case requiredFieldMissingOrMalformed(Error, [String: Any])
     case invalidJsonObject([String: Any])
     case dataURLError
+    case unexpectedErrorWithDataModel(String)
     
     var errorDescription: String? {
         switch self {
@@ -327,6 +301,8 @@ enum RecipeDecodeError: LocalizedError {
             return "JsonSerialization error for invalid json object: \(dict.debugDescription)"
         case .dataURLError:
             return "Error occured attempting to form data url."
+        case .unexpectedErrorWithDataModel(let message):
+            return message
         }
     }
 }

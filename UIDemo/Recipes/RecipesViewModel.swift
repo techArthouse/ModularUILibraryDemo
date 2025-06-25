@@ -142,7 +142,7 @@ extension RecipesViewModel: RecipeDataConsumer {
     /// Returns true if parsing succeeded, false otherwise.
     func loadRecipes(from url: URL? = nil) async -> Bool {
         do {
-            let recipes = try await Recipe.allFromJSON(using: .good) // Network call
+            let recipes = try await Recipe.allFromJSON(using: .malformed) // Network call
             recipeStore.loadRecipes(recipes: recipes.map ({ recipe in
                 var recipeItem = RecipeItem(recipe: recipe)
                 recipeItem.isFavorite = memoryStore.isFavorite(for: recipe.id)
