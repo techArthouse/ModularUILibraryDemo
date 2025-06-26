@@ -185,7 +185,7 @@ class FetchCache: ObservableObject {
         print("refresh delete diskandlocal mem")
         
         do {
-            try initializeDiskMemory(with: diskMemoryCacheURLPath) // maybe make it a optional init if folder fails to start?
+            try initializeDiskMemory(with: "DevelopmentFetchImageCache") // maybe make it a optional init if folder fails to start?
         } catch {
             /// TODO: In the future we should thow the error so caller can make informed step.
             print(error.localizedDescription)

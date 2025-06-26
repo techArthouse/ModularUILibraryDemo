@@ -145,7 +145,7 @@ extension Recipe {
         do {
             let list = try JSONDecoder().decode(RecipeList.self, from: data)
             
-            return list.recipes
+            return list.recipes + list.invalidRecipes
         } catch {
             throw RecipeDecodeError.unexpectedErrorWithDataModel("")
         }

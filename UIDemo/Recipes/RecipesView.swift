@@ -13,7 +13,26 @@ import ModularUILibrary
 struct RecipesView: View {
     @ObservedObject private var vm: RecipesViewModel
     @EnvironmentObject private var nav: AppNavigation
-    @State private var errorLoading: Bool = false
+    @State private var badRecipe: BadRecipe = BadRecipe()
+    @State private var feedbackMessage: String = ""
+    @State private var feedbackOnLoading: FeedbackType = .stable
+    
+    struct BadRecipe {
+        var isBad: Bool = false
+        var id: UUID?
+    }
+    
+    enum FeedbackType {
+        case stable, error, emptyList
+        
+        var isError: Bool {
+            self == .error
+        }
+        
+        var isStable: Bool {
+            self == .stable
+        }
+    }
     
     init(defaultSize: ImageSize = .medium, vm: RecipesViewModel) {
         self.vm = vm
@@ -21,8 +40,8 @@ struct RecipesView: View {
     
     var body: some View {
         List {
-            Section(header: searchHeaderView) {
-                if !errorLoading {
+            if feedbackOnLoading.isStable {
+                Section(header: searchHeaderView) {
                     ForEach(vm.items, id: \.id) { item in
                         RecipeRowView(item: item, onToggleFavorite: {
                             withAnimation {
@@ -31,26 +50,42 @@ struct RecipesView: View {
                         }) {
                             nav.path.append(.recipeDetail(item.id))
                         }
+                        .onDisabled(isDisabled: .constant(item.recipe.isInvalid)) {
+                            badRecipe.id = item.id
+                            badRecipe.isBad.toggle()
+                        }
                         .listRowInsets(EdgeInsets())
                     }
-                } else {
-                    VStack {
-                        Text("There was an error loading. Pull to refresh and try again.")
-                            .font(.robotoMono.regular(size: 25.0))
-                            .multilineTextAlignment(.center)
-                            .bold()
-                            .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    }
-                    .background(.red.opacity(0.3))
-                    .clipShape(RoundedRectangle(cornerRadius: 16))
                 }
+            } else {
+                VStack {
+                    Text(feedbackMessage)
+                        .font(.robotoMono.regular(size: 25.0))
+                        .multilineTextAlignment(.center)
+                        .bold()
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                }
+                .background(feedbackOnLoading.isError ? .red.opacity(0.3): .blue.opacity(0.3))
+                .clipShape(RoundedRectangle(cornerRadius: 16))
             }
         }
         .animation(.easeInOut, value: vm.items)
         .listStyle(.insetGrouped)
         .navigationTitle("Recipes")
         .refreshable {
-            await FetchCache.shared.refresh()
+            do {
+                if try await vm.reload() {
+                    print("task finished RecipesView")
+                } else {
+                    feedbackMessage = "There was an error loading. Pull to refresh and try again."
+                    feedbackOnLoading = .error
+                }
+            } catch {
+                print("Cache failed to start")
+                feedbackMessage = "There was an error loading. Pull to refresh and try again."
+                feedbackOnLoading = .error
+                return
+            }
         }
         .task {
             do {
@@ -59,13 +94,16 @@ struct RecipesView: View {
 #else
                 try vm.startCache(path: "FetchImageCache")
 #endif
-                if await vm.loadRecipes() {
+                if try await vm.loadRecipes() {
                     print("task finished RecipesView")
                 } else {
-                    
+                    feedbackMessage = "There was an error loading. Pull to refresh and try again."
+                    feedbackOnLoading = .error
                 }
             } catch {
                 print("Cache failed to start")
+                feedbackMessage = "There was an error loading. Pull to refresh and try again."
+                feedbackOnLoading = .error
                 return
             }
         }
@@ -92,7 +130,7 @@ struct RecipesView: View {
                 model: model,
                 selectedCuisine: vm.selectedCuisine,
                 onSelect: { cuisine in
-                        vm.searchModel = nil
+                    vm.searchModel = nil
                     vm.selectedCuisine = cuisine
                 },
                 onReset: {
@@ -100,6 +138,22 @@ struct RecipesView: View {
                     vm.selectedCuisine = nil
                 }
             )
+        }
+        .alert(
+            "Failed to load recipe properly",
+            isPresented: $badRecipe.isBad,
+            presenting: badRecipe.id
+        ) { id in
+            CTAButtonStack(.horizontal()) {
+                CTAButton(title: "Dismiss") {
+                    
+                }
+                .asPrimaryButton()
+                CTAButton(title: "View Anyway") {
+                    nav.path.append(.recipeDetail(id))
+                }
+                .asDestructiveButton()
+            }
         }
     }
     
@@ -124,32 +178,12 @@ struct RecipesView: View {
 }
 
 
-#if DEBUG
-struct RecipesView_Previews: PreviewProvider {
-    @State var strring = "https%3A//d3jbb8n5wk0qxi.cloudfront.net/photos/.../small.jpg"
-    
-    static var previews: some View {
-        @StateObject var recipeStore = RecipeStore()
-        @StateObject var vm = RecipesViewModel(memoryStore: RecipeDataSource.shared, recipeStore: recipeStore, filterStrategy: AllRecipesFilter())
-        @StateObject var nav = AppNavigation.shared
-        
-        @StateObject var themeManager: ThemeManager = ThemeManager()
-        // TODO: Test resizing here later.
-        
-        NavigationStack {
-            RecipesView(vm: vm)
-                .environmentObject(themeManager)
-                .environmentObject(nav)
-        }
-    }
-}
-#endif
-
-
 // MARK: - Recipes List View
 struct FavoriteRecipesView: View {
     @ObservedObject private var vm: RecipesViewModel
     @EnvironmentObject private var nav: AppNavigation
+    @State private var feedbackMessage: String = ""
+    @State private var feedbackOnLoading: FeedbackType = .stable
     
     init(defaultSize: ImageSize = .medium, vm: RecipesViewModel) {
         self.vm = vm
@@ -169,7 +203,19 @@ struct FavoriteRecipesView: View {
         .animation(.easeInOut, value: vm.items)
         .navigationTitle("Favorites")
         .refreshable {
-            await FetchCache.shared.refresh()
+            do {
+                if try await vm.reload() {
+                    print("task finished RecipesView")
+                } else {
+                    feedbackMessage = "There was an error loading. Pull to refresh and try again."
+                    feedbackOnLoading = .error
+                }
+            } catch {
+                print("Cache failed to start")
+                feedbackMessage = "There was an error loading. Pull to refresh and try again."
+                feedbackOnLoading = .error
+                return
+            }
         }
         .task {
             do {
@@ -178,7 +224,12 @@ struct FavoriteRecipesView: View {
 #else
                 try vm.startCache(path: "FetchImageCache")
 #endif
-                await vm.loadRecipes()
+                if try await vm.loadRecipes() {
+                    print("task finished RecipesView")
+                } else {
+                    feedbackMessage = "There was an error loading. Pull to refresh and try again."
+                    feedbackOnLoading = .error
+                }
             } catch let error as FetchCacheError {
                 switch error {
                 case .directoryAlreadyOpenWithPathComponent:
@@ -187,7 +238,10 @@ struct FavoriteRecipesView: View {
                     break
                 }
             } catch {
-                
+                print("Cache failed to start")
+                feedbackMessage = "There was an error loading. Pull to refresh and try again."
+                feedbackOnLoading = .error
+                return
             }
         }
         .toolbar {
@@ -342,3 +396,39 @@ struct FavoriteRecipeCard: View {
         })
     }
 }
+
+enum FeedbackType {
+    case stable, error, emptyList
+    
+    var isError: Bool {
+        self == .error
+    }
+    
+    var isStable: Bool {
+        self == .stable
+    }
+}
+
+
+
+#if DEBUG
+struct RecipesView_Previews: PreviewProvider {
+    @State var strring = "https%3A//d3jbb8n5wk0qxi.cloudfront.net/photos/.../small.jpg"
+    
+    static var previews: some View {
+        @StateObject var recipeStore = RecipeStore()
+        @StateObject var vm = RecipesViewModel(memoryStore: RecipeDataSource.shared, recipeStore: recipeStore, filterStrategy: AllRecipesFilter())
+        @StateObject var nav = AppNavigation.shared
+        
+        @StateObject var themeManager: ThemeManager = ThemeManager()
+        // TODO: Test resizing here later.
+        
+        NavigationStack {
+            RecipesView(vm: vm)
+                .environmentObject(themeManager)
+                .environmentObject(nav)
+        }
+    }
+}
+#endif
+

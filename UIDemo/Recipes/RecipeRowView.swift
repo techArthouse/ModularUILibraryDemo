@@ -15,20 +15,15 @@ struct RecipeRowView: View {
         @ObservedObject var item: RecipeItem
         let onToggleFavorite: () -> Void
         let onSelectRow: () -> Void
-        //        @State var image: Image?
         @EnvironmentObject private var nav: AppNavigation
         @Environment(\.dynamicTypeSize) private var dynamicTypeSize
-//        @EnvironmentObject var memoryStore: RecipeDataSource
-        
-//        @Binding var recipeMemory: Bool {
-//            bindingFor(memoryStore.getMemory(for: item.sourceURL!))
-//        }
         
         var body: some View {
             
             FeatureItem(
                 title: item.name,
                 description: item.cuisine,
+                isDisabled: item.recipe.isInvalid,
                 action: {
                     print("action fire for item")
                     onSelectRow()
@@ -41,28 +36,15 @@ struct RecipeRowView: View {
                         }
                 },
                 trailing: {
-                    //                        let memory = $memoryStore.memories[url.absoluteString]
                     ToggleIconButton(
                         iconOn: .system("star.fill"),
                         iconOff: .system("star"),
-                        isDisabled: .constant(false),
+                        isDisabled: .constant(item.recipe.isInvalid),
                         isSelected: $item.isFavorite) {
                             onToggleFavorite()
                         }
                     .asStandardIconButtonStyle(withColor: .yellow)
                     .accessibilityLabel(Text("ToggleIconButton: \(item.id.uuidString)"))
-                    
-                    
-                    //                    VStack {
-                    //                        if let url = item.sourceURL, memoryStore.getMemory(for: url).isFavorite {
-                    //                            Image(systemName: "star.fill")
-                    //                                .foregroundColor(.yellow)
-                    //                        } else {
-                    //                            Image(systemName: "star.fill")
-                    //                                .foregroundColor(.black.opacity(0.4))
-                    //                        }
-                    //                    }
-                    //                    .simultaneousGesture(newGesture, including: .all)
                 })
             .task {
                 print("ran task")

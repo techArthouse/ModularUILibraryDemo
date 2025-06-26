@@ -28,30 +28,30 @@ class RecipesViewModel: ObservableObject {
         self.recipeStore = recipeStore
         self.filterStrategy = filterStrategy
         
-//        filterTrigger
-//            .flatMap { _ in
-//                print("filtertriggered")
-//                return Publishers.CombineLatest3(
-//                    recipeStore.itemsPublisher,
-//                    self.$selectedCuisine,
-//                    self.$searchQuery
-//                )
-//            }
-//            .map { items, cuisine, query in
-//                filterStrategy.filter(items, cuisine: cuisine, query: query)
-//            }
-//            .receive(on: RunLoop.main)
-//            .assign(to: &$items)
+        filterTrigger
+            .flatMap { _ in
+                print("filtertriggered")
+                return Publishers.CombineLatest3(
+                    recipeStore.itemsPublisher,
+                    self.$selectedCuisine.debounce(for: .milliseconds(300), scheduler: RunLoop.main),
+                    self.$searchQuery.debounce(for: .milliseconds(300), scheduler: RunLoop.main)
+                )
+            }
+            .map { items, cuisine, query in
+                filterStrategy.filter(items, cuisine: cuisine, query: query)
+            }
+            .receive(on: RunLoop.main)
+            .assign(to: &$items)
         
-        Publishers.CombineLatest3(
-            recipeStore.itemsPublisher,
-            $selectedCuisine.debounce(for: .milliseconds(300), scheduler: RunLoop.main),
-            $searchQuery.debounce(for: .milliseconds(300), scheduler: RunLoop.main)
-        )
-        .map { items, cuisine, query in
-            filterStrategy.filter(items, cuisine: cuisine, query: query)
-        }
-        .assign(to: &$items)
+//        Publishers.CombineLatest3(
+//            recipeStore.itemsPublisher,
+//            $selectedCuisine.debounce(for: .milliseconds(300), scheduler: RunLoop.main),
+//            $searchQuery.debounce(for: .milliseconds(300), scheduler: RunLoop.main)
+//        )
+//        .map { items, cuisine, query in
+//            filterStrategy.filter(items, cuisine: cuisine, query: query)
+//        }
+//        .assign(to: &$items)
     }
     
     // MARK: - Public API
@@ -65,13 +65,16 @@ class RecipesViewModel: ObservableObject {
     }
     
     /// resets fields to reload again
-    func reload() async -> Bool {
+    func reload() async throws -> Bool {
         self.items.removeAll()
+        try? await Task.sleep(for: .seconds(0.5)) // for visual feedback on reload
+        
         self.searchQuery = ""
         self.selectedCuisine = nil
         self.searchModel = nil
         
-        return await loadRecipes()
+        await FetchCache.shared.refresh()
+        return try await loadRecipes()
     }
     
     func addNote(_ text: String, for recipeUUID: UUID) {
@@ -130,7 +133,7 @@ protocol RecipeDataConsumer {
     var items: [RecipeItem] { get }
     var recipeStore: RecipeStore { get }
     func toggleFavorite(recipeUUID: UUID)
-    func loadRecipes(from url: URL?) async -> Bool
+    func loadRecipes(from url: URL?) async throws -> Bool
 }
 
 extension RecipesViewModel: RecipeDataConsumer {
@@ -140,7 +143,7 @@ extension RecipesViewModel: RecipeDataConsumer {
     
     /// Load recipes and update listeners through `RecipeStore`
     /// Returns true if parsing succeeded, false otherwise.
-    func loadRecipes(from url: URL? = nil) async -> Bool {
+    func loadRecipes(from url: URL? = nil) async throws -> Bool {
         do {
             let recipes = try await Recipe.allFromJSON(using: .malformed) // Network call
             recipeStore.loadRecipes(recipes: recipes.map ({ recipe in
@@ -150,10 +153,10 @@ extension RecipesViewModel: RecipeDataConsumer {
                 return recipeItem
             }))
             filterSend()
-        } catch is RecipeDecodeError {
-            return false
+            return !recipes.isEmpty
+        } catch let e as RecipeDecodeError {
+            throw e
         }
-        return true
     }
     
 #else

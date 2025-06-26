@@ -19,6 +19,16 @@ struct RecipeDetailView: View {
     @State private var isLoading: Bool = false
     @State private var isAddingNote = false
     @State private var newNoteText = ""
+    @State private var isDisabled: Bool
+    
+    init(item: RecipeItem,
+         onToggleFavorite: @escaping () -> Void,
+         onSubmitNote: @escaping (String) -> Void) {
+        self.item = item
+        self.onToggleFavorite = onToggleFavorite
+        self.onSubmitNote = onSubmitNote
+        self.isDisabled = true // item.recipe.isInvalid
+    }
 
     enum URLType: Identifiable {
         public var id: URL {
@@ -51,7 +61,7 @@ struct RecipeDetailView: View {
                             image = try? await FetchCache.shared
                                 .getImageFor(url: item.smallImageURL!)
                         }
-                    ZStack {
+                    if !isDisabled {
                         HStack(alignment: .top) {
                             Spacer()
                             VStack {
@@ -61,9 +71,9 @@ struct RecipeDetailView: View {
                                     isDisabled: .constant(false),
                                     isSelected: $item.isFavorite) {
                                         
-                                            withAnimation {
-                                                self.onToggleFavorite()
-                                            }
+                                        withAnimation {
+                                            self.onToggleFavorite()
+                                        }
                                     }
                                     .asStandardIconButtonStyle(withColor: .yellow)
                                     .accessibilityLabel(Text("ToggleIconButton: \(item.id.uuidString)"))
@@ -73,20 +83,26 @@ struct RecipeDetailView: View {
                         }
                     }
                 }
+                .onDisabled(isDisabled: $isDisabled)
                 
                 // MARK: — Buttons
                 VStack(spacing: 12) {
                     CTAButtonStack(.vertical()) {
                         if let url = item.videoURL {
                             CTAButton(title: "Watch Video", icon: .system("video.fill")) {
-                                //                                    showVideoSheet = true
                                 source = .video(url)
+                            }.asPrimaryButton(padding: .stacked)
+                        } else {
+                            CTAButton(title: "Video Unavailable", isDisabled: .constant(true), icon: .system("video.fill")) {
                             }.asPrimaryButton(padding: .stacked)
                         }
                         if let sourceURL = item.sourceURL {
                             CTAButton(title: "View Full Recipe", icon: .system("safari.fill")) {
-                                //                                showSourceSheet = true
                                 source = .webPage(sourceURL)
+                            }.asSecondaryButton(padding: .stacked)
+                        } else {
+                            
+                            CTAButton(title: "Source Unavailable", isDisabled: .constant(true), icon: .system("safari.fill")) {
                             }.asSecondaryButton(padding: .stacked)
                         }
                     }
@@ -157,6 +173,7 @@ struct RecipeDetailView: View {
                         .shadow(color: .black.opacity(0.1), radius: 8, x: 0, y: -1) // lifts up
                 )
                 .padding()
+                .onDisabled(isDisabled: $isDisabled)
             }
         }
         .navigationTitle(item.name)
@@ -183,7 +200,6 @@ struct RecipeDetailView: View {
                                         .background(Color.black.opacity(0.25))
                                 }
                             }
-                            //                        .ignoresSafeArea()
                         Spacer()
                     } else {
                         Text("Video unavailable")
