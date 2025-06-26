@@ -190,18 +190,32 @@ struct FavoriteRecipesView: View {
     }
     
     var body: some View {
-        ScrollView {
-            Section(header: searchHeaderView) {
-                ForEach($vm.items, id: \.id) { $item in
-                    FavoriteRecipeCard(item: $item.wrappedValue)
-                        .gesture(TapGesture().onEnded({
-                            nav.path2.append(.recipeDetail(item.id))
-                        }), including: .gesture)
+        List{
+            if feedbackOnLoading.isStable {
+                Section(header: searchHeaderView) {
+                    ForEach($vm.items, id: \.id) { $item in
+                        FavoriteRecipeCard(item: $item.wrappedValue)
+                            .gesture(TapGesture().onEnded({
+                                nav.path2.append(.recipeDetail(item.id))
+                            }), including: .gesture)
+                    }
                 }
+            } else {
+                VStack {
+                    Text(feedbackMessage)
+                        .font(.robotoMono.regular(size: 25.0))
+                        .multilineTextAlignment(.center)
+                        .bold()
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                }
+                .background(feedbackOnLoading.isError ? .red.opacity(0.3): .blue.opacity(0.3))
+                .clipShape(RoundedRectangle(cornerRadius: 16))
             }
         }
         .animation(.easeInOut, value: vm.items)
-        .navigationTitle("Favorites")
+        .listStyle(.plain)
+        .listRowSeparator(.hidden)
+        .navigationTitle("Recipes")
         .refreshable {
             do {
                 if try await vm.reload() {
@@ -300,27 +314,44 @@ struct FavoriteRecipesView: View {
 
 struct FavoriteRecipeCard: View {
     @ObservedObject var item: RecipeItem
+    
+    @State private var clickableLinks: ClickableLinks
+    
+    init(item: RecipeItem) {
+        self.item = item
+        self.clickableLinks = ClickableLinks(youtube: item.videoURL != nil ? true: false, source: item.sourceURL != nil ? true: false)
+    }
+    
+    // `ClickableLinks evaluate if any optionable links are availabler per type (i.e. web, favorites...)
+    struct ClickableLinks {
+        let favorite: Bool = false
+        var youtube: Bool
+        var source: Bool
+    }
     //    @Binding var image: Image
     var body: some View {
         //        ZStack {
         Card(title: item.name ,hasBorder: true, hasShadow: false, leading: {
             //                            Text("wowzers")
-            
-            ImageContainer(image: $item.image, size: CGFloat(150.0))
-                .cornerRadius(12)
-                .shadow(radius: 4)
+            VStack {
+                ImageContainer(image: $item.image, size: CGFloat(150.0))
+                    .cornerRadius(12)
+                    .shadow(radius: 4)
+            }
+//            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
         }, trailing: {
             // MARK: — Notes Section
-            HStack {
-                VStack(alignment: .leading, spacing: 0) {
-                    VStack(alignment: .leading) {
-                        VStack {
+//            VStack {
+//                Spacer()
+                VStack(alignment: .center, spacing: 0) {
+//                    VStack(alignment: .leading) {
+//                        VStack {
                             Text("Notes")
                                 .font(.subheadline)
                                 .fontWeight(.semibold)
-                                .frame(maxWidth: .infinity, alignment: .center)
-                        }
-                        .padding(.top, 5)
+//                                .frame(maxWidth: .infinity, alignment: .center)
+//                        }
+//                        .padding(.top, 5)
                         Group {
                             Text("- Origin: \(item.cuisine)")
                             ForEach(item.notes, id: \.id) { note in
@@ -330,70 +361,76 @@ struct FavoriteRecipeCard: View {
                         }
                         .lineLimit(1)
                         .truncationMode(.tail)
-                        .font(.caption)
-                        .padding(.leading, 2)
-                        Spacer()
-                    }
-                    
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    .background(.yellow.opacity(0.4))
-                    
-                    HStack {
-                        
-                        VStack(spacing: 0) {
-                            ToggleIconButton(
-                                iconOn: .system("star.fill"),
-                                iconOff: .system("star"),
-                                isDisabled: .constant(false),
-                                isSelected: $item.isFavorite) {
-                                }
-                                .asStandardIconButtonStyle(withColor: .yellow)
-                            Text("Favorite")
-                                .font(.footnote)
-                                .fontWeight(.regular)
-                                .padding(0)
-                        }
-                        if let videoURL = item.videoURL {
-                            Spacer()
-                            VStack(spacing: 0){
-                                IconButton(icon: .system("video.fill"), isDisabled: .constant(false)) {
-                                    
-                                }
-                                .asStandardIconButtonStyle(withColor: .green)
-                                Text("Youtube")
-                                    .font(.footnote)
-                                    .fontWeight(.regular)
-                                    .padding(0)
-                            }
-                        } else {
-                            Spacer()
-                        }
-                        
-                        if let sourceSite = item.sourceURL {
-                            
-                            Spacer()
-                            VStack(spacing: 0){
-                                IconButton(icon: .system("safari.fill"), isDisabled: .constant(false)) {
-                                    
-                                }
-                                .asStandardIconButtonStyle(withColor: .blue)
-                                Text("Web")
-                                    .font(.footnote)
-                                    .fontWeight(.regular)
-                                    .padding(0)
-                            }
-                        } else {
-                        }
-                    }
-                    .frame(maxWidth: .infinity)
-                    .padding(.horizontal, 10)
+                        .font(.robotoMono.light(size: 8))
+//                        .padding(.leading, 2)
+//                        Spacer()
+//                    }
+//
+//                    .frame(maxWidth: .infinity, maxHeight: .infinity)
                     
                 }
                 .disabled(true)
-                .clipShape(RoundedRectangle(cornerRadius: 16))
                 .padding(0)
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+                .background(.yellow.opacity(0.4))
+                .cornerRadius(12)
+//                Spacer()
+//            }
+//            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+//            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+        }, {
+            
+            HStack {
+                
+                VStack(spacing: 0) {
+                    ToggleIconButton(
+                        iconOn: .system("star.fill"),
+                        iconOff: .system("star"),
+                        isDisabled: .constant(false),
+                        isSelected: $item.isFavorite) {
+                        }
+                        .asStandardIconButtonStyle(withColor: .yellow)
+                    Text("Favorite")
+                        .font(.robotoMono.regular(size: 10))
+                }
+//                        if let videoURL = item.videoURL {
+                    Spacer()
+                    VStack(spacing: 0){
+                        IconButton(icon: .system("video.fill"), isDisabled: .constant(false)) {
+                            
+                        }
+                        .asStandardIconButtonStyle(withColor: .green)
+                        Text("Youtube")
+                            .font(.footnote)
+                            .fontWeight(.regular)
+                            .padding(0)
+                    }
+//                        } else {
+//                            Spacer()
+//                        }
+                
+//                        if let sourceSite = item.sourceURL {
+                    
+                    Spacer()
+                    VStack(spacing: 0){
+                        IconButton(icon: .system("safari.fill"), isDisabled: .constant(false)) {
+                            
+                        }
+                        .asStandardIconButtonStyle(withColor: .blue)
+                        Text("Web")
+                            .font(.footnote)
+                            .fontWeight(.regular)
+                            .padding(0)
+                    }
+//                        } else {
+//                            Spacer()
+//                        }
             }
+//            .frame(maxWidth: .infinity)
+            .padding(.horizontal, 10)
+            
         })
+//        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
     }
 }
 
@@ -409,6 +446,26 @@ enum FeedbackType {
     }
 }
 
+#if DEBUG
+struct FavoriteRecipesCard_Previews: PreviewProvider {
+    @State var strring = "https%3A//d3jbb8n5wk0qxi.cloudfront.net/photos/.../small.jpg"
+    
+    static var previews: some View {
+        @StateObject var recipeStore = RecipeStore()
+        @StateObject var vm = RecipesViewModel(memoryStore: RecipeDataSource.shared, recipeStore: recipeStore, filterStrategy: FavoriteRecipesFilter())
+        @StateObject var nav = AppNavigation.shared
+        
+        @StateObject var themeManager: ThemeManager = ThemeManager()
+        // TODO: Test resizing here later.
+        
+        FavoriteRecipeCard(item: RecipeItem(recipe: Recipe.recipePreview(using: .good)!))
+            .background(.red)
+            .environmentObject(themeManager)
+        
+
+    }
+}
+#endif
 
 
 #if DEBUG
@@ -423,11 +480,11 @@ struct RecipesView_Previews: PreviewProvider {
         @StateObject var themeManager: ThemeManager = ThemeManager()
         // TODO: Test resizing here later.
         
-        NavigationStack {
-            RecipesView(vm: vm)
+//        NavigationStack {
+            /*Favorite*/RecipesView(vm: vm)
                 .environmentObject(themeManager)
                 .environmentObject(nav)
-        }
+//        }
     }
 }
 #endif
