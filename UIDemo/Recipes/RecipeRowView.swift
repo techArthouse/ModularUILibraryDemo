@@ -8,7 +8,8 @@
 
 import SwiftUI
 import ModularUILibrary
-    
+
+/// Takes up as much width and height as it can. specify size if you need different.
 struct RecipeRowView: View {
     
         // Suppose the parent passed us a Binding<RecipeItem>:
@@ -84,21 +85,60 @@ struct RecipeRowView: View {
                 item.image = nil
             }
         }
-        
-//        func bindingFor(_ item: Bool) -> Binding<Bool> {
-//            Binding<Bool>(
-//                get: {
-//                    // read from your store
-//                    item.isFavorite
-////                    memoryStore.getMemory(for: url).isFavorite
-//                },
-//                set: { newValue in
-//                    
-//                    print("this is where i thought it would \(newValue)")
-//                    item.isFavorite = newValue
-//                    // write *that* back into the store
-////                                    memoryStore.setFavorite(newValue, for: url)
-//                }
-//            )
-//        }
     }
+
+#if DEBUG
+
+struct RecipeRowView_Previews: PreviewProvider {
+    static var previews: some View {
+        let goodRecipe = Recipe.recipePreview(using: .good)!
+        let invalidRecipe = Recipe.recipePreview(using: .malformed)!
+        
+        let goodItem = RecipeItem(recipe: goodRecipe)
+        goodItem.image = Image(systemName: "photo") // Simulate image already loaded
+        
+        let badItem = RecipeItem(recipe: invalidRecipe)
+        badItem.image = Image(systemName: "exclamationmark.triangle") // Placeholder for failed load
+        
+        let nav = AppNavigation.shared
+        let themeManager = ThemeManager()
+        
+        return VStack {
+            RecipeRowView(
+                item: goodItem,
+                onToggleFavorite: {
+                    print("Favorite toggled for good item")
+                },
+                onSelectRow: {
+                    print("Selected good item")
+                }
+            )
+            .background(.red)
+            .border(.blue, width: 2)
+            .previewDisplayName("Good Recipe")
+//            .padding()
+//            .previewLayout(.sizeThatFits)
+            .environmentObject(nav)
+            .environmentObject(themeManager)
+            
+            RecipeRowView(
+                item: badItem,
+                onToggleFavorite: {
+                    print("Favorite toggled for bad item")
+                },
+                onSelectRow: {
+                    print("Selected bad item")
+                }
+            )
+//            .frame(maxWidth: .infinity, maxHeight: 100)
+            .background(.red)
+            .previewDisplayName("Invalid Recipe")
+//            .padding()
+//            .previewLayout(.sizeThatFits)
+            .environmentObject(nav)
+            .environmentObject(themeManager)
+//            .preferredColorScheme(.dark)
+        }
+    }
+}
+#endif

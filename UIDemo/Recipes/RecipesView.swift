@@ -199,7 +199,13 @@ struct FavoriteRecipesView: View {
                                 nav.path2.append(.recipeDetail(item.id))
                             }), including: .gesture)
                     }
+                    .listRowSeparator(.hidden)
+                    .listRowInsets(.init(top: 0, leading: 10, bottom: 0, trailing: 10))
+//                    .listRowBackground(Color.clear)
                 }
+//                .background(.blue)
+//                .listSectionSeparatorTint(.black)
+                
             } else {
                 VStack {
                     Text(feedbackMessage)
@@ -214,8 +220,7 @@ struct FavoriteRecipesView: View {
         }
         .animation(.easeInOut, value: vm.items)
         .listStyle(.plain)
-        .listRowSeparator(.hidden)
-        .navigationTitle("Recipes")
+        .navigationTitle("Favorite Recipes")
         .refreshable {
             do {
                 if try await vm.reload() {
@@ -474,17 +479,22 @@ struct RecipesView_Previews: PreviewProvider {
     
     static var previews: some View {
         @StateObject var recipeStore = RecipeStore()
-        @StateObject var vm = RecipesViewModel(memoryStore: RecipeDataSource.shared, recipeStore: recipeStore, filterStrategy: AllRecipesFilter())
+        @StateObject var vm = RecipesViewModel(memoryStore: RecipeDataSource.shared, recipeStore: recipeStore, filterStrategy: FavoriteRecipesFilter())
         @StateObject var nav = AppNavigation.shared
         
         @StateObject var themeManager: ThemeManager = ThemeManager()
         // TODO: Test resizing here later.
         
-//        NavigationStack {
-            /*Favorite*/RecipesView(vm: vm)
+        NavigationStack {
+            FavoriteRecipesView(vm: vm)
                 .environmentObject(themeManager)
                 .environmentObject(nav)
-//        }
+        }
+        NavigationStack {
+            RecipesView(vm: vm)
+                .environmentObject(themeManager)
+                .environmentObject(nav)
+        }
     }
 }
 #endif
