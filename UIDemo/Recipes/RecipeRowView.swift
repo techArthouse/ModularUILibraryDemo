@@ -25,6 +25,7 @@ struct RecipeRowView: View {
                 title: item.name,
                 description: item.cuisine,
                 isDisabled: item.recipe.isInvalid,
+                config: .init(rounded: true, withBorder: false),
                 action: {
                     print("action fire for item")
                     onSelectRow()
@@ -32,6 +33,7 @@ struct RecipeRowView: View {
                 leading: {
                     ImageContainer(image: $item.image, size: dynamicTypeSize.photoDimension, accessibilityId: item.id.uuidString)
                         .equatable()
+                        .border(.black.opacity(0.5), width: 1)
                         .onAppear{
                             print("i appear imagecontainer with image \(item.image != nil)")
                         }
@@ -113,8 +115,8 @@ struct RecipeRowView_Previews: PreviewProvider {
                     print("Selected good item")
                 }
             )
-            .background(.red)
-            .border(.blue, width: 2)
+//            .background(.red)
+//            .border(.blue, width: 2)
             .previewDisplayName("Good Recipe")
 //            .padding()
 //            .previewLayout(.sizeThatFits)

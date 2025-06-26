@@ -39,38 +39,73 @@ struct RecipesView: View {
     }
     
     var body: some View {
-        List {
-            if feedbackOnLoading.isStable {
-                Section(header: searchHeaderView) {
-                    ForEach(vm.items, id: \.id) { item in
-                        RecipeRowView(item: item, onToggleFavorite: {
-                            withAnimation {
-                                vm.toggleFavorite(recipeUUID: item.id)
+        ScrollView {
+            LazyVStack(spacing: 0) {
+                if feedbackOnLoading.isStable {
+                    Section(header: searchHeaderView) {
+                        Divider()
+                            .frame(height: 1)
+                            .background(.black.opacity(0.5))
+//                            .padding(.horizontal, 20)
+                        ForEach(vm.items, id: \.id) { item in
+                            RecipeRowView(item: item, onToggleFavorite: {
+                                withAnimation {
+                                    vm.toggleFavorite(recipeUUID: item.id)
+                                }
+                            }) {
+                                nav.path.append(.recipeDetail(item.id))
                             }
-                        }) {
-                            nav.path.append(.recipeDetail(item.id))
+                            .onDisabled(isDisabled: .constant(item.recipe.isInvalid)) {
+                                badRecipe.id = item.id
+                                badRecipe.isBad.toggle()
+                            }
+//                            .shadow(radius: 1)
+                            .padding(.horizontal, 5)
+//                            .transition(.asymmetric(insertion: .opacity, removal: .move(edge: .trailing)))
+                            
+                        Divider()
+                            .frame(height: 1)
+                            .background(.black.opacity(0.3))
+                            .padding(.horizontal, 15)
+                            //                        .listRowInsets(EdgeInsets())
+                            //                        .border(.black, width: 1)
                         }
-                        .onDisabled(isDisabled: .constant(item.recipe.isInvalid)) {
-                            badRecipe.id = item.id
-                            badRecipe.isBad.toggle()
-                        }
-                        .listRowInsets(EdgeInsets())
+                        .padding(.bottom, 3)
+                        //                    .listRowSeparator(.hidden)
+//                        .listRowSeparatorTint(.black, edges: .all)
+//                        .listRowInsets(.init(top: 0, leading: 10, bottom: 0, trailing: 10))
+                        //                    .listRowBackground(Color(.systemGray))
+                        //                    .listRowSpacing(10)
                     }
+//                    .background(.white)
+                    //                .listRowInsets(.init(top: 0, leading: 0, bottom: 0, trailing: 0))
+                    //                .frame(maxWidth: .infinity)
+                } else {
+                    VStack {
+                        Text(feedbackMessage)
+                            .font(.robotoMono.regular(size: 25.0))
+                            .multilineTextAlignment(.center)
+                            .bold()
+                            .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    }
+                    .background(feedbackOnLoading.isError ? .red.opacity(0.3): .blue.opacity(0.3))
+                    .clipShape(RoundedRectangle(cornerRadius: 16))
                 }
-            } else {
-                VStack {
-                    Text(feedbackMessage)
-                        .font(.robotoMono.regular(size: 25.0))
-                        .multilineTextAlignment(.center)
-                        .bold()
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
-                }
-                .background(feedbackOnLoading.isError ? .red.opacity(0.3): .blue.opacity(0.3))
-                .clipShape(RoundedRectangle(cornerRadius: 16))
             }
+//            .padding(.top, 5)
+            .padding(.vertical, 5)
+            .padding(.horizontal, 5)
+            .background{
+                RoundedRectangle(cornerRadius: 0)
+                    .fill(.gray.opacity(0.09))
+                    .shadow(color: .black, radius: 1)
+                
+            }//            .background(Color(.systemGray).opacity(0.6))
+            .cornerRadius(4)
+//            .animation(.easeInOut, value: vm.items)
         }
-        .animation(.easeInOut, value: vm.items)
-        .listStyle(.insetGrouped)
+        .animation(.linear, value: vm.items)
+//        .listStyle(.plain)
         .navigationTitle("Recipes")
         .refreshable {
             do {
@@ -99,6 +134,13 @@ struct RecipesView: View {
                 } else {
                     feedbackMessage = "There was an error loading. Pull to refresh and try again."
                     feedbackOnLoading = .error
+                }
+            } catch let error as FetchCacheError {
+                switch error {
+                case .directoryAlreadyOpenWithPathComponent:
+                    print("Cache already exists")
+                default:
+                    break
                 }
             } catch {
                 print("Cache failed to start")
@@ -172,8 +214,9 @@ struct RecipesView: View {
             }
         }
         .padding(8)
-        .background(Color(.systemGray6))
         .cornerRadius(10)
+        .background(Color(.systemGray6))
+        .border(.black, width: 0.5)
     }
 }
 
@@ -201,7 +244,7 @@ struct FavoriteRecipesView: View {
                     }
                     .listRowSeparator(.hidden)
                     .listRowInsets(.init(top: 0, leading: 10, bottom: 0, trailing: 10))
-//                    .listRowBackground(Color.clear)
+                    .listRowBackground(Color.clear)
                 }
 //                .background(.blue)
 //                .listSectionSeparatorTint(.black)
@@ -451,26 +494,26 @@ enum FeedbackType {
     }
 }
 
-#if DEBUG
-struct FavoriteRecipesCard_Previews: PreviewProvider {
-    @State var strring = "https%3A//d3jbb8n5wk0qxi.cloudfront.net/photos/.../small.jpg"
-    
-    static var previews: some View {
-        @StateObject var recipeStore = RecipeStore()
-        @StateObject var vm = RecipesViewModel(memoryStore: RecipeDataSource.shared, recipeStore: recipeStore, filterStrategy: FavoriteRecipesFilter())
-        @StateObject var nav = AppNavigation.shared
-        
-        @StateObject var themeManager: ThemeManager = ThemeManager()
-        // TODO: Test resizing here later.
-        
-        FavoriteRecipeCard(item: RecipeItem(recipe: Recipe.recipePreview(using: .good)!))
-            .background(.red)
-            .environmentObject(themeManager)
-        
-
-    }
-}
-#endif
+//#if DEBUG
+//struct FavoriteRecipesCard_Previews: PreviewProvider {
+//    @State var strring = "https%3A//d3jbb8n5wk0qxi.cloudfront.net/photos/.../small.jpg"
+//    
+//    static var previews: some View {
+//        @StateObject var recipeStore = RecipeStore()
+//        @StateObject var vm = RecipesViewModel(memoryStore: RecipeDataSource.shared, recipeStore: recipeStore, filterStrategy: FavoriteRecipesFilter())
+//        @StateObject var nav = AppNavigation.shared
+//        
+//        @StateObject var themeManager: ThemeManager = ThemeManager()
+//        // TODO: Test resizing here later.
+//        
+//        FavoriteRecipeCard(item: RecipeItem(recipe: Recipe.recipePreview(using: .good)!))
+//            .background(.red)
+//            .environmentObject(themeManager)
+//        
+//
+//    }
+//}
+//#endif
 
 
 #if DEBUG
@@ -479,17 +522,17 @@ struct RecipesView_Previews: PreviewProvider {
     
     static var previews: some View {
         @StateObject var recipeStore = RecipeStore()
-        @StateObject var vm = RecipesViewModel(memoryStore: RecipeDataSource.shared, recipeStore: recipeStore, filterStrategy: FavoriteRecipesFilter())
+        @StateObject var vm = RecipesViewModel(memoryStore: RecipeDataSource.shared, recipeStore: recipeStore, filterStrategy: AllRecipesFilter())
         @StateObject var nav = AppNavigation.shared
         
         @StateObject var themeManager: ThemeManager = ThemeManager()
         // TODO: Test resizing here later.
         
-        NavigationStack {
-            FavoriteRecipesView(vm: vm)
-                .environmentObject(themeManager)
-                .environmentObject(nav)
-        }
+//        NavigationStack {
+//            FavoriteRecipesView(vm: vm)
+//                .environmentObject(themeManager)
+//                .environmentObject(nav)
+//        }
         NavigationStack {
             RecipesView(vm: vm)
                 .environmentObject(themeManager)

@@ -28,30 +28,30 @@ class RecipesViewModel: ObservableObject {
         self.recipeStore = recipeStore
         self.filterStrategy = filterStrategy
         
-//        filterTrigger
-//            .flatMap { _ in
-//                print("filtertriggered")
-//                return Publishers.CombineLatest3(
-//                    recipeStore.itemsPublisher,
-//                    self.$selectedCuisine.debounce(for: .milliseconds(300), scheduler: RunLoop.main),
-//                    self.$searchQuery.debounce(for: .milliseconds(300), scheduler: RunLoop.main)
-//                )
-//            }
-//            .map { items, cuisine, query in
-//                filterStrategy.filter(items, cuisine: cuisine, query: query)
-//            }
-//            .receive(on: RunLoop.main)
-//            .assign(to: &$items)
+        filterTrigger
+            .flatMap { _ in
+                print("filtertriggered")
+                return Publishers.CombineLatest3(
+                    recipeStore.itemsPublisher,
+                    self.$selectedCuisine.debounce(for: .milliseconds(300), scheduler: RunLoop.main),
+                    self.$searchQuery.debounce(for: .milliseconds(300), scheduler: RunLoop.main)
+                )
+            }
+            .map { items, cuisine, query in
+                filterStrategy.filter(items, cuisine: cuisine, query: query)
+            }
+            .receive(on: RunLoop.main)
+            .assign(to: &$items)
         
-        Publishers.CombineLatest3(
-            recipeStore.itemsPublisher,
-            $selectedCuisine.debounce(for: .milliseconds(300), scheduler: RunLoop.main),
-            $searchQuery.debounce(for: .milliseconds(300), scheduler: RunLoop.main)
-        )
-        .map { items, cuisine, query in
-            filterStrategy.filter(items, cuisine: cuisine, query: query)
-        }
-        .assign(to: &$items)
+//        Publishers.CombineLatest3(
+//            recipeStore.itemsPublisher,
+//            $selectedCuisine.debounce(for: .milliseconds(300), scheduler: RunLoop.main),
+//            $searchQuery.debounce(for: .milliseconds(300), scheduler: RunLoop.main)
+//        )
+//        .map { items, cuisine, query in
+//            filterStrategy.filter(items, cuisine: cuisine, query: query)
+//        }
+//        .assign(to: &$items)
     }
     
     // MARK: - Public API
@@ -145,7 +145,7 @@ extension RecipesViewModel: RecipeDataConsumer {
     /// Returns true if parsing succeeded, false otherwise.
     func loadRecipes(from url: URL? = nil) async throws -> Bool {
         do {
-            let recipes = try await Recipe.allFromJSON(using: .malformed) // Network call
+            let recipes = try await Recipe.allFromJSON(using: .good) // Network call
             recipeStore.loadRecipes(recipes: recipes.map ({ recipe in
                 var recipeItem = RecipeItem(recipe: recipe)
                 recipeItem.isFavorite = memoryStore.isFavorite(for: recipe.id)
