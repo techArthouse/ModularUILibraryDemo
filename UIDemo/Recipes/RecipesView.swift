@@ -60,7 +60,6 @@ struct RecipesView: View {
                                 badRecipe.isBad.toggle()
                             }
 //                            .shadow(radius: 1)
-                            .padding(.horizontal, 5)
 //                            .transition(.asymmetric(insertion: .opacity, removal: .move(edge: .trailing)))
                             
                         Divider()
@@ -70,6 +69,7 @@ struct RecipesView: View {
                             //                        .listRowInsets(EdgeInsets())
                             //                        .border(.black, width: 1)
                         }
+                        .padding(.horizontal, 5)
                         .padding(.bottom, 3)
                         //                    .listRowSeparator(.hidden)
 //                        .listRowSeparatorTint(.black, edges: .all)
@@ -243,7 +243,7 @@ struct FavoriteRecipesView: View {
                             }), including: .gesture)
                     }
                     .listRowSeparator(.hidden)
-                    .listRowInsets(.init(top: 0, leading: 10, bottom: 0, trailing: 10))
+                    .listRowInsets(.init(top: 10, leading: 10, bottom: 10, trailing: 10))
                     .listRowBackground(Color.clear)
                 }
 //                .background(.blue)
@@ -286,6 +286,20 @@ struct FavoriteRecipesView: View {
 #else
                 try vm.startCache(path: "FetchImageCache")
 #endif
+            } catch let error as FetchCacheError {
+                switch error {
+                case .directoryAlreadyOpenWithPathComponent:
+                    print("Cache already exists")
+                default:
+                    break
+                }
+            } catch {
+                print("Cache failed to start")
+                feedbackMessage = "There was an error loading. Pull to refresh and try again."
+                feedbackOnLoading = .error
+                return
+            }
+            do {
                 if try await vm.loadRecipes() {
                     print("task finished RecipesView")
                 } else {
@@ -364,6 +378,7 @@ struct FavoriteRecipeCard: View {
     @ObservedObject var item: RecipeItem
     
     @State private var clickableLinks: ClickableLinks
+    let size: CGSize = .init(width: 150, height: 150)
     
     init(item: RecipeItem) {
         self.item = item
@@ -379,49 +394,98 @@ struct FavoriteRecipeCard: View {
     //    @Binding var image: Image
     var body: some View {
         //        ZStack {
-        Card(title: item.name ,hasBorder: true, hasShadow: false, leading: {
+        Card(title: item.name ,hasBorder: true, hasShadow: true, leading: {
             //                            Text("wowzers")
-            VStack {
-                ImageContainer(image: $item.image, size: CGFloat(150.0))
-                    .cornerRadius(12)
-                    .shadow(radius: 4)
-            }
+//            VStack {
+            ImageCard(image: $item.image, size: size, hasBorder: true, hasShadow: false)
+//                ImageContainer(image: $item.image, size: CGFloat(150.0))
+//                    .cornerRadius(12)
+//                    .shadow(radius: 4)
+//            }
 //            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
         }, trailing: {
             // MARK: — Notes Section
 //            VStack {
 //                Spacer()
-                VStack(alignment: .center, spacing: 0) {
-//                    VStack(alignment: .leading) {
-//                        VStack {
-                            Text("Notes")
-                                .font(.subheadline)
-                                .fontWeight(.semibold)
-//                                .frame(maxWidth: .infinity, alignment: .center)
-//                        }
-//                        .padding(.top, 5)
-                        Group {
-                            Text("- Origin: \(item.cuisine)")
-                            ForEach(item.notes, id: \.id) { note in
-                                Text("- \(note.text)")
-                                    .fontWeight(.light)
-                            }
-                        }
-                        .lineLimit(1)
-                        .truncationMode(.tail)
-                        .font(.robotoMono.light(size: 8))
-//                        .padding(.leading, 2)
-//                        Spacer()
-//                    }
-//
-//                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    
+//            EmptyView()
+            
+            VStack(alignment: .center, spacing: 0) {
+                //                    VStack(alignment: .leading) {
+                //                        VStack {
+                VStack {
+                    Text("Notes")
+                        .font(.subheadline)
+                        .fontWeight(.semibold)
+                    //                        }
+                    //                        .padding(.top, 5)
+                    Text("Origin: \(item.cuisine)")
+                        .font(.robotoMono.regular(size: 12))
+                        .italic()
                 }
-                .disabled(true)
-                .padding(0)
-                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+                .frame(maxWidth: .infinity, alignment: .center)
+                .overlay(alignment: .bottom) {
+//                    VStack {
+//                        Spacer()
+                        Divider()
+                        .frame(height: 0.5)
+                            .background(.black.opacity(0.5))
+                            .padding(.horizontal, 10)
+//                    }
+//                    .padding(.top, 20)
+                }
+                //                    VStack {
+                //                        Group {
+                //                HStack {
+                
+                //                        Divider()
+                //                                    .frame(width: 1)
+                //                            .background(.black.opacity(0.5))
+                //                            .padding(.leading, 1)
+                //                    ForEach(item.notes, id: \.id) { note in
+                //                                Text("-\(note.text)")
+                ScrollView(.vertical, showsIndicators: false) {
+                    VStack(alignment: .leading, spacing: 0) {
+                        ForEach(item.notes, id: \.id) { note in
+                            Text("- asfg adlkj ")
+                                .font(.robotoMono.regular(size: 12))
+                            //                                    .lineLimit(1)
+                                .lineLimit(2)
+                                .truncationMode(.tail)
+                            //                                    .padding(.leading, 5)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .multilineTextAlignment(.leading)
+                        }
+                    }
+                    //                            Divider()
+                    //                            //                                    .frame(height: 1)
+                    //                                .background(.black.opacity(0.5))
+                    //                                .padding(.horizontal, 10)
+                    //                                    .fontWeight(.light)
+                }
+                //                }
+                //                        }
+                //                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
+//                .background(.red)
+                //                }
+                //                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
+                //                        .font(.robotoMono.light(size: 8))
+                //                        .padding(.leading, 2)
+                //                        Spacer()
+                //                    }
+                //
+                //                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                
+            }
+            .frame(height: size.height)
+//                .disabled(true)
+//                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
                 .background(.yellow.opacity(0.4))
-                .cornerRadius(12)
+                .cornerRadius(16)
+                .padding(.trailing, 5)
+//                .padding(.vertical, 10)
+//                .padding(.trailing, 5)
+            
+            
 //                Spacer()
 //            }
 //            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
@@ -429,7 +493,7 @@ struct FavoriteRecipeCard: View {
         }, {
             
             HStack {
-                
+                Spacer()
                 VStack(spacing: 0) {
                     ToggleIconButton(
                         iconOn: .system("star.fill"),
@@ -439,7 +503,7 @@ struct FavoriteRecipeCard: View {
                         }
                         .asStandardIconButtonStyle(withColor: .yellow)
                     Text("Favorite")
-                        .font(.robotoMono.regular(size: 10))
+                        .font(.robotoMono.regular(size: 16).bold())
                 }
 //                        if let videoURL = item.videoURL {
                     Spacer()
@@ -449,9 +513,8 @@ struct FavoriteRecipeCard: View {
                         }
                         .asStandardIconButtonStyle(withColor: .green)
                         Text("Youtube")
-                            .font(.footnote)
-                            .fontWeight(.regular)
-                            .padding(0)
+                            .font(.robotoMono.regular(size: 16).bold())
+//                            .padding(0)
                     }
 //                        } else {
 //                            Spacer()
@@ -466,18 +529,54 @@ struct FavoriteRecipeCard: View {
                         }
                         .asStandardIconButtonStyle(withColor: .blue)
                         Text("Web")
-                            .font(.footnote)
-                            .fontWeight(.regular)
-                            .padding(0)
+                            .font(.robotoMono.regular(size: 16).bold())
                     }
-//                        } else {
+                Spacer()
+//                        } else
 //                            Spacer()
 //                        }
             }
 //            .frame(maxWidth: .infinity)
-            .padding(.horizontal, 10)
+            .padding(EdgeInsets(top: 0, leading: 10, bottom: 5, trailing: 10))
             
         })
+        .task {
+            print("ran task")
+            do {
+                guard let url = item.smallImageURL else {
+                    throw URLError(.badURL)
+                }
+                guard item.image == nil else {
+                    
+                    print("not equal to nil")
+                    return
+                }
+                item.image = try await FetchCache.shared.getImageFor(url: url)
+            } catch let e as FetchCacheError {
+                switch e {
+                case .taskCancelled:
+                    // We anticipate to fall here with a CancellationError as that is what's thrown when `task
+                    // cancels a network call. but we wrap it in our own error.
+                    // In our case we scrolled and the row running the request disappeared.
+                    return
+                default:
+                    // Any other error that would suggest we are still viewing the row but an error occured
+                    print("Image load failed: \(e.localizedDescription)")
+                    item.image = Image("imageNotFound")
+                }
+            } catch let e {
+                // Any error we haven't anticipated
+                // (but it's not likely to happen since the methods define the throw type)
+                print("Error in row task. error: \(e.localizedDescription)")
+                item.image = Image("placeHolder")
+            }
+        }
+//        .onAppear {
+//            print("were appearing oh yeah")
+//            // By having this here we can always show a progressview whenever
+//            // we return to this item cell.
+//            item.image = nil
+//        }
 //        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
     }
 }
@@ -522,22 +621,22 @@ struct RecipesView_Previews: PreviewProvider {
     
     static var previews: some View {
         @StateObject var recipeStore = RecipeStore()
-        @StateObject var vm = RecipesViewModel(memoryStore: RecipeDataSource.shared, recipeStore: recipeStore, filterStrategy: AllRecipesFilter())
+        @StateObject var vm = RecipesViewModel(memoryStore: RecipeDataSource.shared, recipeStore: recipeStore, filterStrategy: FavoriteRecipesFilter())
         @StateObject var nav = AppNavigation.shared
         
         @StateObject var themeManager: ThemeManager = ThemeManager()
         // TODO: Test resizing here later.
         
-//        NavigationStack {
-//            FavoriteRecipesView(vm: vm)
-//                .environmentObject(themeManager)
-//                .environmentObject(nav)
-//        }
         NavigationStack {
-            RecipesView(vm: vm)
+            FavoriteRecipesView(vm: vm)
                 .environmentObject(themeManager)
                 .environmentObject(nav)
         }
+//        NavigationStack {
+//            RecipesView(vm: vm)
+//                .environmentObject(themeManager)
+//                .environmentObject(nav)
+//        }
     }
 }
 #endif

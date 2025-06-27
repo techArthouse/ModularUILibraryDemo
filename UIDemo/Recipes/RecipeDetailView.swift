@@ -27,7 +27,7 @@ struct RecipeDetailView: View {
         self.item = item
         self.onToggleFavorite = onToggleFavorite
         self.onSubmitNote = onSubmitNote
-        self.isDisabled = true // item.recipe.isInvalid
+        self.isDisabled = item.recipe.isInvalid
     }
 
     enum URLType: Identifiable {
@@ -55,34 +55,37 @@ struct RecipeDetailView: View {
                     .padding(.vertical)
                 
                 // MARK: — Image + Cuisine + favorite
-                ZStack {
+//                VStack {
                     ImageCard(image: $image, size: nil, title: item.name, description: item.cuisine)
+                        .overlay {
+                            if !isDisabled {
+                                HStack(alignment: .top) {
+                                    Spacer()
+                                    VStack {
+                                        ToggleIconButton(
+                                            iconOn: .system("star.fill"),
+                                            iconOff: .system("star"),
+                                            isDisabled: .constant(false),
+                                            isSelected: $item.isFavorite) {
+                                                
+                                                withAnimation {
+                                                    self.onToggleFavorite()
+                                                }
+                                            }
+                                            .asStandardIconButtonStyle(withColor: .yellow)
+                                            .accessibilityLabel(Text("ToggleIconButton: \(item.id.uuidString)"))
+                                            .padding(.trailing)
+                                            .padding(.top)
+                                        Spacer()
+                                    }
+                                }
+                            }
+                        }
                         .task {
                             image = try? await FetchCache.shared
                                 .getImageFor(url: item.smallImageURL!)
                         }
-                    if !isDisabled {
-                        HStack(alignment: .top) {
-                            Spacer()
-                            VStack {
-                                ToggleIconButton(
-                                    iconOn: .system("star.fill"),
-                                    iconOff: .system("star"),
-                                    isDisabled: .constant(false),
-                                    isSelected: $item.isFavorite) {
-                                        
-                                        withAnimation {
-                                            self.onToggleFavorite()
-                                        }
-                                    }
-                                    .asStandardIconButtonStyle(withColor: .yellow)
-                                    .accessibilityLabel(Text("ToggleIconButton: \(item.id.uuidString)"))
-                                    .padding(.trailing)
-                                Spacer()
-                            }
-                        }
-                    }
-                }
+//                }
                 .onDisabled(isDisabled: $isDisabled)
                 
                 // MARK: — Buttons
