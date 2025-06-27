@@ -15,6 +15,7 @@ class RecipeItem: ObservableObject, Identifiable {
     @Published var image: Image?
     @Published var isFavorite: Bool = false
     @Published var notes: [RecipeNote] = []
+    @Published var markedForRemoval = false
     let id: UUID
 
     init(recipe: Recipe) {
@@ -51,12 +52,5 @@ extension RecipeItem {
     
     var videoURL: URL? {
         recipe.youtubeVideoURL
-    }
-}
-
-@MainActor
-extension RecipeItem: Equatable {
-    static func == (lhs: RecipeItem, rhs: RecipeItem) -> Bool {
-        return lhs.id == rhs.id
     }
 }
