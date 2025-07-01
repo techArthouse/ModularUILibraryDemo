@@ -8,9 +8,8 @@
 import SwiftUI
 import UIKit
 
-
 @MainActor
-class FetchCache: ObservableObject {
+class FetchCache: ObservableObject, ImageCache {
     static let shared = FetchCache()
     
     private var memoryCache = [String: Image]() //  in‐memory cache
@@ -63,9 +62,9 @@ class FetchCache: ObservableObject {
     }
     
     private func initializeDiskMemory(with pathComponent: String) throws(FetchCacheError) {
-        guard pathComponent.isContiguousUTF8 else {
-            throw FetchCacheError.invalidPathForCacheURL(pathComponent)
-        }
+//        guard pathComponent.isContiguousUTF8 else {
+//            throw FetchCacheError.invalidPathForCacheURL(pathComponent)
+//        }
         
         let cacheDomainBaseURL = try baseDirectoryURLForDomainCache()
         let cacheDirectoryURL = cacheDomainBaseURL.appendingPathComponent(
@@ -231,3 +230,9 @@ extension FetchCache {
 }
 
 extension FetchCache: RecipeCacheProtocol { }
+
+@MainActor
+protocol ImageCache {
+  /// “Give me the image for that URL (small or large, your choice).”
+    func getImageFor(url networkSourceURL: URL) async throws(FetchCacheError) -> Image
+}

@@ -3,24 +3,24 @@ import ModularUILibrary
 
 struct ContentView: View {
     @StateObject private var vm: RecipesViewModel
-    @StateObject private var vm2: RecipesViewModel
+//    @StateObject private var vm2: RecipesViewModel
     
-    @StateObject private var recipeStore: RecipeStore = RecipeStore()
+    @StateObject private var recipeStore: RecipeStore
     @StateObject private var nav: AppNavigation = .shared
     @EnvironmentObject private var themeManager: ThemeManager
     
+    
     init() {
-        let store = RecipeStore()
+        let store = RecipeStore(memoryStore: RecipeMemoryDataSource.shared, fetchCache: FetchCache.shared)
         _recipeStore = StateObject(wrappedValue: store)
         _vm = StateObject(wrappedValue: RecipesViewModel(
-            memoryStore: RecipeDataSource.shared,
             recipeStore: store,
             filterStrategy: AllRecipesFilter()))
         
-        _vm2 = StateObject(wrappedValue: RecipesViewModel(
-            memoryStore: RecipeDataSource.shared,
-            recipeStore: store,
-            filterStrategy: FavoriteRecipesFilter()))
+//        _vm2 = StateObject(wrappedValue: RecipesViewModel(
+//            memoryStore: RecipeDataSource.shared,
+//            recipeStore: store,
+//            filterStrategy: FavoriteRecipesFilter()))
     }
 
     var body: some View {
@@ -31,17 +31,9 @@ struct ContentView: View {
                     .navigationDestination(for: Route.self) { recipe in
                         switch recipe {
                         case .recipeDetail(let uuid):
-                            if let item = vm.items.first(where: { $0.id == uuid }) {
-                                RecipeDetailView(item: item, onToggleFavorite: {
-                                    print("toggling")
-                                    withAnimation {
-                                        vm.toggleFavorite(recipeUUID: item.id)
-                                    }
-                                },
-                                                 onSubmitNote: { note in
-                                    vm.addNote(note, for: item.id)
-                                })
-                            }
+//                            if let item = vm.items.first(where: { $0.id == uuid }) {
+                            RecipeDetailView(recipeRowVM: RecipeRowViewModel(recipeId: uuid, recipeStore: vm.recipeStore, vm: vm))
+//                            }
                         default:
                             EmptyView()
                         }
@@ -50,32 +42,34 @@ struct ContentView: View {
             .tabItem {
                 Label("Home", systemImage: "house.fill")
             }
-            
-            // 2) Favorites tab—placeholder for now
-            NavigationStack(path: $nav.path2) {
-                FavoriteRecipesView(vm: vm2)
-                    .navigationDestination(for: Route.self) { recipe in
-                        switch recipe {
-                        case .recipeDetail(let uuid):
-                            if let item = vm.items.first(where: { $0.id == uuid }) {
-                                RecipeDetailView(item: item, onToggleFavorite: {
-                                    print("toggling")
-                                    withAnimation {
-                                        vm2.toggleFavorite(recipeUUID: item.id)
-                                    }
-                                },
-                                                 onSubmitNote: { note in
-                                    vm2.addNote(note, for: item.id)
-                                })
-                            }
-                        default:
-                            EmptyView()
-                        }
-                    }
+            .onAppear {
+                print("ok lets do it")
             }
-            .tabItem {
-                Label("Favorites", systemImage: "star.fill")
-            }
+//            // 2) Favorites tab—placeholder for now
+//            NavigationStack(path: $nav.path2) {
+//                FavoriteRecipesView(vm: vm2)
+//                    .navigationDestination(for: Route.self) { recipe in
+//                        switch recipe {
+//                        case .recipeDetail(let uuid):
+//                            if let item = vm.items.first(where: { $0.id == uuid }) {
+//                                RecipeDetailView(item: item, onToggleFavorite: {
+//                                    print("toggling")
+//                                    withAnimation {
+//                                        vm2.toggleFavorite(recipeUUID: item.id)
+//                                    }
+//                                },
+//                                                 onSubmitNote: { note in
+//                                    vm2.addNote(note, for: item.id)
+//                                })
+//                            }
+//                        default:
+//                            EmptyView()
+//                        }
+//                    }
+//            }
+//            .tabItem {
+//                Label("Favorites", systemImage: "star.fill")
+//            }
             
             // 3) Profile tab
             Text("Profile")

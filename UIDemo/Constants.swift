@@ -42,7 +42,7 @@ import ModularUILibrary
 // MARK: - Recipes Data Models
 
 protocol CanBeInvalid {
-    var isInvalid: Bool { get }
+    var isNotValid: Bool { get }
 }
 
 struct RecipeList: Decodable {
@@ -58,7 +58,7 @@ struct RecipeList: Decodable {
         var validRecipes = [Recipe]()
         
         for recipe in recipes {
-            if recipe.isInvalid {
+            if recipe.isNotValid {
                 invalidRecipes.append(recipe)
             } else {
                 validRecipes.append(recipe)
@@ -75,7 +75,7 @@ struct RecipeList: Decodable {
 }
 
 struct Recipe: Decodable, Identifiable, Hashable, CanBeInvalid {
-    var isInvalid: Bool {
+    var isNotValid: Bool {
         _id == nil || _cuisine == nil || _name == nil
     }
     

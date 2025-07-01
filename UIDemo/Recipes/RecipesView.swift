@@ -13,15 +13,10 @@ import ModularUILibrary
 struct RecipesView: View {
     @ObservedObject private var vm: RecipesViewModel
     @EnvironmentObject private var nav: AppNavigation
-    @State private var badRecipe: BadRecipe = BadRecipe()
+//    @EnvironmentObject private var memoryStore: RecipeMemoryDataSource
     @State private var feedbackMessage: String = ""
     @State private var feedbackOnLoading: FeedbackType = .stable
     @State private var totalItems = 0
-    
-    struct BadRecipe {
-        var isBad: Bool = false
-        var id: UUID?
-    }
     
     enum FeedbackType {
         case stable, error, emptyList
@@ -49,17 +44,8 @@ struct RecipesView: View {
                             .background(.black.opacity(0.5))
                         //                            .padding(.horizontal, 20)
                         ForEach(vm.items, id: \.id) { item in
-                            
-                            RecipeRowView(item: item, onToggleFavorite: {
-                                withAnimation {
-                                    vm.toggleFavorite(recipeUUID: item.id)
-                                }
-                            }) {
+                            RecipeRowView(viewmodel: RecipeRowViewModel(recipeId: item.id, recipeStore: vm.recipeStore, vm: vm)) {
                                 nav.path.append(.recipeDetail(item.id))
-                            }
-                            .onDisabled(isDisabled: .constant(item.recipe.isInvalid)) {
-                                badRecipe.id = item.id
-                                badRecipe.isBad.toggle()
                             }
                             //                            .shadow(radius: 1)
                             //                            .transition(.asymmetric(insertion: .opacity, removal: .move(edge: .trailing)))
@@ -183,22 +169,22 @@ struct RecipesView: View {
                 }
             )
         }
-        .alert(
-            "Failed to load recipe properly",
-            isPresented: $badRecipe.isBad,
-            presenting: badRecipe.id
-        ) { id in
-            CTAButtonStack(.horizontal()) {
-                CTAButton(title: "Dismiss") {
-                    
-                }
-                .asPrimaryButton()
-                CTAButton(title: "View Anyway") {
-                    nav.path.append(.recipeDetail(id))
-                }
-                .asDestructiveButton()
-            }
-        }
+//        .alert(
+//            "Failed to load recipe properly",
+//            isPresented: $badRecipe.isBad,
+//            presenting: badRecipe.id
+//        ) { id in
+//            CTAButtonStack(.horizontal()) {
+//                CTAButton(title: "Dismiss") {
+//                    
+//                }
+//                .asPrimaryButton()
+//                CTAButton(title: "View Anyway") {
+//                    nav.path.append(.recipeDetail(id))
+//                }
+//                .asDestructiveButton()
+//            }
+//        }
     }
     
     private var searchHeaderView: some View {
@@ -261,9 +247,9 @@ struct RecipesView_Previews: PreviewProvider {
     @State var strring = "https%3A//d3jbb8n5wk0qxi.cloudfront.net/photos/.../small.jpg"
     
     static var previews: some View {
-        @StateObject var recipeStore = RecipeStore()
-        @StateObject var vm = RecipesViewModel(memoryStore: RecipeDataSource.shared, recipeStore: recipeStore, filterStrategy: AllRecipesFilter())
-        @StateObject var vm2 = RecipesViewModel(memoryStore: RecipeDataSource.shared, recipeStore: recipeStore, filterStrategy: FavoriteRecipesFilter())
+        @StateObject var recipeStore = RecipeStore(memoryStore: RecipeMemoryDataSource.shared, fetchCache: MockFetchCache())
+        @StateObject var vm = RecipesViewModel(recipeStore: recipeStore, filterStrategy: AllRecipesFilter())
+//        @StateObject var vm2 = RecipesViewModel(memoryStore: RecipeDataSource.shared, recipeStore: recipeStore, filterStrategy: AllRecipesFilter())
         @StateObject var nav = AppNavigation.shared
         
         @StateObject var themeManager: ThemeManager = ThemeManager()
@@ -279,8 +265,16 @@ struct RecipesView_Previews: PreviewProvider {
             RecipesView(vm: vm)
                 .environmentObject(themeManager)
                 .environmentObject(nav)
+//                .environmentObject(RecipeMemoryDataSource.shared)
         }
     }
 }
 #endif
 
+class MockFetchCache: ImageCache {
+    func getImageFor(url networkSourceURL: URL) async throws(FetchCacheError) -> Image {
+        Image(systemName: "heart.fill")
+            .resizable()
+            .renderingMode(.template)
+    }
+}

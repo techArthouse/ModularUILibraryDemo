@@ -8,11 +8,11 @@
 import SwiftUI
 
 @MainActor
-final class RecipeDataSource: ObservableObject {
-    private(set) var memories: [UUID: RecipeMemory] = [:]
+final class RecipeMemoryDataSource: ObservableObject {
+    @Published private(set) var memories: [UUID: RecipeMemory] = [:]
     private let key = "RecipeMemories"
 
-    static let shared = RecipeDataSource()
+    static let shared = RecipeMemoryDataSource()
     
     private init() {
         load()
@@ -72,7 +72,7 @@ class RecipeMemory: Codable, ObservableObject {
     }
 }
 
-extension RecipeDataSource: RecipeMemoryStoreProtocol {
+extension RecipeMemoryDataSource: RecipeMemoryStoreProtocol {
     func isFavorite(for recipeUUID: UUID) -> Bool {
         getMemory(for: recipeUUID).isFavorite
     }

@@ -23,11 +23,10 @@ struct FavoriteRecipesView: View {
         List{
             if feedbackOnLoading.isStable {
                 Section(header: searchHeaderView) {
-                    ForEach($vm.items, id: \.id) { $item in
-                        FavoriteRecipeCard(item: $item.wrappedValue)
-                            .gesture(TapGesture().onEnded({
-                                nav.path2.append(.recipeDetail(item.id))
-                            }), including: .gesture)
+                    ForEach(vm.items, id: \.id) { item in
+                        FavoriteRecipeCard(viewmodel: FavoriteFecipeRowViewModel(recipeId: item.id, memoryStore: vm.recipeStore)) {
+                            nav.path2.append(.recipeDetail(item.id))
+                        }
                     }
                     .listRowSeparator(.hidden)
                     .listRowInsets(.init(top: 10, leading: 10, bottom: 10, trailing: 10))
@@ -162,29 +161,36 @@ struct FavoriteRecipesView: View {
 }
 
 struct FavoriteRecipeCard: View {
-    @ObservedObject var item: RecipeItem
+    @StateObject private var vm: FavoriteFecipeRowViewModel
     
     @State private var clickableLinks: ClickableLinks
-    let size: CGSize = .init(width: 150, height: 150)
+    let size: CGSize
+    let onTapRow: () -> Void
     
-    init(item: RecipeItem) {
-        self.item = item
-        self.clickableLinks = ClickableLinks(youtube: item.videoURL != nil ? true: false, source: item.sourceURL != nil ? true: false)
+    init(
+        viewmodel: FavoriteFecipeRowViewModel,
+        size: CGSize = .init(width: 150, height: 150),
+        onTapRow: @escaping () -> Void
+    ) {
+        _vm = StateObject(wrappedValue: viewmodel)
+        self.size = size
+        self.onTapRow = onTapRow
+        self.clickableLinks = ClickableLinks(favorite: viewmodel.isRecipFavorited, youtube: viewmodel.videoURL != nil ? true: false, source: viewmodel.sourceURL != nil ? true: false)
     }
     
     // `ClickableLinks evaluate if any optionable links are availabler per type (i.e. web, favorites...)
     struct ClickableLinks {
-        let favorite: Bool = false
+        var favorite: Bool
         var youtube: Bool
         var source: Bool
     }
     //    @Binding var image: Image
     var body: some View {
         //        ZStack {
-        Card(title: item.name ,hasBorder: true, hasShadow: true, leading: {
+        Card(title: vm.title, hasBorder: true, hasShadow: true, leading: {
             //                            Text("wowzers")
 //            VStack {
-            ImageCard(image: $item.image, size: size, hasBorder: true, hasShadow: false)
+            ImageCard(image: $vm.image, size: size, hasBorder: true, hasShadow: false)
 //                ImageContainer(image: $item.image, size: CGFloat(150.0))
 //                    .cornerRadius(12)
 //                    .shadow(radius: 4)
@@ -205,7 +211,7 @@ struct FavoriteRecipeCard: View {
                         .fontWeight(.semibold)
                     //                        }
                     //                        .padding(.top, 5)
-                    Text("Origin: \(item.cuisine)")
+                    Text("Origin: \(vm.description)")
                         .font(.robotoMono.regular(size: 12))
                         .italic()
                 }
@@ -232,8 +238,8 @@ struct FavoriteRecipeCard: View {
                 //                                Text("-\(note.text)")
                 ScrollView(.vertical, showsIndicators: false) {
                     VStack(alignment: .leading, spacing: 0) {
-                        ForEach(item.notes, id: \.id) { note in
-                            Text("- asfg adlkj ")
+                        ForEach(vm.notes, id: \.id) { note in
+                            Text("- \(note)")
                                 .font(.robotoMono.regular(size: 12))
                             //                                    .lineLimit(1)
                                 .lineLimit(2)
@@ -285,8 +291,9 @@ struct FavoriteRecipeCard: View {
                     ToggleIconButton(
                         iconOn: .system("star.fill"),
                         iconOff: .system("star"),
-                        isDisabled: .constant(false),
-                        isSelected: $item.isFavorite) {
+                        isDisabled: vm.isDisabledBinding,
+                        isSelected: $vm.isFavoriteBinding) {
+                            vm.toggleFavorite()
                         }
                         .asStandardIconButtonStyle(withColor: .yellow)
                     Text("Favorite")
@@ -327,36 +334,12 @@ struct FavoriteRecipeCard: View {
             .padding(EdgeInsets(top: 0, leading: 10, bottom: 5, trailing: 10))
             
         })
+        
+            .gesture(TapGesture().onEnded({
+                onTapRow()
+            }), including: .gesture)
         .task {
-            print("ran task")
-            do {
-                guard let url = item.smallImageURL else {
-                    throw URLError(.badURL)
-                }
-                guard item.image == nil else {
-                    
-                    print("not equal to nil")
-                    return
-                }
-                item.image = try await FetchCache.shared.getImageFor(url: url)
-            } catch let e as FetchCacheError {
-                switch e {
-                case .taskCancelled:
-                    // We anticipate to fall here with a CancellationError as that is what's thrown when `task
-                    // cancels a network call. but we wrap it in our own error.
-                    // In our case we scrolled and the row running the request disappeared.
-                    return
-                default:
-                    // Any other error that would suggest we are still viewing the row but an error occured
-                    print("Image load failed: \(e.localizedDescription)")
-                    item.image = Image("imageNotFound")
-                }
-            } catch let e {
-                // Any error we haven't anticipated
-                // (but it's not likely to happen since the methods define the throw type)
-                print("Error in row task. error: \(e.localizedDescription)")
-                item.image = Image("placeHolder")
-            }
+            await vm.loadImage(sizeSmall: false)
         }
 //        .onAppear {
 //            print("were appearing oh yeah")
