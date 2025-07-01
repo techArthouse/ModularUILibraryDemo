@@ -76,7 +76,7 @@ class RecipesViewModel: ObservableObject {
 //                }
                 
                 for item in strongSelf.items {
-                    withAnimation(.easeInOut(duration: 0.5)) {
+                    withAnimation(.easeInOut(duration: 0.3)) {
                         item.selected = filteredIds.contains(item.id)
                     }
                 }
@@ -145,7 +145,7 @@ class RecipesViewModel: ObservableObject {
         self.selectedCuisine = nil
         self.searchModel = nil
         
-        await FetchCache.shared.refresh()
+        await recipeStore.refresh()
         return try await loadRecipes()
     }
     
@@ -311,6 +311,7 @@ protocol RecipeService: AnyObject {
   /// Fetches the small or large image for the given recipe.
   func getImage(for id: UUID, smallImage: Bool) async throws(FetchCacheError) -> Image?
     func startCache(path: String) throws(FetchCacheError)
+    func refresh() async
 }
 
 //extension RecipeStore: RecipeService {
@@ -451,5 +452,8 @@ class RecipeStore: ObservableObject, RecipeService {
     }
     func startCache(path: String) throws(FetchCacheError) {
         try fetchCache.openCacheDirectoryWithPath(path: path)
+    }
+    func refresh() async {
+        await fetchCache.refresh()
     }
 }

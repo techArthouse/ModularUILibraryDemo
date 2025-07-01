@@ -290,6 +290,10 @@ struct RecipesView_Previews: PreviewProvider {
 #endif
 
 class MockFetchCache: ImageCache {
+    func refresh() async {
+        print("refreshing")
+    }
+    
     func openCacheDirectoryWithPath(path: String) throws(FetchCacheError) {
         print("mock fetchcache directory opened")
     }

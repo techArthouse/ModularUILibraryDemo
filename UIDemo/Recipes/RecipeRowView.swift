@@ -160,6 +160,10 @@ struct RecipeRowModel: Identifiable {
 }
 
 class MockRecipeService: RecipeService, ObservableObject {
+    func refresh() async {
+        print("refresshing")
+    }
+    
     func startCache(path: String) throws(FetchCacheError) {
         print("Mock started Cache")
     }

@@ -23,9 +23,9 @@ final class RecipeRowViewModel: ObservableObject {
         self.placeholderImage = placeholder ?? Image("placeHolder")
         self.image = self.placeholderImage
         self.recipeId = recipeId
-        self.recipeStore = vm?.recipeStore ?? recipeStore
+        self.recipeStore = recipeStore
 //        self.vm = vm
-        isFavoriteBinding = vm?.recipeStore.isFavorite(for: recipeId) ?? false
+        isFavoriteBinding = recipeStore.isFavorite(for: recipeId)
         
     }
     
