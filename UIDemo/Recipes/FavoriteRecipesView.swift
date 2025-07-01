@@ -24,8 +24,10 @@ struct FavoriteRecipesView: View {
             if feedbackOnLoading.isStable {
                 Section(header: searchHeaderView) {
                     ForEach(vm.items, id: \.id) { item in
-                        FavoriteRecipeCard(viewmodel: FavoriteFecipeRowViewModel(recipeId: item.id, memoryStore: vm.recipeStore)) {
-                            nav.path2.append(.recipeDetail(item.id))
+                        if item.isFavorite {
+                            FavoriteRecipeCard(viewmodel: FavoriteFecipeRowViewModel(recipeId: item.id, memoryStore: vm.recipeStore)) {
+                                nav.path2.append(.recipeDetail(item.id))
+                            }
                         }
                     }
                     .listRowSeparator(.hidden)
@@ -239,7 +241,7 @@ struct FavoriteRecipeCard: View {
                 ScrollView(.vertical, showsIndicators: false) {
                     VStack(alignment: .leading, spacing: 0) {
                         ForEach(vm.notes, id: \.id) { note in
-                            Text("- \(note)")
+                            Text("- \(note.text)")
                                 .font(.robotoMono.regular(size: 12))
                             //                                    .lineLimit(1)
                                 .lineLimit(2)

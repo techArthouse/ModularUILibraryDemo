@@ -3,7 +3,7 @@ import ModularUILibrary
 
 struct ContentView: View {
     @StateObject private var vm: RecipesViewModel
-//    @StateObject private var vm2: RecipesViewModel
+    @StateObject private var vm2: RecipesViewModel
     
     @StateObject private var recipeStore: RecipeStore
     @StateObject private var nav: AppNavigation = .shared
@@ -17,15 +17,14 @@ struct ContentView: View {
             recipeStore: store,
             filterStrategy: AllRecipesFilter()))
         
-//        _vm2 = StateObject(wrappedValue: RecipesViewModel(
-//            memoryStore: RecipeDataSource.shared,
-//            recipeStore: store,
-//            filterStrategy: FavoriteRecipesFilter()))
+        _vm2 = StateObject(wrappedValue: RecipesViewModel(
+            recipeStore: store,
+            filterStrategy: FavoriteRecipesFilter()))
     }
 
     var body: some View {
         TabView {
-            // 1) Home tab: recipe list + detail navigation
+            // 1) Home tab: recipe list
             NavigationStack(path: $nav.path) {
                 RecipesView(vm: vm)
                     .navigationDestination(for: Route.self) { recipe in
@@ -45,37 +44,27 @@ struct ContentView: View {
             .onAppear {
                 print("ok lets do it")
             }
-//            // 2) Favorites tab—placeholder for now
-//            NavigationStack(path: $nav.path2) {
-//                FavoriteRecipesView(vm: vm2)
-//                    .navigationDestination(for: Route.self) { recipe in
-//                        switch recipe {
-//                        case .recipeDetail(let uuid):
-//                            if let item = vm.items.first(where: { $0.id == uuid }) {
-//                                RecipeDetailView(item: item, onToggleFavorite: {
-//                                    print("toggling")
-//                                    withAnimation {
-//                                        vm2.toggleFavorite(recipeUUID: item.id)
-//                                    }
-//                                },
-//                                                 onSubmitNote: { note in
-//                                    vm2.addNote(note, for: item.id)
-//                                })
-//                            }
-//                        default:
-//                            EmptyView()
-//                        }
-//                    }
-//            }
-//            .tabItem {
-//                Label("Favorites", systemImage: "star.fill")
-//            }
+            // 2) Favorites tab: list of favorites
+            NavigationStack(path: $nav.path2) {
+                FavoriteRecipesView(vm: vm)
+                    .navigationDestination(for: Route.self) { recipe in
+                        switch recipe {
+                        case .recipeDetail(let uuid):
+                            RecipeDetailView(recipeRowVM: RecipeRowViewModel(recipeId: uuid, recipeStore: vm.recipeStore, vm: vm))
+                        default:
+                            EmptyView()
+                        }
+                    }
+            }
+            .tabItem {
+                Label("Favorites", systemImage: "star.fill")
+            }
             
-            // 3) Profile tab
-            Text("Profile")
-                .tabItem {
-                    Label("Profile", systemImage: "person.crop.circle")
-                }
+//            // 3) Profile tab
+//            Text("Profile")
+//                .tabItem {
+//                    Label("Profile", systemImage: "person.crop.circle")
+//                }
         }
         .environmentObject(nav)
     }

@@ -38,24 +38,40 @@ struct RecipesView: View {
         ScrollView(showsIndicators: false) {
             LazyVStack(spacing: 0) {
                 if feedbackOnLoading.isStable {
-                    Section(header: searchHeaderView) {
+//                    Section(header: searchHeaderView) {
+                    searchHeaderView
                         Divider()
                             .frame(height: 1)
                             .background(.black.opacity(0.5))
                         //                            .padding(.horizontal, 20)
                         ForEach(vm.items, id: \.id) { item in
-                            RecipeRowView(viewmodel: RecipeRowViewModel(recipeId: item.id, recipeStore: vm.recipeStore, vm: vm)) {
-                                nav.path.append(.recipeDetail(item.id))
-                            }
-                            //                            .shadow(radius: 1)
-                            //                            .transition(.asymmetric(insertion: .opacity, removal: .move(edge: .trailing)))
-                            
-                            Divider()
-                                .frame(height: 1)
-                                .background(.black.opacity(0.3))
-                                .padding(.horizontal, 15)
-                            //                        .listRowInsets(EdgeInsets())
-                            //                        .border(.black, width: 1)
+//                            withAnimation {
+//                                Group {
+                                    if item.selected {
+                                        RecipeRowView(viewmodel: RecipeRowViewModel(recipeId: item.id, recipeStore: vm.recipeStore, vm: vm)) {
+                                            nav.path.append(.recipeDetail(item.id))
+                                        }
+                                        .transition(.asymmetric(
+                                                     insertion: .opacity,
+                                                     removal: .move(edge: .trailing))
+                                        )
+//                                        .transition(.asymmetric(insertion: .slide, removal: .move(edge: .trailing)))
+                                        //                            .shadow(radius: 1)
+                                        //                                                            .animation(.linear, value: item.selected)
+                                        
+//                                        Divider()
+//                                            .frame(height: 1)
+//                                            .background(.black.opacity(0.3))
+//                                            .padding(.horizontal, 15)
+                                        //                        .listRowInsets(EdgeInsets())
+                                        //                        .border(.black, width: 1)
+                                    }
+                                    
+//                                }
+//                                .transition(.asymmetric(insertion: .opacity, removal: .move(edge: .trailing)))
+//                                .animation(.linear, value: item.selected)
+//                            }
+//                            .transition(.asymmetric(insertion: .opacity, removal: .move(edge: .trailing)))
                         }
                         .padding(.horizontal, 10)
                         .padding(.bottom, 3)
@@ -64,7 +80,7 @@ struct RecipesView: View {
                         //                        .listRowInsets(.init(top: 0, leading: 10, bottom: 0, trailing: 10))
                         //                    .listRowBackground(Color(.systemGray))
                         //                    .listRowSpacing(10)
-                    }
+//                    }
                     //                    .background(.white)
                     //                .listRowInsets(.init(top: 0, leading: 0, bottom: 0, trailing: 0))
                     //                .frame(maxWidth: .infinity)
@@ -90,6 +106,7 @@ struct RecipesView: View {
                 
             } //            .background(Color(.systemGray).opacity(0.6))
             .cornerRadius(4)
+            .animation(.easeInOut, value: vm.items.map(\.selected))
             //            .animation(.easeInOut, value: vm.items)
         }
 //        .animation(.linear, value: vm.items)
@@ -162,6 +179,7 @@ struct RecipesView: View {
                 onSelect: { cuisine in
                     vm.searchModel = nil
                     vm.selectedCuisine = cuisine
+                    vm.filterSend()
                 },
                 onReset: {
                     vm.searchModel = nil
@@ -272,6 +290,10 @@ struct RecipesView_Previews: PreviewProvider {
 #endif
 
 class MockFetchCache: ImageCache {
+    func openCacheDirectoryWithPath(path: String) throws(FetchCacheError) {
+        print("mock fetchcache directory opened")
+    }
+    
     func getImageFor(url networkSourceURL: URL) async throws(FetchCacheError) -> Image {
         Image(systemName: "heart.fill")
             .resizable()

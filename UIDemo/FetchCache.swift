@@ -235,4 +235,5 @@ extension FetchCache: RecipeCacheProtocol { }
 protocol ImageCache {
   /// “Give me the image for that URL (small or large, your choice).”
     func getImageFor(url networkSourceURL: URL) async throws(FetchCacheError) -> Image
+    func openCacheDirectoryWithPath(path: String) throws(FetchCacheError)
 }

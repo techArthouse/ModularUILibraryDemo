@@ -21,6 +21,8 @@ class RecipesViewModel: ObservableObject {
     private var cancellables = Set<AnyCancellable>()
     let filterTrigger = PassthroughSubject<Void, Never>()
     
+    let recipesLoadedTrigger = PassthroughSubject<Void, Never>()
+    
     // MARK: - Init
     
     init(recipeStore: RecipeStore, filterStrategy: RecipeFilterStrategy) {
@@ -28,14 +30,56 @@ class RecipesViewModel: ObservableObject {
         self.recipeStore = recipeStore
         self.filterStrategy = filterStrategy
         
-        filterTrigger
+        recipesLoadedTrigger
             .flatMap { _ in
                     recipeStore.itemsPublisher
                 
             }
             .receive(on: RunLoop.main)
             .sink { [weak self] newItems in
-                self?.items = newItems.map({ RecipeItem($0) })
+                
+                self?.items = newItems.map({ recipe in
+                    var recipeItem = RecipeItem(recipe)
+                    recipeItem.isFavorite = recipeStore.isFavorite(for: recipe.id)
+                    recipeItem.notes = recipeStore.notes(for: recipe.id)
+                    return recipeItem
+                }).filter({
+                    if filterStrategy.isFavorite {
+                        $0.isFavorite
+                    } else {
+                        true
+                    }
+                })
+            }
+            .store(in: &cancellables)
+        
+        filterTrigger
+            .flatMap { _ in
+                return Publishers.CombineLatest3(
+                    recipeStore.itemsPublisher,
+                    self.$selectedCuisine.debounce(for: .milliseconds(300), scheduler: RunLoop.main),
+                    self.$searchQuery.debounce(for: .milliseconds(300), scheduler: RunLoop.main)
+                )
+            }
+            .receive(on: RunLoop.main)
+            .sink { [weak self] items, cuisine, query in
+                guard let strongSelf = self else { return }
+                let filteredIds = strongSelf.filter(items, cuisine: cuisine, query: query)
+//                for (i, item) in strongSelf.items.enumerated() {
+//                  let shouldShow = filteredIds.contains(item.id)
+//                  // each row waits i * 50ms before animating
+////                  DispatchQueue.main.asyncAfter(deadline: .now() + Double(i) * 0.15) {
+//                    withAnimation(.easeInOut(duration: 0.3 + (Double(i) * 0.45))) {
+//                      item.selected = shouldShow
+//                    }
+////                  }
+//                }
+                
+                for item in strongSelf.items {
+                    withAnimation(.easeInOut(duration: 0.5)) {
+                        item.selected = filteredIds.contains(item.id)
+                    }
+                }
             }
             .store(in: &cancellables)
         
@@ -89,7 +133,7 @@ class RecipesViewModel: ObservableObject {
     /// the error
     func startCache(path: String) throws {
         print("Starting cache at path: \(path)")
-        try FetchCache.shared.openCacheDirectoryWithPath(path: path)
+        try recipeStore.startCache(path: path) // FetchCache.shared.openCacheDirectoryWithPath(path: path)
     }
     
     /// resets fields to reload again
@@ -114,9 +158,10 @@ class RecipesViewModel: ObservableObject {
     
     var cusineCategories: [String] {
         var categories = Set<String>()
-//        for item in items {
-//            categories.insert(item.cuisine)
-//        }
+        let itemIds = self.items.map { $0.id }
+        for item in recipeStore.allItems.filter({ itemIds.contains($0.id) }) {
+            categories.insert(item.cuisine)
+        }
         return Array(categories)
     }
 }
@@ -147,7 +192,8 @@ extension RecipesViewModel: RecipeDataConsumer {
         do {
             let recipes = try await Recipe.allFromJSON(using: .good) // Network call
             recipeStore.loadRecipes(recipes: recipes)
-            filterSend()
+//            filterSend()
+            recipesLoadedTrigger.send()
             return !recipes.isEmpty
         } catch let e as RecipeDecodeError {
             throw e
@@ -198,7 +244,14 @@ protocol RecipeFilterStrategy {
     func filter(_ items: [Recipe], cuisine: String?, query: String?) -> [UUID]
 }
 
+extension RecipeFilterStrategy {
+    var isFavorite: Bool {
+        (self as? FavoriteRecipesFilter) != nil
+    }
+}
+
 struct AllRecipesFilter: RecipeFilterStrategy {
+    
     func filter(_ items: [Recipe], cuisine: String?, query: String?) -> [UUID] {
         var filtered = items
         if let cuisine = cuisine {
@@ -212,18 +265,18 @@ struct AllRecipesFilter: RecipeFilterStrategy {
 }
 
 
-//struct FavoriteRecipesFilter: RecipeFilterStrategy {
-//    func filter(_ items: [Recipe], cuisine: String?, query: String?) -> [UUID] {
-//        var filtered = items.filter({ $0.isFavorite })
-//        if let cuisine = cuisine {
-//            filtered = filtered.filter { $0.cuisine.lowercased() == cuisine.lowercased() }
-//        }
-//        if let query = query, !query.isEmpty {
-//            filtered = filtered.filter { $0.name.localizedCaseInsensitiveContains(query) }
-//        }
-//        return filtered
-//    }
-//}
+struct FavoriteRecipesFilter: RecipeFilterStrategy {
+    func filter(_ items: [Recipe], cuisine: String?, query: String?) -> [UUID] {
+        var filtered = items // .filter({ $0.isFavorite })
+        if let cuisine = cuisine {
+            filtered = filtered.filter { $0.cuisine.lowercased() == cuisine.lowercased() }
+        }
+        if let query = query, !query.isEmpty {
+            filtered = filtered.filter { $0.name.localizedCaseInsensitiveContains(query) }
+        }
+        return filtered.map({$0.id})
+    }
+}
     
 @MainActor
 protocol Filterable {
@@ -257,6 +310,7 @@ protocol RecipeService: AnyObject {
   // MARK: – Image Loading
   /// Fetches the small or large image for the given recipe.
   func getImage(for id: UUID, smallImage: Bool) async throws(FetchCacheError) -> Image?
+    func startCache(path: String) throws(FetchCacheError)
 }
 
 //extension RecipeStore: RecipeService {
@@ -394,5 +448,8 @@ class RecipeStore: ObservableObject, RecipeService {
             }
             return try await fetchCache.getImageFor(url: url)
         }
+    }
+    func startCache(path: String) throws(FetchCacheError) {
+        try fetchCache.openCacheDirectoryWithPath(path: path)
     }
 }

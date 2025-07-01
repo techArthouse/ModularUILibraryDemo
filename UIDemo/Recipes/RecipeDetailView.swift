@@ -105,71 +105,71 @@ struct RecipeDetailView: View {
                 }
                 
                 // MARK: — Notes Section
-//                VStack(alignment: .leading, spacing: 12) {
-//                    VStack {
-//                        Text("Notes")
-//                            .font(.headline)
-//                            .frame(maxWidth: .infinity, alignment: .center)
-//                    }
-//                    .padding(.vertical, 5)
-//                    .background( isAddingNote ? .white : .yellow.opacity(0.4))
-//                    
-//                    ForEach(vm.notes) { note in
-//                        Text(note.text)
-//                            .padding(.leading, 10)
-//                            .cornerRadius(8)
-//                            .transition(.opacity)
-//                        Divider()
-//                            .frame(height: 1)
-//                            .background(.black.opacity(0.5))
-//                    }
-//                    
-//                    if isAddingNote {
-//                        TextField("Write your note...", text: $newNoteText)
-//                            .padding(10)
-//                            .background(Color.yellow.opacity(0.4))
-//                            .cornerRadius(8)
-//                            .overlay(RoundedRectangle(cornerRadius: 8).stroke(Color.gray.opacity(0.6)))
-//                            .transition(.move(edge: .bottom).combined(with: .opacity)).onSubmit {
-//                                if !newNoteText.trimmingCharacters(in: .whitespaces).isEmpty {
-//                                    vm.addNote(newNoteText.trimmingCharacters(in: .whitespaces))
-//                                    withAnimation {
-//                                        isAddingNote = false
-//                                        newNoteText = ""
-//                                    }
-//                                }
-//                            }
-//                    }
-//                    else {
-//                        if vm.isRecipFavorited {
-//                            CTAButton(title: "Add Note") {
-//                                withAnimation {
-//                                    isAddingNote = true
-//                                }
-//                            }
-//                            .asBorderlessButton(padding: .manualPadding)
-//                            .transition(.scale.combined(with: .opacity))
-//                        } else {
-//                            CTAButton(title: "Add Recipe to Favorites to Add Notes") {
-//                                withAnimation {
-//                                    self.onToggleFavorite()
-//                                }
-//                            }
-//                            .asBorderlessButton(padding: .manualPadding)
-//                            .padding(.horizontal, 10)
-//                            .transition(.scale.combined(with: .opacity))
-//                        }
-//                    }
-//                }
-//                .frame(maxWidth: .infinity, maxHeight: .infinity)
-//                .clipShape(RoundedRectangle(cornerRadius: 16))
-//                .background(
-//                    RoundedRectangle(cornerRadius: 16)
-//                        .fill(Color.white)
-//                        .shadow(color: .black.opacity(0.1), radius: 8, x: 0, y: -1) // lifts up
-//                )
-//                .padding()
-//                .onDisabled(isDisabled: vm.isDisabledBinding)
+                VStack(alignment: .leading, spacing: 12) {
+                    VStack {
+                        Text("Notes")
+                            .font(.headline)
+                            .frame(maxWidth: .infinity, alignment: .center)
+                    }
+                    .padding(.vertical, 5)
+                    .background( isAddingNote ? .white : .yellow.opacity(0.4))
+                    
+                    ForEach(vm.notes) { note in
+                        Text(note.text)
+                            .padding(.leading, 10)
+                            .cornerRadius(8)
+                            .transition(.opacity)
+                        Divider()
+                            .frame(height: 1)
+                            .background(.black.opacity(0.5))
+                    }
+                    
+                    if isAddingNote {
+                        TextField("Write your note...", text: $newNoteText)
+                            .padding(10)
+                            .background(Color.yellow.opacity(0.4))
+                            .cornerRadius(8)
+                            .overlay(RoundedRectangle(cornerRadius: 8).stroke(Color.gray.opacity(0.6)))
+                            .transition(.move(edge: .bottom).combined(with: .opacity)).onSubmit {
+                                if !newNoteText.trimmingCharacters(in: .whitespaces).isEmpty {
+                                    vm.addNote(newNoteText.trimmingCharacters(in: .whitespaces))
+                                    withAnimation {
+                                        isAddingNote = false
+                                        newNoteText = ""
+                                    }
+                                }
+                            }
+                    }
+                    else {
+                        if vm.isRecipFavorited {
+                            CTAButton(title: "Add Note") {
+                                withAnimation {
+                                    isAddingNote = true
+                                }
+                            }
+                            .asBorderlessButton(padding: .manualPadding)
+                            .transition(.scale.combined(with: .opacity))
+                        } else {
+                            CTAButton(title: "Add Recipe to Favorites to Add Notes") {
+                                withAnimation {
+                                    vm.toggleFavorite()
+                                }
+                            }
+                            .asBorderlessButton(padding: .manualPadding)
+                            .padding(.horizontal, 10)
+                            .transition(.scale.combined(with: .opacity))
+                        }
+                    }
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .clipShape(RoundedRectangle(cornerRadius: 16))
+                .background(
+                    RoundedRectangle(cornerRadius: 16)
+                        .fill(Color.white)
+                        .shadow(color: .black.opacity(0.1), radius: 8, x: 0, y: -1) // lifts up
+                )
+                .padding()
+                .onDisabled(isDisabled: vm.isDisabledBinding)
             }
         }
         .navigationTitle(vm.title)
