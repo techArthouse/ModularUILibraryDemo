@@ -13,6 +13,7 @@ import ModularUILibrary
 struct RecipesView: View {
     @ObservedObject private var vm: RecipesViewModel
     @EnvironmentObject private var nav: AppNavigation
+    @EnvironmentObject private var imageCache: FetchCache
 //    @EnvironmentObject private var memoryStore: RecipeMemoryDataSource
     @State private var feedbackMessage: String = ""
     @State private var feedbackOnLoading: FeedbackType = .stable
@@ -48,7 +49,7 @@ struct RecipesView: View {
 //                            withAnimation {
 //                                Group {
                                     if item.selected {
-                                        RecipeRowView(viewmodel: RecipeRowViewModel(recipeId: item.id, recipeStore: vm.recipeStore, vm: vm)) {
+                                        RecipeRowView(viewmodel: RecipeRowViewModel(recipeId: item.id, recipeStore: vm.recipeStore)) {
                                             nav.path.append(.recipeDetail(item.id))
                                         }
                                         .transition(.asymmetric(
@@ -283,6 +284,7 @@ struct RecipesView_Previews: PreviewProvider {
             RecipesView(vm: vm)
                 .environmentObject(themeManager)
                 .environmentObject(nav)
+                .environmentObject(FetchCache())
 //                .environmentObject(RecipeMemoryDataSource.shared)
         }
     }
@@ -290,17 +292,18 @@ struct RecipesView_Previews: PreviewProvider {
 #endif
 
 class MockFetchCache: ImageCache {
+    func loadImage(for url: URL) async -> Result<Image, FetchCacheError> {
+        .success(
+        Image(systemName: "heart.fill")
+            .resizable()
+            .renderingMode(.template))
+    }
+    
     func refresh() async {
         print("refreshing")
     }
     
     func openCacheDirectoryWithPath(path: String) throws(FetchCacheError) {
         print("mock fetchcache directory opened")
-    }
-    
-    func getImageFor(url networkSourceURL: URL) async throws(FetchCacheError) -> Image {
-        Image(systemName: "heart.fill")
-            .resizable()
-            .renderingMode(.template)
     }
 }

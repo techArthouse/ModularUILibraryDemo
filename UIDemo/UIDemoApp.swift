@@ -16,6 +16,7 @@ struct UIDemoApp: App {
         WindowGroup {
             ContentView()
                 .environmentObject(themeManager)
+                .environmentObject(FetchCache())
         }
     }
 }

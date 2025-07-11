@@ -26,15 +26,15 @@ struct RecipeRowView: View {
     @EnvironmentObject private var nav: AppNavigation
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
         
-        init(
-            viewmodel: RecipeRowViewModel,
-            config: FeatureItemConfig = .init(rounded: true, withBorder: false),
-            onTapRow: @escaping () -> Void
-        ) {
-            _vm = StateObject(wrappedValue: viewmodel)
-            self.config = config
-            self.onTapRow = onTapRow
-        }
+    init(
+        viewmodel: RecipeRowViewModel,
+        config: FeatureItemConfig = .init(rounded: true, withBorder: false),
+        onTapRow: @escaping () -> Void
+    ) {
+        _vm = StateObject(wrappedValue: viewmodel)
+        self.config = config
+        self.onTapRow = onTapRow
+    }
     
     var body: some View {
         
@@ -48,7 +48,7 @@ struct RecipeRowView: View {
                 onTapRow()
             },
             leading: {
-                ImageContainer(image: $vm.image, size: dynamicTypeSize.photoDimension, accessibilityId: vm.recipeId.uuidString)
+                ImageContainer(image: vm.image, size: dynamicTypeSize.photoDimension, accessibilityId: vm.recipeId.uuidString)
                     .equatable()
                     .border(.black.opacity(0.5), width: 1)
                     .onAppear{
@@ -72,15 +72,7 @@ struct RecipeRowView: View {
             badRecipe.toggle()
         }
         .task {
-//            self.isSelected = vm.isFavoriteBinding.wrappedValue
-            await vm.loadImage(sizeSmall: true)
-        }
-        .onAppear {
-            print("were appearing oh yeah")
-            vm.onAppear()
-//            // By having this here we can always show a progressview whenever
-//            // we return to this item cell.
-//            item.image = nil
+            await vm.load()
         }
         .alert(
             "Failed to load recipe properly",
@@ -120,7 +112,7 @@ struct RecipeRowView_Previews: PreviewProvider {
         recipeStore.loadRecipes(recipes: [goodRecipe])
         
         return VStack {
-            RecipeRowView(viewmodel: RecipeRowViewModel(placeholder: Image(systemName: "photo"), recipeId: goodItem.id, recipeStore: recipeStore)) {
+            RecipeRowView(viewmodel: RecipeRowViewModel(recipeId: goodItem.id, recipeStore: recipeStore)) {
                 print("Tapped row with goodItem")
             }
 //            .task {

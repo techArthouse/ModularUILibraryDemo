@@ -192,7 +192,7 @@ struct FavoriteRecipeCard: View {
         Card(title: vm.title, hasBorder: true, hasShadow: true, leading: {
             //                            Text("wowzers")
 //            VStack {
-            ImageCard(image: $vm.image, size: size, hasBorder: true, hasShadow: false)
+            ImageCard(image: vm.image, size: size, hasBorder: true, hasShadow: false)
 //                ImageContainer(image: $item.image, size: CGFloat(150.0))
 //                    .cornerRadius(12)
 //                    .shadow(radius: 4)

@@ -51,7 +51,7 @@ struct RecipeDetailView: View {
                 
                 // MARK: — Image + Cuisine + favorite
 //                VStack {
-                ImageCard(image: $vm.image, size: nil, title: vm.title, description: vm.description)
+                ImageCard(image: vm.image, size: nil, title: vm.title, description: vm.description)
                         .overlay {
                             if !vm.isDisabledBinding.wrappedValue {
                                 HStack(alignment: .top) {
@@ -76,7 +76,7 @@ struct RecipeDetailView: View {
                             }
                         }
                         .task {
-                            await vm.loadImage(sizeSmall: false)
+                            await vm.load()
                         }
 //                }
                         .onDisabled(isDisabled: vm.isDisabledBinding)

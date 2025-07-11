@@ -10,14 +10,12 @@ import UIKit
 
 @MainActor
 class FetchCache: ObservableObject, ImageCache {
-    static let shared = FetchCache()
-    
     private var memoryCache = [String: Image]() //  in‐memory cache
     private var diskMemoryURL: URL? // directory on disk via URL
     /// Track when each URL was last fetched (in-memory or on-disk).
     private var lastFetchDates = [String: Date]()
     
-    private init() { }
+    init() { }
     
     /// Helper Method to open the cacheDirectory for FetchCache. If cache already has an open directory then error is thrown.
     func openCacheDirectoryWithPath(path: String) throws(FetchCacheError) {
@@ -98,45 +96,77 @@ class FetchCache: ObservableObject, ImageCache {
     }
     
     /// returns image from source or
-    func getImageFor(url networkSourceURL: URL) async throws(FetchCacheError) -> Image {
+    func loadImage(for url: URL) async -> Result<Image, FetchCacheError> {
         do {
-//            try? await Task.sleep(for: .seconds(3)) // for testing purposes to visually see the loads
-            
-            if let image = checkLocalMemory(using: networkSourceURL) { // if in local memory then we've already saved to disk
-                return image
-            } else {
-                let localFileURL = try generateElementURLFromDiskMemoryURL(using: networkSourceURL) // the url tied to this remote source and used as key to store and lookup
-                if let image = try await checkDiskMemory(localFileURL: localFileURL) { // if in disk, lets load to localmemory
-                    memoryCache[networkSourceURL.absoluteString] = image // at to mem
-                    return image
-                } else { // if nil then lets ask network for new image and save (implicity overwrite source in disk if exists)
-                    let image = try await requestImageFromNetwork(at: networkSourceURL, saveTo: localFileURL, using: .get)
-                    memoryCache[networkSourceURL.absoluteString] = image
-                    return image
-                }
+            if let image = checkLocalMemory(using: url) {
+                return .success(image)
+            }
+
+            let localFileURL = try generateElementURLFromDiskMemoryURL(using: url)
+
+            if let image = try await checkDiskMemory(localFileURL: localFileURL) {
+                memoryCache[url.absoluteString] = image
+                return .success(image)
+            }
+
+            let image = try await requestImageFromNetwork(at: url, saveTo: localFileURL)
+            memoryCache[url.absoluteString] = image
+            return .success(image)
+
+        } catch let error as FetchCacheError {
+            switch error {
+            case .failedToWriteImageDataToDisk(let image, _):
+                memoryCache[url.absoluteString] = image
+                return .success(image)
+            default:
+                return .failure(error)
             }
         } catch {
-            // if we ould not retrieve an image then we'll log whatever the error is and default to callers logic where no image can get retrieved
-            print("\(error.localizedDescription)")
-            
-            switch error {
-            case .failedToWriteImageDataToDisk(image: let image, _):
-                // still save it to cache for curret instance.
-                memoryCache[networkSourceURL.absoluteString] = image
-                return image
-            case .cachedDirectoryURLisNil: // this error might be good to restart from the client since it's the base requirement to not have non existant cache
-                throw FetchCacheError.failedToFetchImageFrom(source: networkSourceURL, withError: error)
-            case .failedToAppendEncodedRemoteURLToCacheDirectoryURL: // this one might be worth catching at client so they can validate they are passing correct string
-                throw FetchCacheError.failedToFetchImageFrom(source: networkSourceURL, withError: error)
-            case .failedToGetDataFromContentsOf, .failedToConvertDataBlobToImage, .failedToGetImageFromNetworkRequest: // these are fatal since process seems corrupted
-                throw FetchCacheError.failedToFetchImageFrom(source: networkSourceURL, withError: error)
-            case .taskCancelled:
-                throw FetchCacheError.taskCancelled
-            default:
-                throw FetchCacheError.failedToFetchImageFrom(source: networkSourceURL, withError: error) // unless i expanbd on the previous cases maybe they should default to throw original error only .failedToWriteImageDataToDisk would still give us an image we can send back.
-            }
+            return .failure(.failedToFetchImageFrom(source: url, withError: error))
         }
     }
+
+//
+//    /// returns image from source or
+//    func getImageFor(url networkSourceURL: URL) async throws(FetchCacheError) -> Image {
+//        do {
+////            try? await Task.sleep(for: .seconds(3)) // for testing purposes to visually see the loads
+//            
+//            if let image = checkLocalMemory(using: networkSourceURL) { // if in local memory then we've already saved to disk
+//                return image
+//            } else {
+//                let localFileURL = try generateElementURLFromDiskMemoryURL(using: networkSourceURL) // the url tied to this remote source and used as key to store and lookup
+//                if let image = try await checkDiskMemory(localFileURL: localFileURL) { // if in disk, lets load to localmemory
+//                    memoryCache[networkSourceURL.absoluteString] = image // at to mem
+//                    return image
+//                } else { // if nil then lets ask network for new image and save (implicity overwrite source in disk if exists)
+//                    let image = try await requestImageFromNetwork(at: networkSourceURL, saveTo: localFileURL, using: .get)
+//                    memoryCache[networkSourceURL.absoluteString] = image
+//                    return image
+//                }
+//            }
+//        } catch {
+//            // if we ould not retrieve an image then we'll log whatever the error is and default to callers logic where no image can get retrieved
+//            print("\(error.localizedDescription)")
+//            
+//            switch error {
+//            case .failedToWriteImageDataToDisk(image: let image, _):
+//                // still save it to cache for curret instance.
+//                memoryCache[networkSourceURL.absoluteString] = image
+//                return image
+//            case .cachedDirectoryURLisNil: // this error might be good to restart from the client since it's the base requirement to not have non existant cache
+//                throw FetchCacheError.failedToFetchImageFrom(source: networkSourceURL, withError: error)
+//            case .failedToAppendEncodedRemoteURLToCacheDirectoryURL: // this one might be worth catching at client so they can validate they are passing correct string
+//                throw FetchCacheError.failedToFetchImageFrom(source: networkSourceURL, withError: error)
+//            case .failedToGetDataFromContentsOf, .failedToConvertDataBlobToImage, .failedToGetImageFromNetworkRequest: // these are fatal since process seems corrupted
+//                throw FetchCacheError.failedToFetchImageFrom(source: networkSourceURL, withError: error)
+//            case .taskCancelled:
+//                throw FetchCacheError.taskCancelled
+//            default:
+//                throw FetchCacheError.failedToFetchImageFrom(source: networkSourceURL, withError: error) // unless i expanbd on the previous cases maybe they should default to throw original error only .failedToWriteImageDataToDisk would still give us an image we can send back.
+//            }
+//        }
+//    }
     
     /// throws FetchCacheError if failure, otherwise returns image found
     private func requestImageFromNetwork(
@@ -196,7 +226,7 @@ class FetchCache: ObservableObject, ImageCache {
     private func deleteDiskMemory() {
         guard let diskMemoryURL = diskMemoryURL else { return }
         do {
-            try FileManager.default.removeItem(at: diskMemoryURL) // delete system app mem
+            try FileManager.default.removeItem(at: diskMemoryURL)
             self.diskMemoryURL = nil
         } catch {
             print(error.localizedDescription)
@@ -234,7 +264,7 @@ extension FetchCache: RecipeCacheProtocol { }
 @MainActor
 protocol ImageCache {
   /// “Give me the image for that URL (small or large, your choice).”
-    func getImageFor(url networkSourceURL: URL) async throws(FetchCacheError) -> Image
+    func loadImage(for url: URL) async -> Result<Image, FetchCacheError>
     func openCacheDirectoryWithPath(path: String) throws(FetchCacheError)
     func refresh() async
 }
