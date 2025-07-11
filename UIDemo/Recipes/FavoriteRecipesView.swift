@@ -25,7 +25,7 @@ struct FavoriteRecipesView: View {
                 Section(header: searchHeaderView) {
                     ForEach(vm.items, id: \.id) { item in
                         if item.isFavorite {
-                            FavoriteRecipeCard(viewmodel: FavoriteFecipeRowViewModel(recipeId: item.id, memoryStore: vm.recipeStore)) {
+                            FavoriteRecipeCard(viewmodel: RecipeRowViewModel(recipeId: item.id, recipeStore: vm.recipeStore)) {
                                 nav.path2.append(.recipeDetail(item.id))
                             }
                         }
@@ -163,14 +163,14 @@ struct FavoriteRecipesView: View {
 }
 
 struct FavoriteRecipeCard: View {
-    @StateObject private var vm: FavoriteFecipeRowViewModel
+    @StateObject private var vm: RecipeRowViewModel
     
     @State private var clickableLinks: ClickableLinks
     let size: CGSize
     let onTapRow: () -> Void
     
     init(
-        viewmodel: FavoriteFecipeRowViewModel,
+        viewmodel: RecipeRowViewModel,
         size: CGSize = .init(width: 150, height: 150),
         onTapRow: @escaping () -> Void
     ) {
@@ -341,7 +341,7 @@ struct FavoriteRecipeCard: View {
                 onTapRow()
             }), including: .gesture)
         .task {
-            await vm.loadImage(sizeSmall: false)
+            await vm.load()
         }
 //        .onAppear {
 //            print("were appearing oh yeah")
