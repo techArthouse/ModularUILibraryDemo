@@ -63,9 +63,6 @@ struct RecipeDetailView: View {
                                             iconOff: .system("star"),
                                             isDisabled: vm.isDisabledBinding,
                                             isSelected: vm.isFavoriteBinding) {
-                                                withAnimation {
-                                                    vm.toggleFavorite()
-                                                }
                                             }
                                             .asStandardIconButtonStyle(withColor: .yellow)
                                             .accessibilityLabel(Text("ToggleIconButton: \(vm.accessibilityId)"))

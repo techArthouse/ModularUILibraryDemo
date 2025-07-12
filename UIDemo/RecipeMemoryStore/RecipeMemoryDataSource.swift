@@ -56,22 +56,6 @@ final class RecipeMemoryDataSource: ObservableObject {
     }
 }
 
-struct RecipeNote: Identifiable, Codable {
-    let id: UUID
-    let text: String
-    let date: Date
-}
-
-class RecipeMemory: Codable, ObservableObject {
-    var isFavorite: Bool
-    var notes: [RecipeNote]
-    
-    init(isFavorite: Bool, notes: [RecipeNote]) {
-        self.isFavorite = isFavorite
-        self.notes = notes
-    }
-}
-
 extension RecipeMemoryDataSource: RecipeMemoryStoreProtocol {
     func isFavorite(for recipeUUID: UUID) -> Bool {
         getMemory(for: recipeUUID).isFavorite
@@ -108,5 +92,21 @@ extension RecipeMemoryDataSource: RecipeMemoryStoreProtocol {
             memories[recipeUUID] = RecipeMemory(isFavorite: true, notes: [])
         }
         save()
+    }
+}
+
+struct RecipeNote: Identifiable, Codable {
+    let id: UUID
+    let text: String
+    let date: Date
+}
+
+class RecipeMemory: Codable, ObservableObject {
+    var isFavorite: Bool
+    var notes: [RecipeNote]
+    
+    init(isFavorite: Bool, notes: [RecipeNote]) {
+        self.isFavorite = isFavorite
+        self.notes = notes
     }
 }

@@ -19,7 +19,6 @@
 		71E7CD342DEA16C90075C883 /* recipesGood.json in Resources */ = {isa = PBXBuildFile; fileRef = 71E7CD332DEA16C90075C883 /* recipesGood.json */; };
 		71E7CD362DEA16EC0075C883 /* recipesEmpty.json in Resources */ = {isa = PBXBuildFile; fileRef = 71E7CD352DEA16EC0075C883 /* recipesEmpty.json */; };
 		71E7CD382DEA17060075C883 /* recipesMalformed.json in Resources */ = {isa = PBXBuildFile; fileRef = 71E7CD372DEA17060075C883 /* recipesMalformed.json */; };
-		71E7CD3A2DEA179C0075C883 /* FetchCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = 71E7CD392DEA179C0075C883 /* FetchCache.swift */; };
 		71E7CD3E2DEA70EB0075C883 /* NetworkService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 71E7CD3D2DEA70EB0075C883 /* NetworkService.swift */; };
 		71E7CD7A2DFBA5740075C883 /* Modifiers.swift in Sources */ = {isa = PBXBuildFile; fileRef = 71E7CD792DFBA5740075C883 /* Modifiers.swift */; };
 		71E7CD7C2DFBA5C00075C883 /* CustomErrors.swift in Sources */ = {isa = PBXBuildFile; fileRef = 71E7CD7B2DFBA5C00075C883 /* CustomErrors.swift */; };
@@ -39,7 +38,6 @@
 		71E7CD332DEA16C90075C883 /* recipesGood.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = recipesGood.json; sourceTree = "<group>"; };
 		71E7CD352DEA16EC0075C883 /* recipesEmpty.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = recipesEmpty.json; sourceTree = "<group>"; };
 		71E7CD372DEA17060075C883 /* recipesMalformed.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = recipesMalformed.json; sourceTree = "<group>"; };
-		71E7CD392DEA179C0075C883 /* FetchCache.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FetchCache.swift; sourceTree = "<group>"; };
 		71E7CD3D2DEA70EB0075C883 /* NetworkService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NetworkService.swift; sourceTree = "<group>"; };
 		71E7CD792DFBA5740075C883 /* Modifiers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Modifiers.swift; sourceTree = "<group>"; };
 		71E7CD7B2DFBA5C00075C883 /* CustomErrors.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomErrors.swift; sourceTree = "<group>"; };
@@ -97,7 +95,6 @@
 				71E7CD7B2DFBA5C00075C883 /* CustomErrors.swift */,
 				71E7CD792DFBA5740075C883 /* Modifiers.swift */,
 				71E7CD3D2DEA70EB0075C883 /* NetworkService.swift */,
-				71E7CD392DEA179C0075C883 /* FetchCache.swift */,
 				71E7CD322DEA16A50075C883 /* Resources */,
 				71E7CD302DEA15CC0075C883 /* Constants.swift */,
 				71E7CD2E2DEA13C10075C883 /* LandingView.swift */,
@@ -222,7 +219,6 @@
 				71D5EE092B8D407D004DE667 /* UIDemoApp.swift in Sources */,
 				71E7CD312DEA15CC0075C883 /* Constants.swift in Sources */,
 				71E7CD7A2DFBA5740075C883 /* Modifiers.swift in Sources */,
-				71E7CD3A2DEA179C0075C883 /* FetchCache.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

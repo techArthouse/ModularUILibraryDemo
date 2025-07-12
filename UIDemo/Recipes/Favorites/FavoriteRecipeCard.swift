@@ -95,7 +95,6 @@ struct FavoriteRecipeCard: View {
                             iconOff: .system("star"),
                             isDisabled: vm.isDisabledBinding,
                             isSelected: vm.isFavoriteBinding) {
-                                vm.toggleFavorite()
                             }
                             .asStandardIconButtonStyle(withColor: .yellow)
                         Text("Favorite")

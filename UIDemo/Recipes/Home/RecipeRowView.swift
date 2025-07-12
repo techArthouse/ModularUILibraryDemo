@@ -14,14 +14,6 @@ struct RecipeRowView: View {
     @StateObject private var vm: RecipeRowViewModel
     let config: FeatureItemConfig
     @State private var badRecipe: Bool = false
-//    @State private var isSelected = false
-    
-    struct BadRecipe {
-        var isBad: Bool = false
-        var id: UUID?
-    }
-    // Suppose the parent passed us a Binding<RecipeItem>:
-//    @ObservedObject var item: RecipeItem
     let onTapRow: () -> Void
     @EnvironmentObject private var nav: AppNavigation
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
@@ -64,8 +56,6 @@ struct RecipeRowView: View {
                         iconOff: .system("star"),
                         isDisabled: vm.isDisabledBinding, // .constant(false),
                         isSelected: vm.isFavoriteBinding) {
-                            vm.toggleFavorite()
-                            //                        vm.isFavoriteBinding.wrappedValue = true
                         }
                         .asStandardIconButtonStyle(withColor: .yellow)
                         .accessibilityLabel(Text("ToggleIconButton: \(vm.recipeId.uuidString)"))
@@ -157,7 +147,6 @@ class MockFetchCacheGOODandBAD: ImageCache {
         print("mock fetchcache directory opened")
     }
 }
-#endif
 
 class MockRecipeMemoryDataSource: RecipeMemoryStoreProtocol, ObservableObject {
     @Published var memories: [UUID : RecipeMemory] = [:]
@@ -205,3 +194,5 @@ class MockRecipeMemoryDataSource: RecipeMemoryStoreProtocol, ObservableObject {
         }
     }
 }
+
+#endif
