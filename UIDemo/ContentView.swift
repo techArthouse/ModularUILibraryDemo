@@ -19,7 +19,7 @@ struct ContentView: View {
         
             _favoritesVM = StateObject(wrappedValue: RecipesViewModel(
                 recipeStore: recipeStore,
-                filterStrategy: AllRecipesFilter()))
+                filterStrategy: FavoriteRecipesFilter()))
     }
 
     var body: some View {

@@ -166,7 +166,7 @@ class MockRecipeMemoryDataSource: RecipeMemoryStoreProtocol, ObservableObject {
         if let res = memories[recipeUUID] {
             return res
         } else {
-            return RecipeMemory(isFavorite: false, notes: [])
+            return RecipeMemory(isFavorite: true, notes: [])
         }
     }
     

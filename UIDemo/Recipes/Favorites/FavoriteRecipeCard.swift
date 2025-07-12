@@ -38,98 +38,94 @@ struct FavoriteRecipeCard: View {
     }
     
     var body: some View {
-        if vm.isRecipFavorited {
-            Card(
-                title: vm.title,
-                hasBorder: true,
-                hasShadow: true,
-                leading: {
-                    ImageCard(image: vm.image, size: size, hasBorder: true, hasShadow: false)
-                },
-                trailing: {
-                    // MARK: — Notes Section
-                    VStack(alignment: .center, spacing: 0) {
-                        VStack {
-                            Text("Notes")
-                                .font(.subheadline)
-                                .fontWeight(.semibold)
-                            
-                            Text("Origin: \(vm.description)")
-                                .font(.robotoMono.regular(size: 12))
-                                .italic()
-                        }
-                        .frame(maxWidth: .infinity, alignment: .center)
-                        .overlay(alignment: .bottom) {
-                            Divider()
-                                .frame(height: 0.5)
-                                .background(.black.opacity(0.5))
-                                .padding(.horizontal, 10)
-                        }
-                        ScrollView(.vertical, showsIndicators: false) {
-                            VStack(alignment: .leading, spacing: 0) {
-                                ForEach(vm.notes, id: \.id) { note in
-                                    Text("- \(note.text)")
-                                        .font(.robotoMono.regular(size: 12))
-                                        .lineLimit(2)
-                                        .truncationMode(.tail)
-                                        .frame(maxWidth: .infinity, alignment: .leading)
-                                        .multilineTextAlignment(.leading)
-                                }
+        Card(
+            title: vm.title,
+            hasBorder: true,
+            hasShadow: true,
+            leading: {
+                ImageCard(image: vm.image, size: size, hasBorder: true, hasShadow: false)
+            },
+            trailing: {
+                // MARK: — Notes Section
+                VStack(alignment: .center, spacing: 0) {
+                    VStack {
+                        Text("Notes")
+                            .font(.subheadline)
+                            .fontWeight(.semibold)
+                        
+                        Text("Origin: \(vm.description)")
+                            .font(.robotoMono.regular(size: 12))
+                            .italic()
+                    }
+                    .frame(maxWidth: .infinity, alignment: .center)
+                    .overlay(alignment: .bottom) {
+                        Divider()
+                            .frame(height: 0.5)
+                            .background(.black.opacity(0.5))
+                            .padding(.horizontal, 10)
+                    }
+                    ScrollView(.vertical, showsIndicators: false) {
+                        VStack(alignment: .leading, spacing: 0) {
+                            ForEach(vm.notes, id: \.id) { note in
+                                Text("- \(note.text)")
+                                    .font(.robotoMono.regular(size: 12))
+                                    .lineLimit(2)
+                                    .truncationMode(.tail)
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                    .multilineTextAlignment(.leading)
                             }
                         }
                     }
-                    .frame(height: size.height)
-                    .background(.yellow.opacity(0.4))
-                    .cornerRadius(16)
-                    .padding(.trailing, 5)
-                },
-                {
-                    // MARK: - Favorite togglable icon
-                    
-                    /// This HStack shows icons for each of the recipes clickable links and favorite icon. If the link
-                    /// is not clickable for any reason then it is disabled and reflects a disabled state.
-                    HStack {
-                        Spacer()
-                        VStack(spacing: 0) {
-                            ToggleIconButton(
-                                iconOn: .system("star.fill"),
-                                iconOff: .system("star"),
-                                isDisabled: vm.isDisabledBinding,
-                                isSelected: vm.isFavoriteBinding) {
-                                    vm.toggleFavorite()
-                                }
-                                .asStandardIconButtonStyle(withColor: .yellow)
-                            Text("Favorite")
-                                .font(.robotoMono.regular(size: 16).bold())
-                        }
-                        
-                        Spacer()
-                        VStack(spacing: 0){
-                            IconButton(icon: .system("video.fill"), isDisabled: .constant(false)) { }
-                                .asStandardIconButtonStyle(withColor: .green)
-                            
-                            Text("Youtube")
-                                .font(.robotoMono.regular(size: 16).bold())
-                        }
-                        Spacer()
-                        
-                        VStack(spacing: 0){
-                            IconButton(icon: .system("safari.fill"), isDisabled: .constant(false)) { }
-                                .asStandardIconButtonStyle(withColor: .blue)
-                            
-                            Text("Web")
-                                .font(.robotoMono.regular(size: 16).bold())
-                        }
-                        Spacer()
+                }
+                .frame(height: size.height)
+                .background(.yellow.opacity(0.4))
+                .cornerRadius(16)
+                .padding(.trailing, 5)
+            },
+            {
+                // MARK: - Favorite togglable icon
+                
+                /// This HStack shows icons for each of the recipes clickable links and favorite icon. If the link
+                /// is not clickable for any reason then it is disabled and reflects a disabled state.
+                HStack {
+                    Spacer()
+                    VStack(spacing: 0) {
+                        ToggleIconButton(
+                            iconOn: .system("star.fill"),
+                            iconOff: .system("star"),
+                            isDisabled: vm.isDisabledBinding,
+                            isSelected: vm.isFavoriteBinding) {
+                                vm.toggleFavorite()
+                            }
+                            .asStandardIconButtonStyle(withColor: .yellow)
+                        Text("Favorite")
+                            .font(.robotoMono.regular(size: 16).bold())
                     }
-                    .padding(EdgeInsets(top: 0, leading: 10, bottom: 5, trailing: 10))
-                })
-            .gesture(TapGesture().onEnded({ onTapRow() }), including: .gesture)
-            .task {
-                await vm.load()
-            }
-        } else {
-            EmptyView()
+                    
+                    Spacer()
+                    VStack(spacing: 0){
+                        IconButton(icon: .system("video.fill"), isDisabled: .constant(false)) { }
+                            .asStandardIconButtonStyle(withColor: .green)
+                        
+                        Text("Youtube")
+                            .font(.robotoMono.regular(size: 16).bold())
+                    }
+                    Spacer()
+                    
+                    VStack(spacing: 0){
+                        IconButton(icon: .system("safari.fill"), isDisabled: .constant(false)) { }
+                            .asStandardIconButtonStyle(withColor: .blue)
+                        
+                        Text("Web")
+                            .font(.robotoMono.regular(size: 16).bold())
+                    }
+                    Spacer()
+                }
+                .padding(EdgeInsets(top: 0, leading: 10, bottom: 5, trailing: 10))
+            })
+        .gesture(TapGesture().onEnded({ onTapRow() }), including: .gesture)
+        .task {
+            await vm.load()
         }
     }
 }
@@ -137,7 +133,7 @@ struct FavoriteRecipeCard: View {
 #if DEBUG
 struct FavoriteRecipesCard_Previews: PreviewProvider {
     static var previews: some View {
-        @StateObject var recipeStore = RecipeStore(memoryStore: RecipeMemoryDataSource.shared, fetchCache: MockFetchCache())
+        @StateObject var recipeStore = RecipeStore(memoryStore: MockRecipeMemoryDataSource(), fetchCache: MockFetchCache())
         @StateObject var vm = RecipesViewModel(recipeStore: recipeStore, filterStrategy: AllRecipesFilter())
         @StateObject var nav = AppNavigation.shared
         

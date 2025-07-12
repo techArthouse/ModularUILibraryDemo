@@ -79,7 +79,13 @@ class RecipesViewModel: ObservableObject {
         // computes which recipe ids should be visible
         let visibleIDs = self.filterStrategy.filter(recipeStore.allItems,
                                                     cuisine: selectedCuisine,
-                                                    query: searchQuery)
+                                                    query: searchQuery).filter({ id in
+            if self.filterStrategy.isFavorite {
+                return self.recipeStore.isFavorite(for: id)
+            } else {
+                return true
+            }
+        })
         
         // update each item's `selected` in place to preserve animations and prevent odd ui flickers
         for (idx, item) in items.enumerated() {
@@ -133,7 +139,9 @@ class RecipesViewModel: ObservableObject {
     
     var cusineCategories: [String] {
         var categories = Set<String>()
-        let itemIds = self.items.map { $0.id }
+        let itemIds = self.items.filter({ item in
+            item.selected
+        }).map { $0.id }
         for item in recipeStore.allItems.filter({ itemIds.contains($0.id) }) {
             categories.insert(item.cuisine)
         }
