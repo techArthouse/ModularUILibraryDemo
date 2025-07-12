@@ -17,7 +17,7 @@ indirect enum FetchCacheError: Error {
     case failedToWriteImageDataToDisk(image: Image, error: Error)
     case failedToAppendEncodedRemoteURLToCacheDirectoryURL(
         remoteURL: URL,
-        cacheDirectoryURL: URL
+        cacheDirectoryURL: URL?
     )
     case failedToConvertDataBlobToImage(
         sourceURL: URL,
@@ -85,7 +85,7 @@ extension FetchCacheError: LocalizedError {
             return """
                    Could not form a valid cache filename for remote URL.
                    remoteURL = \(remoteURL.absoluteString)
-                   cacheDirectory = \(cacheDirectoryURL.path)
+                   cacheDirectory = \(cacheDirectoryURL?.path ?? "nil")
                    """
 
         case .failedToConvertDataBlobToImage(let sourceURL, let blob, let sourceLocation):

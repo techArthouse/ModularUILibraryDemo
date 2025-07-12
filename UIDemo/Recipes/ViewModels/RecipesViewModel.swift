@@ -16,16 +16,9 @@ class RecipesViewModel: ObservableObject {
         case success
         case failure(String)
     }
-    
-    enum CacheState {
-        case uninitialized
-        case ready
-        case failure(Error)
-    }
 
     @Published var items: [RecipeItem] = []
     @Published var loadPhase: LoadPhase = .idle
-    @Published var cacheState: CacheState = .uninitialized
     
     @Published var searchQuery: String = ""
     @Published var selectedCuisine: String?
@@ -61,8 +54,8 @@ class RecipesViewModel: ObservableObject {
                 // create one RecipeItem per recipe. no filter
                 self.items = recipes.map { recipe in
                     let item = RecipeItem(recipe)
-                    item.isFavorite = self.recipeStore.isFavorite(for: recipe.id)
-                    item.notes = self.recipeStore.notes(for: recipe.id)
+//                    item.isFavorite = self.recipeStore.isFavorite(for: recipe.id)
+//                    item.notes = self.recipeStore.notes(for: recipe.id)
                     return item
                 }
                 self.applyFilter(animated: false)
@@ -104,31 +97,11 @@ class RecipesViewModel: ObservableObject {
         }
     }
     
-    /// Ensures our disk cache directory is opened exactly once.
-    private func ensureCacheOpened() {
-        guard case .uninitialized = cacheState else { return }
-        do {
-#if DEBUG
-            try recipeStore.startCache(path: "DevelopmentFetchImageCache")
-#else
-            try recipeStore.startCache(path: "FetchImageCache")
-#endif
-            cacheState = .ready
-        }
-        catch FetchCacheError.directoryAlreadyOpenWithPathComponent { // if someone already started it we fallback to a safe ready setup.
-            cacheState = .ready
-        }
-        catch {
-            cacheState = .failure(error)
-        }
-    }
-    
     // MARK: - Public API
     
     /// Called on first appearance. Start the cache and load recipes.
     func loadAll() {
         loadPhase = .loading
-        ensureCacheOpened()
 
         Task {
             do {
@@ -143,7 +116,6 @@ class RecipesViewModel: ObservableObject {
     
     func reloadAll() async {
         loadPhase = .loading
-        ensureCacheOpened()
         
         do {
             try await Task.sleep(for: .seconds(0.5)) // for UX feedback

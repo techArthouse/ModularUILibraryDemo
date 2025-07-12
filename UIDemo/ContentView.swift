@@ -2,31 +2,44 @@ import SwiftUI
 import ModularUILibrary
 
 struct ContentView: View {
-    @StateObject private var vm: RecipesViewModel // source of truth for recipes (it traces to a `recipeStore`
+    // source of truth for recipes (it traces to a `recipeStore`
+    
+    @StateObject private var homeVM: RecipesViewModel
+    @StateObject private var favoritesVM: RecipesViewModel
     @StateObject private var nav: AppNavigation = .shared
     @EnvironmentObject private var themeManager: ThemeManager
     
     
-    init() {
-        _vm = StateObject(wrappedValue: RecipesViewModel(
-            recipeStore: RecipeStore(memoryStore: RecipeMemoryDataSource.shared, fetchCache: FetchCache()),
+    
+    
+    init(recipeStore: RecipeStore) {
+        _homeVM = StateObject(wrappedValue: RecipesViewModel(
+            recipeStore: recipeStore,
             filterStrategy: AllRecipesFilter()))
+        
+            _favoritesVM = StateObject(wrappedValue: RecipesViewModel(
+                recipeStore: recipeStore,
+                filterStrategy: AllRecipesFilter()))
     }
 
     var body: some View {
-        TabView {
+        TabView(selection: $nav.selectedTab) {
             // 1) Home tab: recipe list
             NavigationStack(path: $nav.path) {
-                RecipesView(vm: vm)
+                RecipesView(vm: homeVM)
                     .navigationDestination(for: Route.self) { recipe in
                         switch recipe {
                         case .recipeDetail(let uuid):
-                            RecipeDetailView(recipeRowVM: RecipeRowViewModel(recipeId: uuid, recipeStore: vm.recipeStore))
+                            RecipeDetailView(recipeRowVM: RecipeRowViewModel(recipeId: uuid, recipeStore: homeVM.recipeStore))
+                                .onAppear {
+                                    print("recipedia 1")
+                                }
                         default:
                             EmptyView()
                         }
                     }
             }
+            .tag(Tab.home)
             .tabItem {
                 Label("Home", systemImage: "house.fill")
             }
@@ -35,16 +48,20 @@ struct ContentView: View {
             }
             // 2) Favorites tab: list of favorites
             NavigationStack(path: $nav.path2) {
-                FavoriteRecipesView(vm: vm)
+                FavoriteRecipesView(vm: favoritesVM)
                     .navigationDestination(for: Route.self) { recipe in
                         switch recipe {
                         case .recipeDetail(let uuid):
-                            RecipeDetailView(recipeRowVM: RecipeRowViewModel(recipeId: uuid, recipeStore: vm.recipeStore))
+                            RecipeDetailView(recipeRowVM: RecipeRowViewModel(recipeId: uuid, recipeStore: favoritesVM.recipeStore))
+                                .onAppear {
+                                    print("recipedia 2")
+                                }
                         default:
                             EmptyView()
                         }
                     }
             }
+            .tag(Tab.favorites)
             .tabItem {
                 Label("Favorites", systemImage: "star.fill")
             }
@@ -78,7 +95,8 @@ final class AppNavigation: ObservableObject {
 struct ContentView_Previews: PreviewProvider {
     static var previews: some View {
         let themeManager: ThemeManager = ThemeManager()
-        ContentView()
+        
+        ContentView(recipeStore: RecipeStore(memoryStore: RecipeMemoryDataSource.shared, fetchCache: FetchCache(path: "DevelopmentImageCache")))
             .environmentObject(themeManager)
     }
 }

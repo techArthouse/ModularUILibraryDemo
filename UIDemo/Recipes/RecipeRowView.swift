@@ -63,7 +63,7 @@ struct RecipeRowView: View {
                         iconOn: .system("star.fill"),
                         iconOff: .system("star"),
                         isDisabled: vm.isDisabledBinding, // .constant(false),
-                        isSelected: .constant(vm.isRecipFavorited)) {
+                        isSelected: vm.isFavoriteBinding) {
                             vm.toggleFavorite()
                             //                        vm.isFavoriteBinding.wrappedValue = true
                         }

@@ -144,7 +144,6 @@ struct RecipesView_Previews: PreviewProvider {
             RecipesView(vm: vm)
                 .environmentObject(themeManager)
                 .environmentObject(nav)
-                .environmentObject(FetchCache())
         }
     }
 }

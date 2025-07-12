@@ -22,6 +22,7 @@ struct RecipeDetailView: View {
 //    @State private var isDisabled: Bool
     
     init(recipeRowVM: RecipeRowViewModel) {
+        print("recipedia 1-1")
         self._vm = StateObject(wrappedValue: recipeRowVM)
     }
 
@@ -61,7 +62,7 @@ struct RecipeDetailView: View {
                                             iconOn: .system("star.fill"),
                                             iconOff: .system("star"),
                                             isDisabled: vm.isDisabledBinding,
-                                            isSelected: $vm.isFavoriteBinding) {
+                                            isSelected: vm.isFavoriteBinding) {
                                                 withAnimation {
                                                     vm.toggleFavorite()
                                                 }

@@ -14,8 +14,8 @@ final class RecipeRowViewModel: ObservableObject {
     var recipeId: UUID
 //    @ObservedObject private var vm: RecipesViewModel
     @ObservedObject var recipeStore: RecipeStore
-    @Published var isFavoriteBinding: Bool
     @Published private(set) var image: Image?
+    @Published var isFavorite: Bool = false
     
     private var cancellables = Set<AnyCancellable>()
     
@@ -23,7 +23,7 @@ final class RecipeRowViewModel: ObservableObject {
         print("omgomg2")
         self.recipeId = recipeId
         self.recipeStore = recipeStore
-        isFavoriteBinding = recipeStore.isFavorite(for: recipeId)
+        isFavorite = recipeStore.isFavorite(for: recipeId)
         self.imageLoader = ImageLoader(url: recipeStore.smallImageURL(for: recipeId), cache: recipeStore.fetchCache)
     }
     
@@ -53,7 +53,23 @@ final class RecipeRowViewModel: ObservableObject {
     var accessibilityId: String {
         recipeId.uuidString
     }
-    // …
+    
+    var isFavoriteBinding: Binding<Bool> {
+      Binding(
+        get: { [weak self] in
+            guard let self = self else { return false }
+            print( "get favorite for id \(self.recipeId) is \(isFavorite)")
+            return isRecipFavorited },
+        set: { [weak self] newValue in
+            guard let self = self else { return }
+            print("set favorite \(newValue) for id \(self.recipeId)")
+            self.objectWillChange.send()
+            self.recipeStore.setFavorite(newValue, for: self.recipeId)
+//            isFavorite = newValue
+        }
+      )
+    }
+
 }
 
 extension RecipeRowViewModel: RecipeRowObjectProtocol, RecipeSourcesProtocol, RecipeMemoryItemProtocol {
@@ -125,7 +141,7 @@ extension RecipeSourcesProtocol {
 protocol RecipeMemoryItemProtocol: AnyObject {
     var recipeStore: RecipeStore { get }
     var recipeId: UUID { get }
-    var isFavoriteBinding: Bool { get set }
+//    var isFavoriteBinding: Binding<Bool> { get set }
 }
 
 extension RecipeMemoryItemProtocol {
@@ -149,6 +165,6 @@ extension RecipeMemoryItemProtocol {
     
     func toggleFavorite() {
         recipeStore.toggleFavorite(recipeId)
-        isFavoriteBinding.toggle()
+//        isFavoriteBinding.toggle()
     }
 }

@@ -21,20 +21,27 @@ struct FavoriteRecipesView: View {
         List{
             Section(header: searchHeaderView) {
                 ForEach(vm.items, id: \.id) { item in
-                    if item.isFavorite {
+//                    if item.isFavorite {
                         FavoriteRecipeCard(viewmodel: RecipeRowViewModel(recipeId: item.id, recipeStore: vm.recipeStore)) {
                             nav.path2.append(.recipeDetail(item.id))
                         }
-                    }
+                        .transition(.asymmetric(
+                            insertion: .opacity,
+                            removal: .move(edge: .trailing))
+                        )
+//                    }
                 }
                 .listRowSeparator(.hidden)
                 .listRowInsets(.init(top: 10, leading: 10, bottom: 10, trailing: 10))
                 .listRowBackground(Color.clear)
             }
         }
-        .animation(.easeInOut, value: vm.items.map(\.isFavorite))
+//        .animation(.easeInOut, value: vm.items.map(\.isFavorite))
         .listStyle(.plain)
-        .task { vm.loadAll() }
+        .task {
+            print("tasking again in favorites")
+            vm.loadAll()
+        }
         .refreshable { await vm.reloadAll() }
         .navigationTitle("Favorite Recipes")
         .toolbar {
