@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		7178C8812E0C5AF3005C4571 /* RobotoMono-VariableFont_wght.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 7178C87F2E0C5AF3005C4571 /* RobotoMono-VariableFont_wght.ttf */; };
 		7178C8902E0C5AF3005C4571 /* RobotoMono-Italic-VariableFont_wght.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 7178C87E2E0C5AF3005C4571 /* RobotoMono-Italic-VariableFont_wght.ttf */; };
+		71A95C792E22FCC8001B52CC /* README.md in Resources */ = {isa = PBXBuildFile; fileRef = 71A95C782E22FCC8001B52CC /* README.md */; };
 		71D5EE092B8D407D004DE667 /* UIDemoApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 71D5EE082B8D407D004DE667 /* UIDemoApp.swift */; };
 		71D5EE0B2B8D407D004DE667 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 71D5EE0A2B8D407D004DE667 /* ContentView.swift */; };
 		71D5EE0D2B8D4081004DE667 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 71D5EE0C2B8D4081004DE667 /* Assets.xcassets */; };
@@ -28,6 +29,7 @@
 		7178C87E2E0C5AF3005C4571 /* RobotoMono-Italic-VariableFont_wght.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "RobotoMono-Italic-VariableFont_wght.ttf"; sourceTree = "<group>"; };
 		7178C87F2E0C5AF3005C4571 /* RobotoMono-VariableFont_wght.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "RobotoMono-VariableFont_wght.ttf"; sourceTree = "<group>"; };
 		7178C8932E0C5F80005C4571 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		71A95C782E22FCC8001B52CC /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 		71D5EE052B8D407D004DE667 /* UIDemo.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = UIDemo.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		71D5EE082B8D407D004DE667 /* UIDemoApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UIDemoApp.swift; sourceTree = "<group>"; };
 		71D5EE0A2B8D407D004DE667 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
@@ -100,6 +102,7 @@
 				71E7CD2E2DEA13C10075C883 /* LandingView.swift */,
 				71D5EE082B8D407D004DE667 /* UIDemoApp.swift */,
 				71D5EE0A2B8D407D004DE667 /* ContentView.swift */,
+				71A95C782E22FCC8001B52CC /* README.md */,
 				71D5EE0C2B8D4081004DE667 /* Assets.xcassets */,
 				71D5EE0E2B8D4081004DE667 /* Preview Content */,
 				7178C8932E0C5F80005C4571 /* Info.plist */,
@@ -201,6 +204,7 @@
 				7178C8902E0C5AF3005C4571 /* RobotoMono-Italic-VariableFont_wght.ttf in Resources */,
 				71D5EE0D2B8D4081004DE667 /* Assets.xcassets in Resources */,
 				71E7CD362DEA16EC0075C883 /* recipesEmpty.json in Resources */,
+				71A95C792E22FCC8001B52CC /* README.md in Resources */,
 				71E7CD342DEA16C90075C883 /* recipesGood.json in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

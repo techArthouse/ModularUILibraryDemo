@@ -36,6 +36,6 @@ protocol RecipeService: AnyObject {
     // MARK: – Image Loading
     /// Fetches the small or large image for the given recipe.
     //  func getImage(for id: UUID, smallImage: Bool) async throws(FetchCacheError) -> Image?
-    func startCache(path: String) throws(FetchCacheError)
+//    func startCache(path: String) throws(FetchCacheError)
     func refresh() async
 }

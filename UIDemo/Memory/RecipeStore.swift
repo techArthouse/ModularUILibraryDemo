@@ -23,11 +23,6 @@ class RecipeStore: ObservableObject, RecipeService {
         $allItems.eraseToAnyPublisher()
     }
     
-    //    func toggleFavorite(_ id: UUID) {
-    //        let toggledFavoriteValue = !self.isFavorite(for: id) // NOT(`!`) toggles current value.
-    //        memoryStore.setFavorite(toggledFavoriteValue, for: id)
-    //    }
-    
     func loadRecipes(recipes: [Recipe]) {
         print("we loaded recipe with id: \(recipes.first!.id)")
         allItems = recipes
@@ -73,9 +68,7 @@ class RecipeStore: ObservableObject, RecipeService {
         guard let url = allItems.first(where: { $0.id == recipeId })?.youtubeVideoURL else { return nil }
         return url
     }
-    func startCache(path: String) throws(FetchCacheError) {
-        try fetchCache.openCacheDirectoryWithPath(path: path)
-    }
+    
     func refresh() async {
         await fetchCache.refresh()
     }

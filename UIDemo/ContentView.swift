@@ -1,17 +1,22 @@
 import SwiftUI
 import ModularUILibrary
 
+/// The root content view, displaying a tabbed interface for Home and Favorites.
+/// It sets up two view models with appropriate filter strategies, and shares
+/// a navigation object to handle deep links and programmatic navigation.
 struct ContentView: View {
-    // source of truth for recipes (it traces to a `recipeStore`
-    
+    /// ViewModel for displaying all recipes.
     @StateObject private var homeVM: RecipesViewModel
+    /// ViewModel for displaying favorite recipes.
     @StateObject private var favoritesVM: RecipesViewModel
+    /// Shared navigation controller for tab-based navigation.
     @StateObject private var nav: AppNavigation = .shared
+    /// Injected theme manager for styling.
     @EnvironmentObject private var themeManager: ThemeManager
     
-    
-    
-    
+    /// Constructs ContentView with the given RecipeStore,
+    /// creating a view model for all recipes and another for favorites.
+    /// - Parameter recipeStore: The central store managing recipe data.
     init(recipeStore: RecipeStore) {
         _homeVM = StateObject(wrappedValue: RecipesViewModel(
             recipeStore: recipeStore,
@@ -24,69 +29,58 @@ struct ContentView: View {
 
     var body: some View {
         TabView(selection: $nav.selectedTab) {
-            // 1) Home tab: recipe list
+            // Home tab
             NavigationStack(path: $nav.path) {
                 RecipesView(vm: homeVM)
                     .navigationDestination(for: Route.self) { recipe in
                         switch recipe {
                         case .recipeDetail(let uuid):
-                            RecipeDetailView(recipeRowVM: RecipeRowViewModel(recipeId: uuid, recipeStore: homeVM.recipeStore))
-                                .onAppear {
-                                    print("recipedia 1")
-                                }
+                            RecipeDetailView(
+                                recipeRowVM: RecipeRowViewModel(
+                                    recipeId: uuid,
+                                    recipeStore: homeVM.recipeStore))
                         default:
                             EmptyView()
                         }
                     }
             }
             .tag(Tab.home)
-            .tabItem {
-                Label("Home", systemImage: "house.fill")
-            }
-            .onAppear {
-                print("ok lets do it")
-            }
-            // 2) Favorites tab: list of favorites
+            .tabItem { Label("Home", systemImage: "house.fill") }
+
+            // Favorites tab
             NavigationStack(path: $nav.path2) {
                 FavoriteRecipesView(vm: favoritesVM)
                     .navigationDestination(for: Route.self) { recipe in
                         switch recipe {
                         case .recipeDetail(let uuid):
-                            RecipeDetailView(recipeRowVM: RecipeRowViewModel(recipeId: uuid, recipeStore: favoritesVM.recipeStore))
-                                .onAppear {
-                                    print("recipedia 2")
-                                }
+                            RecipeDetailView(
+                                recipeRowVM: RecipeRowViewModel(
+                                    recipeId: uuid,
+                                    recipeStore: favoritesVM.recipeStore))
                         default:
                             EmptyView()
                         }
                     }
             }
             .tag(Tab.favorites)
-            .tabItem {
-                Label("Favorites", systemImage: "star.fill")
-            }
-            
-//            // 3) Profile tab
-//            Text("Profile")
-//                .tabItem {
-//                    Label("Profile", systemImage: "person.crop.circle")
-//                }
+            .tabItem { Label("Favorites", systemImage: "star.fill") }
         }
         .environmentObject(nav)
     }
 }
 
+/// Manages tab and path navigation for the app.
 @MainActor
 final class AppNavigation: ObservableObject {
+    /// Shared singleton instance.
     static let shared = AppNavigation()
-    
+    /// Navigation path for the Home tab.
     @Published var path: [Route] = []
+    /// Navigation path for the Favorites tab.
     @Published var path2: [Route] = []
+    /// Currently selected tab.
     @Published var selectedTab: Tab = .home
-    
-    private init() {
-        
-    }
+    private init() {}
 }
 
 // MARK: - Preview
