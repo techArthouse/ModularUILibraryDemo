@@ -239,7 +239,7 @@ struct RecipeDetailView: View {
 struct RecipeDetailView_Previews: PreviewProvider {
     static var previews: some View {
         //    let memoryStore = MockRecipeMemoryDataSource()
-        let recipe = Recipe.recipePreview(using: .good)
+        let recipe = Recipe.recipePreview(using: .good).first
         var recipeItem = RecipeItem(recipe!)
         
         let recipeStore = RecipeStore(memoryStore: MockRecipeMemoryDataSource(), fetchCache: MockFetchCache())

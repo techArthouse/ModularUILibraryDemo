@@ -56,16 +56,20 @@ struct RecipeRowView: View {
                     }
             },
             trailing: {
-                ToggleIconButton(
-                    iconOn: .system("star.fill"),
-                    iconOff: .system("star"),
-                    isDisabled: .constant(false),
-                    isSelected: .constant(vm.isRecipFavorited)) {
-                        vm.toggleFavorite()
-//                        vm.isFavoriteBinding.wrappedValue = true
-                    }
-                    .asStandardIconButtonStyle(withColor: .yellow)
-                    .accessibilityLabel(Text("ToggleIconButton: \(vm.recipeId.uuidString)"))
+                if vm.isNotValid {
+                    EmptyView()
+                } else {
+                    ToggleIconButton(
+                        iconOn: .system("star.fill"),
+                        iconOff: .system("star"),
+                        isDisabled: vm.isDisabledBinding, // .constant(false),
+                        isSelected: .constant(vm.isRecipFavorited)) {
+                            vm.toggleFavorite()
+                            //                        vm.isFavoriteBinding.wrappedValue = true
+                        }
+                        .asStandardIconButtonStyle(withColor: .yellow)
+                        .accessibilityLabel(Text("ToggleIconButton: \(vm.recipeId.uuidString)"))
+                }
             })
         
         .onDisabled(isDisabled: vm.isDisabledBinding) {
@@ -96,10 +100,10 @@ struct RecipeRowView: View {
 
 struct RecipeRowView_Previews: PreviewProvider {
     static var previews: some View {
-        let goodRecipe = Recipe.recipePreview(using: .good)!
+        let goodRecipe = Recipe.recipePreview(using: .good).first!
 //        let recipeStore = RecipeStore(memoryStore: RecipeDataSource.shared)
-        let recipeStore = RecipeStore(memoryStore: MockRecipeMemoryDataSource(), fetchCache: MockFetchCache())
-        let invalidRecipe = Recipe.recipePreview(using: .malformed)!
+        let recipeStore = RecipeStore(memoryStore: MockRecipeMemoryDataSource(), fetchCache: MockFetchCacheGOODandBAD())
+        let invalidRecipe = Recipe.recipePreview(using: .malformed)[1]
         
         let goodItem = RecipeItem(goodRecipe)
 //        goodItem.image = Image(systemName: "photo") // Simulate image already loaded
@@ -109,157 +113,51 @@ struct RecipeRowView_Previews: PreviewProvider {
         
         let nav = AppNavigation.shared
         let themeManager = ThemeManager()
-        recipeStore.loadRecipes(recipes: [goodRecipe])
+        recipeStore.loadRecipes(recipes: [goodRecipe, invalidRecipe])
         
         return VStack {
             RecipeRowView(viewmodel: RecipeRowViewModel(recipeId: goodItem.id, recipeStore: recipeStore)) {
                 print("Tapped row with goodItem")
             }
-//            .task {
-//                recipeStore.loadRecipes(recipes: [goodRecipe])
-//                print("allitems content should have goodRecipe which is \(goodRecipe)")
-//                print("\(recipeStore.allItems.first)")
-//            }
-//            .onAppear {
-//            }
             .background(.red)
-//            .border(.blue, width: 2)
             .previewDisplayName("Good Recipe")
-//            .padding()
-//            .previewLayout(.sizeThatFits)
             .environmentObject(nav)
             .environmentObject(themeManager)
             
-//            RecipeRowView(viewmodel: RecipeRowViewModel(placeholder: Image(systemName: "exclamationmark.triangle"), recipeId: badItem.id, memoryStore: recipeStore)) {
-//                print("Tapped row with badItem")
-//            }
-////            .frame(maxWidth: .infinity, maxHeight: 100)
-//            .background(.red)
-//            .previewDisplayName("Invalid Recipe")
-////            .padding()
-////            .previewLayout(.sizeThatFits)
-//            .environmentObject(nav)
-//            .environmentObject(themeManager)
-////            .preferredColorScheme(.dark)
+            RecipeRowView(viewmodel: RecipeRowViewModel(recipeId: badItem.id, recipeStore: recipeStore)) {
+                print("Tapped row with badItem")
+            }
+            .background(.red)
+            .previewDisplayName("Invalid Recipe")
+            .environmentObject(nav)
+            .environmentObject(themeManager)
         }
     }
 }
-#endif
-struct RecipeRowModel: Identifiable {
-    let id: UUID
-    var show: Bool
-    var highlight: Bool // an example
-}
 
-class MockRecipeService: RecipeService, ObservableObject {
+class MockFetchCacheGOODandBAD: ImageCache {
+    func loadImage(for url: URL) async -> Result<Image, FetchCacheError> {
+        if url.absoluteString != "https://d3jbb8n5wk0qxi.cloudfront.net/photos/b9ab0071-b281-4bee-b361-ec340d405320/small.jpg" {
+            return
+                .failure(.failedToFetchImageFrom(source: url, withError: .failedToFindImageFromSystemMemoryBanks))
+        } else {
+            return
+                .success(
+                    Image(systemName: "heart.fill")
+                    .resizable()
+                    .renderingMode(.template))
+        }
+    }
+    
     func refresh() async {
-        print("refresshing")
+        print("refreshing")
     }
     
-    func startCache(path: String) throws(FetchCacheError) {
-        print("Mock started Cache")
-    }
-    
-     var favorite = true
-    
-    func title(for id: UUID) -> String       { "Mock Title" }
-    func description(for id: UUID) -> String { "Mock Cuisine" }
-    func isNotValid(for id: UUID) -> Bool       {
-        print(" checking valid")
-        return false
-    }
-    func isFavorite(for id: UUID) -> Bool    {
-        print("checking favorite")
-       return  favorite
-    }
-    func toggleFavorite(_ id: UUID) {
-//        print("toggle to: \()")
-        favorite.toggle()
-    }
-    func notes(for id: UUID) -> [RecipeNote] { [] }
-    func addNote(_ text: String, for id: UUID) { }
-    func smallImageURL(for id: UUID) -> URL? {
-        URL(string: "https://example.com/image.png")
-    }
-    
-    func setFavorite(_ favorite: Bool, for id: UUID) {
-        self.favorite = favorite
-    }
-    
-    func deleteNotes(for id: UUID) {
-        //
-    }
-    
-    func largeImageURL(for id: UUID) -> URL? {
-        URL(string: "https://example.com/image.png")
-    }
-    
-    func sourceWebsiteURL(for id: UUID) -> URL? {
-        URL(string: "https://example.com/image.png")
-    }
-    
-    func youtubeVideoURL(for id: UUID) -> URL? {
-        URL(string: "https://example.com/image.png")
-    }
-    
-    func getImage(for id: UUID, smallImage: Bool) async throws(FetchCacheError) -> Image? {
-        Image(systemName: "heart.fill")
+    func openCacheDirectoryWithPath(path: String) throws(FetchCacheError) {
+        print("mock fetchcache directory opened")
     }
 }
-
-
-//RecipeRowViewModel(id: id,
-//                                                    recipeStore: recipeStore,
-//                                                    memoryStore: memoryStore)
-
-//@MainActor
-//class MockRecipeMemoryStore: RecipeMemoryStoreProtocol {
-//    func isFavorite(for recipeUUID: UUID) -> Bool {
-//        <#code#>
-//    }
-//    
-//    func notes(for recipeUUID: UUID) -> [RecipeNote] {
-//        <#code#>
-//    }
-//    
-//    func addNote(_ text: String, for recipeUUID: UUID) -> RecipeNote? {
-//        <#code#>
-//    }
-//    
-//    func toggleFavorite(recipeUUID: UUID) {
-//        <#code#>
-//    }
-//    
-//    
-////    init(recipe: Recipe) {
-//////        self.memoryStore = memoryStore
-////        self.recipeId = recipe.id
-////        memoryStore.loadRecipes(recipes: [recipe])
-////    }
-//    
-//    func loadImage(sizeSmall: Bool) async {
-//        return
-//    }
-//    ///
-//    
-//    func setFavorite(_ favorite: Bool, for recipeUUID: UUID) {
-//        //
-//    }
-//
-//
-//    
-//    func deleteNotes(for recipeUUID: UUID) {
-////        if var mem = memories[recipeUUID] {
-////            mem.notes.removeAll()
-////            memories[recipeUUID] = mem
-////            save()
-////        }
-//    }
-//    
-//    func getImage(sizeSmall: Bool = true) async throws(FetchCacheError )-> Image? {
-//        return Image("PlaceHolder")
-//    }
-//}
+#endif
 
 class MockRecipeMemoryDataSource: RecipeMemoryStoreProtocol, ObservableObject {
     @Published var memories: [UUID : RecipeMemory] = [:]
@@ -274,7 +172,7 @@ class MockRecipeMemoryDataSource: RecipeMemoryStoreProtocol, ObservableObject {
     
     func isFavorite(for recipeUUID: UUID) -> Bool {
         
-            getMemory(for: recipeUUID).isFavorite
+        getMemory(for: recipeUUID).isFavorite
     }
     
     func setFavorite(_ favorite: Bool, for recipeUUID: UUID) {
@@ -299,16 +197,11 @@ class MockRecipeMemoryDataSource: RecipeMemoryStoreProtocol, ObservableObject {
     }
     
     func toggleFavorite(recipeUUID: UUID) {
-        
         if var mem = memories[recipeUUID] {
             mem.isFavorite.toggle()
-            // if unfavoriting, you might choose to drop notes
-            // mem.notes.removeAll()
             memories[recipeUUID] = mem
         } else {
             memories[recipeUUID] = RecipeMemory(isFavorite: true, notes: [])
         }
     }
-    
-    
 }

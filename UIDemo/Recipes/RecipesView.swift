@@ -6,155 +6,40 @@
 //
 
 import SwiftUI
-//import Combine
 import ModularUILibrary
 
-// MARK: - Recipes List View
+/// RecipesView is a root view and displays all recipes from the network.
 struct RecipesView: View {
     @ObservedObject private var vm: RecipesViewModel
     @EnvironmentObject private var nav: AppNavigation
-    @EnvironmentObject private var imageCache: FetchCache
-//    @EnvironmentObject private var memoryStore: RecipeMemoryDataSource
-    @State private var feedbackMessage: String = ""
-    @State private var feedbackOnLoading: FeedbackType = .stable
-    @State private var totalItems = 0
-    
-    enum FeedbackType {
-        case stable, error, emptyList
-        
-        var isError: Bool {
-            self == .error
-        }
-        
-        var isStable: Bool {
-            self == .stable
-        }
-    }
     
     init(defaultSize: ImageSize = .medium, vm: RecipesViewModel) {
         self.vm = vm
     }
     
     var body: some View {
-        ScrollView(showsIndicators: false) {
-            LazyVStack(spacing: 0) {
-                if feedbackOnLoading.isStable {
-//                    Section(header: searchHeaderView) {
-                    searchHeaderView
-                        Divider()
-                            .frame(height: 1)
-                            .background(.black.opacity(0.5))
-                        //                            .padding(.horizontal, 20)
-                        ForEach(vm.items, id: \.id) { item in
-//                            withAnimation {
-//                                Group {
-                                    if item.selected {
-                                        RecipeRowView(viewmodel: RecipeRowViewModel(recipeId: item.id, recipeStore: vm.recipeStore)) {
-                                            nav.path.append(.recipeDetail(item.id))
-                                        }
-                                        .transition(.asymmetric(
-                                                     insertion: .opacity,
-                                                     removal: .move(edge: .trailing))
-                                        )
-//                                        .transition(.asymmetric(insertion: .slide, removal: .move(edge: .trailing)))
-                                        //                            .shadow(radius: 1)
-                                        //                                                            .animation(.linear, value: item.selected)
-                                        
-//                                        Divider()
-//                                            .frame(height: 1)
-//                                            .background(.black.opacity(0.3))
-//                                            .padding(.horizontal, 15)
-                                        //                        .listRowInsets(EdgeInsets())
-                                        //                        .border(.black, width: 1)
-                                    }
-                                    
-//                                }
-//                                .transition(.asymmetric(insertion: .opacity, removal: .move(edge: .trailing)))
-//                                .animation(.linear, value: item.selected)
-//                            }
-//                            .transition(.asymmetric(insertion: .opacity, removal: .move(edge: .trailing)))
-                        }
-                        .padding(.horizontal, 10)
-                        .padding(.bottom, 3)
-                        //                    .listRowSeparator(.hidden)
-                        //                        .listRowSeparatorTint(.black, edges: .all)
-                        //                        .listRowInsets(.init(top: 0, leading: 10, bottom: 0, trailing: 10))
-                        //                    .listRowBackground(Color(.systemGray))
-                        //                    .listRowSpacing(10)
-//                    }
-                    //                    .background(.white)
-                    //                .listRowInsets(.init(top: 0, leading: 0, bottom: 0, trailing: 0))
-                    //                .frame(maxWidth: .infinity)
-                } else {
-                    VStack {
-                        Text(feedbackMessage)
-                            .font(.robotoMono.regular(size: 25.0))
-                            .multilineTextAlignment(.center)
-                            .bold()
-                            .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    }
-                    .background(feedbackOnLoading.isError ? .red.opacity(0.3): .blue.opacity(0.3))
-                    .clipShape(RoundedRectangle(cornerRadius: 16))
-                }
-            }
-            //            .padding(.top, 5)
-            .padding(.vertical, 5)
-            .padding(.horizontal, 5)
-            .background{
-                RoundedRectangle(cornerRadius: 0)
-                    .fill(.gray.opacity(0.09))
-                    .shadow(color: .black, radius: 1)
+        Group {
+            switch vm.loadPhase {
+            case .idle, .loading:
+                ProgressView("Loading…")
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
                 
-            } //            .background(Color(.systemGray).opacity(0.6))
-            .cornerRadius(4)
-            .animation(.easeInOut, value: vm.items.map(\.selected))
-            //            .animation(.easeInOut, value: vm.items)
+            case .failure(let msg):
+                VStack(spacing: 16) {
+                    Text("Error: \(msg)")
+                        .multilineTextAlignment(.center)
+                    Button("Retry", action: vm.loadAll)
+                }
+                .padding()
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                
+            case .success:
+                contentList
+            }
         }
-//        .animation(.linear, value: vm.items)
-//        .listStyle(.plain)
+        .task { vm.loadAll() }
+        .refreshable { _ = await vm.reloadAll() }
         .navigationTitle("Recipes")
-        .refreshable {
-            do {
-                if try await vm.reload() {
-                    print("task finished RecipesView")
-                } else {
-                    feedbackMessage = "There was an error loading. Pull to refresh and try again."
-                    feedbackOnLoading = .error
-                }
-            } catch {
-                print("Cache failed to start")
-                feedbackMessage = "There was an error loading. Pull to refresh and try again."
-                feedbackOnLoading = .error
-                return
-            }
-        }
-        .task {
-            do {
-#if DEBUG
-                try vm.startCache(path: "DevelopmentFetchImageCache")
-#else
-                try vm.startCache(path: "FetchImageCache")
-#endif
-                if try await vm.loadRecipes() {
-                    print("task finished RecipesView")
-                } else {
-                    feedbackMessage = "There was an error loading. Pull to refresh and try again."
-                    feedbackOnLoading = .error
-                }
-            } catch let error as FetchCacheError {
-                switch error {
-                case .directoryAlreadyOpenWithPathComponent:
-                    print("Cache already exists")
-                default:
-                    break
-                }
-            } catch {
-                print("Cache failed to start")
-                feedbackMessage = "There was an error loading. Pull to refresh and try again."
-                feedbackOnLoading = .error
-                return
-            }
-        }
         .toolbar {
             ToolbarItem(placement: .navigationBarTrailing) {
                 IconButton(
@@ -180,7 +65,6 @@ struct RecipesView: View {
                 onSelect: { cuisine in
                     vm.searchModel = nil
                     vm.selectedCuisine = cuisine
-                    vm.filterSend()
                 },
                 onReset: {
                     vm.searchModel = nil
@@ -188,22 +72,40 @@ struct RecipesView: View {
                 }
             )
         }
-//        .alert(
-//            "Failed to load recipe properly",
-//            isPresented: $badRecipe.isBad,
-//            presenting: badRecipe.id
-//        ) { id in
-//            CTAButtonStack(.horizontal()) {
-//                CTAButton(title: "Dismiss") {
-//                    
-//                }
-//                .asPrimaryButton()
-//                CTAButton(title: "View Anyway") {
-//                    nav.path.append(.recipeDetail(id))
-//                }
-//                .asDestructiveButton()
-//            }
-//        }
+    }
+    
+    // main body composition
+    private var contentList: some View {
+        ScrollView(showsIndicators: false) {
+            LazyVStack(spacing: 0) {
+                searchHeaderView
+                Divider()
+                    .frame(height: 1)
+                    .background(.black.opacity(0.5))
+                ForEach(vm.items, id: \.id) { item in
+                    if item.selected {
+                        RecipeRowView(viewmodel: RecipeRowViewModel(recipeId: item.id, recipeStore: vm.recipeStore)) {
+                            nav.path.append(.recipeDetail(item.id))
+                        }
+                        .transition(.asymmetric(
+                            insertion: .opacity,
+                            removal: .move(edge: .trailing))
+                        )
+                    }
+                }
+                .padding(.horizontal, 10)
+                .padding(.bottom, 3)
+            }
+            .padding(.horizontal, 5)
+            .background{
+                RoundedRectangle(cornerRadius: 0)
+                    .fill(.gray.opacity(0.09))
+                    .shadow(color: .black, radius: 1)
+                
+            }
+            .cornerRadius(4)
+            .animation(.easeInOut, value: vm.items.map(\.selected))
+        }
     }
     
     private var searchHeaderView: some View {
@@ -222,43 +124,10 @@ struct RecipesView: View {
         }
         .padding(8)
         .cornerRadius(10)
-        .background(Color(.systemGray6))
+        .background(Color(.white))
         .border(.black, width: 0.5)
     }
 }
-
-enum FeedbackType {
-    case stable, error, emptyList
-    
-    var isError: Bool {
-        self == .error
-    }
-    
-    var isStable: Bool {
-        self == .stable
-    }
-}
-
-//#if DEBUG
-//struct FavoriteRecipesCard_Previews: PreviewProvider {
-//    @State var strring = "https%3A//d3jbb8n5wk0qxi.cloudfront.net/photos/.../small.jpg"
-//    
-//    static var previews: some View {
-//        @StateObject var recipeStore = RecipeStore()
-//        @StateObject var vm = RecipesViewModel(memoryStore: RecipeDataSource.shared, recipeStore: recipeStore, filterStrategy: FavoriteRecipesFilter())
-//        @StateObject var nav = AppNavigation.shared
-//        
-//        @StateObject var themeManager: ThemeManager = ThemeManager()
-//        // TODO: Test resizing here later.
-//        
-//        FavoriteRecipeCard(item: RecipeItem(recipe: Recipe.recipePreview(using: .good)!))
-//            .background(.red)
-//            .environmentObject(themeManager)
-//        
-//
-//    }
-//}
-//#endif
 
 
 #if DEBUG
@@ -268,42 +137,15 @@ struct RecipesView_Previews: PreviewProvider {
     static var previews: some View {
         @StateObject var recipeStore = RecipeStore(memoryStore: RecipeMemoryDataSource.shared, fetchCache: MockFetchCache())
         @StateObject var vm = RecipesViewModel(recipeStore: recipeStore, filterStrategy: AllRecipesFilter())
-//        @StateObject var vm2 = RecipesViewModel(memoryStore: RecipeDataSource.shared, recipeStore: recipeStore, filterStrategy: AllRecipesFilter())
         @StateObject var nav = AppNavigation.shared
-        
         @StateObject var themeManager: ThemeManager = ThemeManager()
-        // TODO: Test resizing here later.
-        
-//        NavigationStack {
-//            FavoriteRecipesView(vm: vm2)
-//                .environmentObject(themeManager)
-//                .environmentObject(nav)
-//        }
         
         NavigationStack {
             RecipesView(vm: vm)
                 .environmentObject(themeManager)
                 .environmentObject(nav)
                 .environmentObject(FetchCache())
-//                .environmentObject(RecipeMemoryDataSource.shared)
         }
     }
 }
 #endif
-
-class MockFetchCache: ImageCache {
-    func loadImage(for url: URL) async -> Result<Image, FetchCacheError> {
-        .success(
-        Image(systemName: "heart.fill")
-            .resizable()
-            .renderingMode(.template))
-    }
-    
-    func refresh() async {
-        print("refreshing")
-    }
-    
-    func openCacheDirectoryWithPath(path: String) throws(FetchCacheError) {
-        print("mock fetchcache directory opened")
-    }
-}

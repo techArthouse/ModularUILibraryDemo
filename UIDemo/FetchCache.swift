@@ -268,3 +268,21 @@ protocol ImageCache {
     func openCacheDirectoryWithPath(path: String) throws(FetchCacheError)
     func refresh() async
 }
+
+#if DEBUG
+class MockFetchCache: ImageCache {
+    func loadImage(for url: URL) async -> Result<Image, FetchCacheError> {.success(
+        Image(systemName: "heart.fill")
+            .resizable()
+            .renderingMode(.template))
+    }
+    
+    func refresh() async {
+        print("refreshing")
+    }
+    
+    func openCacheDirectoryWithPath(path: String) throws(FetchCacheError) {
+        print("mock fetchcache directory opened")
+    }
+}
+#endif

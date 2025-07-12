@@ -148,3 +148,24 @@ extension NetworkError: LocalizedError {
         }
     }
 }
+
+
+enum RecipeDecodeError: LocalizedError {
+    case requiredFieldMissingOrMalformed(Error, [String: Any])
+    case invalidJsonObject([String: Any])
+    case dataURLError
+    case unexpectedErrorWithDataModel(String)
+    
+    var errorDescription: String? {
+        switch self {
+        case .requiredFieldMissingOrMalformed(let e, let dict):
+            return "Required data field is missing or malformed. Error: \(e.localizedDescription) for \(dict.debugDescription)"
+        case .invalidJsonObject(let dict):
+            return "JsonSerialization error for invalid json object: \(dict.debugDescription)"
+        case .dataURLError:
+            return "Error occured attempting to form data url."
+        case .unexpectedErrorWithDataModel(let message):
+            return message
+        }
+    }
+}

@@ -10,7 +10,23 @@ import Combine
 
 @MainActor
 class RecipesViewModel: ObservableObject {
+    enum LoadPhase {
+        case idle
+        case loading
+        case success
+        case failure(String)
+    }
+    
+    enum CacheState {
+        case uninitialized
+        case ready
+        case failure(Error)
+    }
+
     @Published var items: [RecipeItem] = []
+    @Published var loadPhase: LoadPhase = .idle
+    @Published var cacheState: CacheState = .uninitialized
+    
     @Published var searchQuery: String = ""
     @Published var selectedCuisine: String?
     @Published var searchModel: SearchViewModel?
@@ -26,135 +42,122 @@ class RecipesViewModel: ObservableObject {
     // MARK: - Init
     
     init(recipeStore: RecipeStore, filterStrategy: RecipeFilterStrategy) {
-//        self.memoryStore = memoryStore
         self.recipeStore = recipeStore
         self.filterStrategy = filterStrategy
         
-        recipesLoadedTrigger
-            .flatMap { _ in
-                    recipeStore.itemsPublisher
-                
-            }
-            .receive(on: RunLoop.main)
-            .sink { [weak self] newItems in
-                
-                self?.items = newItems.map({ recipe in
-                    var recipeItem = RecipeItem(recipe)
-                    recipeItem.isFavorite = recipeStore.isFavorite(for: recipe.id)
-                    recipeItem.notes = recipeStore.notes(for: recipe.id)
-                    return recipeItem
-                }).filter({
-                    if filterStrategy.isFavorite {
-                        $0.isFavorite
-                    } else {
-                        true
-                    }
-                })
-            }
-            .store(in: &cancellables)
-        
-        filterTrigger
-            .flatMap { _ in
-                return Publishers.CombineLatest3(
-                    recipeStore.itemsPublisher,
-                    self.$selectedCuisine.debounce(for: .milliseconds(300), scheduler: RunLoop.main),
-                    self.$searchQuery.debounce(for: .milliseconds(300), scheduler: RunLoop.main)
-                )
-            }
-            .receive(on: RunLoop.main)
-            .sink { [weak self] items, cuisine, query in
-                guard let strongSelf = self else { return }
-                let filteredIds = strongSelf.filter(items, cuisine: cuisine, query: query)
-//                for (i, item) in strongSelf.items.enumerated() {
-//                  let shouldShow = filteredIds.contains(item.id)
-//                  // each row waits i * 50ms before animating
-////                  DispatchQueue.main.asyncAfter(deadline: .now() + Double(i) * 0.15) {
-//                    withAnimation(.easeInOut(duration: 0.3 + (Double(i) * 0.45))) {
-//                      item.selected = shouldShow
-//                    }
-////                  }
-//                }
-                
-                for item in strongSelf.items {
-                    withAnimation(.easeInOut(duration: 0.3)) {
-                        item.selected = filteredIds.contains(item.id)
-                    }
-                }
-            }
-            .store(in: &cancellables)
-        
-//        filterTrigger
-//            .flatMap { _ in
-//                print("filtertriggered")
-//                return Publishers.CombineLatest3(
-//                    recipeStore.itemsPublisher,
-//                    self.$selectedCuisine.debounce(for: .milliseconds(300), scheduler: RunLoop.main),
-//                    self.$searchQuery.debounce(for: .milliseconds(300), scheduler: RunLoop.main)
-//                )
-//            }
-//            .map { items, cuisine, query in
-//                let filteredIds = filterStrategy.filter(items, cuisine: cuisine, query: query)
-//                for item in self.items {
-//                    if filteredIds.contains(item.id) {
-//                        item.selected = true
-//                    } else {
-//                        item.selected = false
-//                    }
-//                }
-//                
-//            }
-////            .map { items, cuisine, query in
-////                filterStrategy.filter(items, cuisine: cuisine, query: query)
-////            }
-//            .receive(on: RunLoop.main)
-//            .sink { [weak self] newItems in
-//                self?.filteredIDs = newItems.map(\.id)
-//            }
-//            .store(in: &cancellables)
-
+        loadSubscriptions()
     }
     
-    /// testing and taken from filterstrategy
-    func filter(_ items: [Recipe], cuisine: String?, query: String?) -> [UUID] {
-        var filtered = items
-        if let cuisine = cuisine {
-            filtered = filtered.filter { $0.cuisine.lowercased() == cuisine.lowercased() }
+    /// The 1st subscription keeps items synced with recipes source of truth.
+    /// the 2nd listens to filter options and mutates items in place to determine if item should be showed.
+    /// By modifying in place we preserve swiftui's internal identity property and keeps animations intact.
+    private func loadSubscriptions() {
+        // 1.
+        recipeStore
+            .itemsPublisher
+            .receive(on: RunLoop.main)
+            .sink { [weak self] recipes in
+                guard let self = self else { return }
+                // create one RecipeItem per recipe. no filter
+                self.items = recipes.map { recipe in
+                    let item = RecipeItem(recipe)
+                    item.isFavorite = self.recipeStore.isFavorite(for: recipe.id)
+                    item.notes = self.recipeStore.notes(for: recipe.id)
+                    return item
+                }
+                self.applyFilter(animated: false)
+            }
+            .store(in: &cancellables)
+        
+        // 2.
+        Publishers
+            .CombineLatest(
+                $selectedCuisine,
+                $searchQuery // .debounce(for: .milliseconds(300), scheduler: RunLoop.main)
+            )
+            .receive(on: RunLoop.main)
+            .sink { [weak self] _, _ in
+                self?.applyFilter(animated: true)
+            }
+            .store(in: &cancellables)
+    }
+    
+    private func applyFilter(animated: Bool) {
+        // computes which recipe ids should be visible
+        let visibleIDs = self.filterStrategy.filter(recipeStore.allItems,
+                                                    cuisine: selectedCuisine,
+                                                    query: searchQuery)
+        
+        // update each item's `selected` in place to preserve animations and prevent odd ui flickers
+        for (idx, item) in items.enumerated() {
+            let shouldShow = visibleIDs.contains(item.id)
+            
+            if animated {
+                // stagger them by index for a “fan-out” effect (TODO: - animation not reflecting fan out)
+                let delay = Double(idx) * 0.03
+                withAnimation(.easeInOut.delay(delay)) {
+                    items[idx].selected = shouldShow
+                }
+            } else {
+                items[idx].selected = shouldShow
+            }
         }
-        if let query = query, !query.isEmpty {
-            filtered = filtered.filter { $0.name.localizedCaseInsensitiveContains(query) }
+    }
+    
+    /// Ensures our disk cache directory is opened exactly once.
+    private func ensureCacheOpened() {
+        guard case .uninitialized = cacheState else { return }
+        do {
+#if DEBUG
+            try recipeStore.startCache(path: "DevelopmentFetchImageCache")
+#else
+            try recipeStore.startCache(path: "FetchImageCache")
+#endif
+            cacheState = .ready
         }
-        return filtered.map({$0.id})
+        catch FetchCacheError.directoryAlreadyOpenWithPathComponent { // if someone already started it we fallback to a safe ready setup.
+            cacheState = .ready
+        }
+        catch {
+            cacheState = .failure(error)
+        }
     }
     
     // MARK: - Public API
     
-    /// Start FetchCache using pathComponent.
-    /// Succeeds unless any error occurs in the cache initialization procees. throws a verbose error if fails.
-    /// the error
-    func startCache(path: String) throws {
-        print("Starting cache at path: \(path)")
-        try recipeStore.startCache(path: path) // FetchCache.shared.openCacheDirectoryWithPath(path: path)
+    /// Called on first appearance. Start the cache and load recipes.
+    func loadAll() {
+        loadPhase = .loading
+        ensureCacheOpened()
+
+        Task {
+            do {
+                try await self.loadRecipes()
+                loadPhase = .success
+            }
+            catch {
+                loadPhase = .failure(error.localizedDescription)
+            }
+        }
     }
     
-    /// resets fields to reload again
-    func reload() async throws -> Bool {
-        self.items.removeAll()
-        try? await Task.sleep(for: .seconds(0.5)) // for visual feedback on reload
+    func reloadAll() async {
+        loadPhase = .loading
+        ensureCacheOpened()
         
-        self.searchQuery = ""
-        self.selectedCuisine = nil
-        self.searchModel = nil
-        
-        await recipeStore.refresh()
-        return try await loadRecipes()
+        do {
+            try await Task.sleep(for: .seconds(0.5)) // for UX feedback
+            await recipeStore.refresh()                 // clear imagecache
+            try await self.loadRecipes()
+            self.searchQuery = ""
+            self.selectedCuisine = nil
+            self.searchModel = nil
+            loadPhase = .success
+        }
+        catch {
+            loadPhase = .failure(error.localizedDescription)
+        }
     }
-    
-//    func addNote(_ text: String, for recipeUUID: UUID) {
-//        guard memoryStore.isFavorite(for: recipeUUID) else { return }
-//        if let note = memoryStore.addNote(text, for: recipeUUID) {
-//            recipeStore.addNote(note, for: recipeUUID)
-//        }
-//    }
     
     var cusineCategories: [String] {
         var categories = Set<String>()
@@ -178,7 +181,7 @@ protocol RecipeDataConsumer {
     var items: [RecipeItem] { get }
     var recipeStore: RecipeStore { get }
 //    func toggleFavorite(recipeUUID: UUID)
-    func loadRecipes(from url: URL?) async throws -> Bool
+    func loadRecipes(from url: URL?) async throws
 }
 
 extension RecipesViewModel: RecipeDataConsumer {
@@ -187,17 +190,10 @@ extension RecipesViewModel: RecipeDataConsumer {
 #if DEBUG
     
     /// Load recipes and update listeners through `RecipeStore`
-    /// Returns true if parsing succeeded, false otherwise.
-    func loadRecipes(from url: URL? = nil) async throws -> Bool {
-        do {
-            let recipes = try await Recipe.allFromJSON(using: .good) // Network call
-            recipeStore.loadRecipes(recipes: recipes)
-//            filterSend()
-            recipesLoadedTrigger.send()
-            return !recipes.isEmpty
-        } catch let e as RecipeDecodeError {
-            throw e
-        }
+    /// Returns true if network succeeded, false otherwise.
+    internal func loadRecipes(from url: URL? = nil) async throws {
+        let recipes = try await Recipe.allFromJSON(using: .malformed)
+        recipeStore.loadRecipes(recipes: recipes)
     }
     
 #else

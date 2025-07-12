@@ -2,25 +2,15 @@ import SwiftUI
 import ModularUILibrary
 
 struct ContentView: View {
-    @StateObject private var vm: RecipesViewModel
-    @StateObject private var vm2: RecipesViewModel
-    
-    @StateObject private var recipeStore: RecipeStore
+    @StateObject private var vm: RecipesViewModel // source of truth for recipes (it traces to a `recipeStore`
     @StateObject private var nav: AppNavigation = .shared
     @EnvironmentObject private var themeManager: ThemeManager
-    @EnvironmentObject var fetchCache: FetchCache
     
     
     init() {
-        let store = RecipeStore(memoryStore: RecipeMemoryDataSource.shared, fetchCache: FetchCache()) // TODO: - fix this
-        _recipeStore = StateObject(wrappedValue: store)
         _vm = StateObject(wrappedValue: RecipesViewModel(
-            recipeStore: store,
+            recipeStore: RecipeStore(memoryStore: RecipeMemoryDataSource.shared, fetchCache: FetchCache()),
             filterStrategy: AllRecipesFilter()))
-        
-        _vm2 = StateObject(wrappedValue: RecipesViewModel(
-            recipeStore: store,
-            filterStrategy: FavoriteRecipesFilter()))
     }
 
     var body: some View {
@@ -31,9 +21,7 @@ struct ContentView: View {
                     .navigationDestination(for: Route.self) { recipe in
                         switch recipe {
                         case .recipeDetail(let uuid):
-//                            if let item = vm.items.first(where: { $0.id == uuid }) {
                             RecipeDetailView(recipeRowVM: RecipeRowViewModel(recipeId: uuid, recipeStore: vm.recipeStore))
-//                            }
                         default:
                             EmptyView()
                         }
@@ -92,7 +80,6 @@ struct ContentView_Previews: PreviewProvider {
         let themeManager: ThemeManager = ThemeManager()
         ContentView()
             .environmentObject(themeManager)
-            .environmentObject(FetchCache())
     }
 }
 #endif

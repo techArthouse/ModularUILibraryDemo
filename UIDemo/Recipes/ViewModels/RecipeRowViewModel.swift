@@ -20,6 +20,7 @@ final class RecipeRowViewModel: ObservableObject {
     private var cancellables = Set<AnyCancellable>()
     
     init(recipeId: UUID, recipeStore: RecipeStore) {
+        print("omgomg2")
         self.recipeId = recipeId
         self.recipeStore = recipeStore
         isFavoriteBinding = recipeStore.isFavorite(for: recipeId)
@@ -149,63 +150,5 @@ extension RecipeMemoryItemProtocol {
     func toggleFavorite() {
         recipeStore.toggleFavorite(recipeId)
         isFavoriteBinding.toggle()
-    }
-}
-
-
-@MainActor
-final class FavoriteFecipeRowViewModel: ObservableObject {
-    @Published var image: Image?
-    var placeholderImage: Image
-    var recipeId: UUID
-    var recipeStore: RecipeStore
-    @Published var isFavoriteBinding: Bool
-    
-    init(placeholder: Image? = nil, recipeId: UUID, memoryStore: RecipeStore) {
-        self.placeholderImage = placeholder ?? Image("placeHolder")
-        self.image = self.placeholderImage
-        self.recipeId = recipeId
-        self.recipeStore = memoryStore
-        isFavoriteBinding = memoryStore.isFavorite(for: recipeId)
-    }
-    
-//    var isFavoriteBinding: Binding<Bool> {
-//        Binding(get: {
-//            self.isRecipFavorited
-//        }, set: { value in
-//            self.setFavorite(value)
-//        })
-//    }
-    
-    var isDisabledBinding: Binding<Bool> {
-        Binding(get: {
-            self.isNotValid
-        }, set: { _ in
-        })
-    }
-    
-    
-    // …
-}
-
-extension FavoriteFecipeRowViewModel: RecipeRowObjectProtocol, RecipeSourcesProtocol, RecipeMemoryItemProtocol {
-    func loadImage(sizeSmall: Bool) async {
-//        Task {
-            do {
-                self.image = try await getImage(sizeSmall: sizeSmall) ?? placeholderImage
-            } catch let e as FetchCacheError {
-                switch e {
-                case .taskCancelled:
-                    // We anticipate to fall here with a CancellationError as that is what's thrown when `task
-                    // cancels a network call. but we wrap it in our own error.
-                    // In our case we scrolled and the row running the request disappeared.
-                    return
-                default:
-                    // Any other error that would suggest we are still viewing the row but an error occured
-                    print("Image load failed: \(e.localizedDescription)")
-                    image = Image("imageNotFound")
-                }
-            }
-//        }
     }
 }
