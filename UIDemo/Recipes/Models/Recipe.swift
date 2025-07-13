@@ -125,3 +125,20 @@ extension Recipe {
         return URL(string: s)
     }
 }
+
+#if DEBUG
+extension Recipe {
+  /// Test‐only initializer so we can spin up lightweight Recipes in XCTest.
+  init(id: UUID, name: String, cuisine: String) {
+    self._id            = id
+    self._name          = name
+    self._cuisine       = cuisine
+    self._uuidString    = id.uuidString
+    // optional fields:
+    self.photoUrlSmall  = nil
+    self.photoUrlLarge  = nil
+    self.sourceUrl      = nil
+    self.youtubeUrl     = nil
+  }
+}
+#endif

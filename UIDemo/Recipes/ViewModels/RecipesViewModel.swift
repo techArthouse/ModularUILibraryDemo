@@ -9,8 +9,8 @@ import SwiftUI
 import Combine
 
 @MainActor
-class RecipesViewModel: ObservableObject {
-    enum LoadPhase {
+class RecipesViewModel: ObservableObject, RecipeDataConsumer {
+    enum LoadPhase: Equatable {
         case idle
         case loading
         case success
@@ -147,26 +147,6 @@ class RecipesViewModel: ObservableObject {
         }
         return Array(categories)
     }
-}
-
-struct SearchViewModel: Identifiable {
-    var id: String { text }
-    var text: String
-    var categories: [String] = []
-}
-
-
-@MainActor
-protocol RecipeDataConsumer {
-    var items: [RecipeItem] { get }
-    var recipeStore: RecipeStore { get }
-//    func toggleFavorite(recipeUUID: UUID)
-    func loadRecipes(from url: URL?) async throws
-}
-
-extension RecipesViewModel: RecipeDataConsumer {
-    
-    
 #if DEBUG
     
     /// Load recipes and update listeners through `RecipeStore`
@@ -195,19 +175,24 @@ extension RecipesViewModel: RecipeDataConsumer {
     }
     
 #endif
-    
-    
-//    func toggleFavorite(recipeUUID: UUID) {
-//        print("is favorite beggining: \(memoryStore.isFavorite(for: recipeUUID))")
-//        memoryStore.toggleFavorite(recipeUUID: recipeUUID)
-//        recipeStore.toggleFavorite(recipeUUID)
-//        if !memoryStore.isFavorite(for: recipeUUID) {
-//            print("it's not favorite")
-//            memoryStore.deleteNotes(for: recipeUUID)
-//            recipeStore.deleteNotes(for: recipeUUID)
-//        }
-//    }
 }
+
+struct SearchViewModel: Identifiable {
+    var id: String { text }
+    var text: String
+    var categories: [String] = []
+}
+
+
+@MainActor
+protocol RecipeDataConsumer {
+    var items: [RecipeItem] { get }
+    var recipeStore: RecipeStore { get }
+//    func toggleFavorite(recipeUUID: UUID)
+    func loadRecipes(from url: URL?) async throws
+}
+
+
 
 extension RecipesViewModel: Filterable {
     func filterSend() {
