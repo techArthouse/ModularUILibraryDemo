@@ -40,8 +40,24 @@ struct Recipe: Decodable, Identifiable, Hashable, CanBeInvalid {
     init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
         
-        self._cuisine = try? c.decode(String.self, forKey: .cuisine)
-        self._name = try? c.decode(String.self, forKey: .name)
+        if let rawCuisine = try? c.decode(String.self, forKey: .cuisine)
+            .trimmingCharacters(in: .whitespacesAndNewlines),
+           !rawCuisine.isEmpty {
+            self._cuisine = rawCuisine
+        } else {
+            self._cuisine = nil
+        }
+        
+        // Decode & normalize name
+        if let rawName = try? c.decode(String.self, forKey: .name)
+            .trimmingCharacters(in: .whitespacesAndNewlines),
+           !rawName.isEmpty {
+            self._name = rawName
+        } else {
+            self._name = nil
+        }
+        
+        // UUID handling unchanged
         self._uuidString = try? c.decode(String.self, forKey: .uuid)
         if let uuidString = self._uuidString {
             self._id = UUID(uuidString: uuidString)
@@ -128,17 +144,18 @@ extension Recipe {
 
 #if DEBUG
 extension Recipe {
-  /// Test‐only initializer so we can spin up lightweight Recipes in XCTest.
-  init(id: UUID, name: String, cuisine: String) {
-    self._id            = id
-    self._name          = name
-    self._cuisine       = cuisine
-    self._uuidString    = id.uuidString
-    // optional fields:
-    self.photoUrlSmall  = nil
-    self.photoUrlLarge  = nil
-    self.sourceUrl      = nil
-    self.youtubeUrl     = nil
-  }
+    /// Test  initializer
+    init(id: UUID, name: String, cuisine: String) {
+        self._id            = id
+        self._name          = name
+        self._cuisine       = cuisine
+        self._uuidString    = id.uuidString
+        
+        // optional fields:
+        self.photoUrlSmall  = nil
+        self.photoUrlLarge  = nil
+        self.sourceUrl      = nil
+        self.youtubeUrl     = nil
+    }
 }
 #endif

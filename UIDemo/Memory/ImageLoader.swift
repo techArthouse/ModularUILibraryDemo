@@ -9,10 +9,10 @@ import SwiftUI
 
 final class ImageLoader: ObservableObject {
     @Published var image: Image? = nil
-    private let cache: ImageCache
+    private let cache: ImageCacheProtocol
     private let url: URL?
     
-    init(url: URL?, cache: ImageCache) {
+    init(url: URL?, cache: ImageCacheProtocol) {
         self.url = url
         self.cache = cache
     }

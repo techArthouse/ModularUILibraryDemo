@@ -1,5 +1,5 @@
 //
-//  RecipeService.swift
+//  RecipeDataServiceProtocol.swift
 //  UIDemo
 //
 //  Created by Arturo Aguilar on 7/12/25.
@@ -9,13 +9,17 @@ import SwiftUI
 import Combine
 
 @MainActor
-protocol RecipeService: AnyObject {
-    var objectWillChange: ObservableObjectPublisher { get }
+protocol RecipeDataServiceProtocol: ObservableObject {
+    var allItems: [Recipe] { get }
+    var imageCache: ImageCacheProtocol { get }
+    var itemsPublisher: AnyPublisher<[Recipe], Never> { get }
+    func setRecipes(recipes: [Recipe]) 
     
     // MARK: – Metadata
-    func title(for id: UUID) -> String
-    func description(for id: UUID) -> String
-    func isNotValid(for id: UUID) -> Bool
+    func title(for id: UUID) -> String // title for recipe
+    func description(for id: UUID) -> String // cuisine
+    func isNotValid(for id: UUID) -> Bool // whether decoded model meets requirments
+    // (i.e. has title, description, and id)
     
     // MARK: – Favorites
     func isFavorite(for id: UUID) -> Bool
@@ -33,9 +37,6 @@ protocol RecipeService: AnyObject {
     func sourceWebsiteURL(for id: UUID) -> URL?
     func youtubeVideoURL(for id: UUID) -> URL?
     
-    // MARK: – Image Loading
-    /// Fetches the small or large image for the given recipe.
-    //  func getImage(for id: UUID, smallImage: Bool) async throws(FetchCacheError) -> Image?
-//    func startCache(path: String) throws(FetchCacheError)
-    func refresh() async
+    // MARK: – Image Cache operation
+    func refreshImageCache() async // we only need to be able to refresh imageCache
 }

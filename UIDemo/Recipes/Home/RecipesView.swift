@@ -151,7 +151,7 @@ struct RecipesView_Previews: PreviewProvider {
     @State var strring = "https%3A//d3jbb8n5wk0qxi.cloudfront.net/photos/.../small.jpg"
     
     static var previews: some View {
-        @StateObject var recipeStore = RecipeStore(memoryStore: RecipeMemoryDataSource.shared, fetchCache: MockFetchCache())
+        @StateObject var recipeStore = RecipeDataService(memoryStore: RecipeMemoryDataSource(), fetchCache: MockFetchCache())
         @StateObject var vm = RecipesViewModel(recipeStore: recipeStore, filterStrategy: AllRecipesFilter())
         @StateObject var nav = AppNavigation.shared
         @StateObject var themeManager: ThemeManager = ThemeManager()

@@ -92,7 +92,7 @@ struct RecipeRowView_Previews: PreviewProvider {
     static var previews: some View {
         let goodRecipe = Recipe.recipePreview(using: .good).first!
 //        let recipeStore = RecipeStore(memoryStore: RecipeDataSource.shared)
-        let recipeStore = RecipeStore(memoryStore: MockRecipeMemoryDataSource(), fetchCache: MockFetchCacheGOODandBAD())
+        let recipeStore = RecipeDataService(memoryStore: MockRecipeMemoryDataSource(), fetchCache: MockFetchCacheGOODandBAD())
         let invalidRecipe = Recipe.recipePreview(using: .malformed)[1]
         
         let goodItem = RecipeItem(goodRecipe)
@@ -103,7 +103,7 @@ struct RecipeRowView_Previews: PreviewProvider {
         
         let nav = AppNavigation.shared
         let themeManager = ThemeManager()
-        recipeStore.loadRecipes(recipes: [goodRecipe, invalidRecipe])
+        recipeStore.setRecipes(recipes: [goodRecipe, invalidRecipe])
         
         return VStack {
             RecipeRowView(viewmodel: RecipeRowViewModel(recipeId: goodItem.id, recipeStore: recipeStore)) {
@@ -125,7 +125,8 @@ struct RecipeRowView_Previews: PreviewProvider {
     }
 }
 
-class MockFetchCacheGOODandBAD: ImageCache {
+class MockFetchCacheGOODandBAD: ImageCacheProtocol {
+    
     func loadImage(for url: URL) async -> Result<Image, FetchCacheError> {
         if url.absoluteString != "https://d3jbb8n5wk0qxi.cloudfront.net/photos/b9ab0071-b281-4bee-b361-ec340d405320/small.jpg" {
             return
@@ -144,11 +145,23 @@ class MockFetchCacheGOODandBAD: ImageCache {
     }
     
     func openCacheDirectoryWithPath(path: String) throws(FetchCacheError) {
-        print("mock fetchcache directory opened")
+        // nothing yet
     }
 }
 
-class MockRecipeMemoryDataSource: RecipeMemoryStoreProtocol, ObservableObject {
+class MockRecipeMemoryDataSource: RecipeMemoryDataSourceProtocol {
+    func load() {
+        // nothing yet
+    }
+    
+    func save() {
+        // nothing yet
+    }
+    
+    func addNote(_ text: String, for recipeUUID: UUID) {
+        // nothing yet
+    }
+    
     @Published var memories: [UUID : RecipeMemory] = [:]
     
     func getMemory(for recipeUUID: UUID) -> RecipeMemory {

@@ -13,18 +13,18 @@ final class RecipeRowViewModel: ObservableObject {
     private let imageLoader: ImageLoader
     var recipeId: UUID
 //    @ObservedObject private var vm: RecipesViewModel
-    @ObservedObject var recipeStore: RecipeStore
+    var recipeStore: any RecipeDataServiceProtocol
     @Published private(set) var image: Image?
     @Published var isFavorite: Bool = false
     
     private var cancellables = Set<AnyCancellable>()
     
-    init(recipeId: UUID, recipeStore: RecipeStore) {
+    init(recipeId: UUID, recipeStore: any RecipeDataServiceProtocol) {
         print("omgomg2")
         self.recipeId = recipeId
         self.recipeStore = recipeStore
         isFavorite = recipeStore.isFavorite(for: recipeId)
-        self.imageLoader = ImageLoader(url: recipeStore.smallImageURL(for: recipeId), cache: recipeStore.fetchCache)
+        self.imageLoader = ImageLoader(url: recipeStore.smallImageURL(for: recipeId), cache: recipeStore.imageCache)
     }
     
     /// Binding: ViewModel.image ← ImageLoader.image
@@ -72,37 +72,7 @@ final class RecipeRowViewModel: ObservableObject {
 
 }
 
-extension RecipeRowViewModel: RecipeRowObjectProtocol, RecipeSourcesProtocol, RecipeMemoryItemProtocol {
-//    func loadImage(sizeSmall: Bool) async {
-////        Task {
-//            do {
-//                self.imageLoader.image = try await getImage(sizeSmall: sizeSmall) ?? Image("placeHolder")
-//            } catch let e as FetchCacheError {
-//                switch e {
-//                case .taskCancelled:
-//                    print("task cancelled?")
-//                    // We anticipate to fall here with a CancellationError as that is what's thrown when `task
-//                    // cancels a network call. but we wrap it in our own error.
-//                    // In our case we scrolled and the row running the request disappeared.
-//                    return
-//                default:
-//                    // Any other error that would suggest we are still viewing the row but an error occured
-//                    print("Image load failed: \(e.localizedDescription)")
-//                    self.imageLoader.image = Image("imageNotFound")
-//                }
-//            }
-////        }
-//    }
-}
-
-@MainActor
-protocol RecipeRowObjectProtocol {
-    var recipeStore: RecipeStore { get }
-    var recipeId: UUID { get }
-//    func loadImage(sizeSmall: Bool) async // Use this to call getImage and request from the network/cache, then what to fallback to in case of FetchCacheError. `see getImage()`
-}
-
-extension RecipeRowObjectProtocol {
+extension RecipeRowViewModel {
     var title: String {
         recipeStore.title(for: recipeId)
     }
@@ -118,16 +88,7 @@ extension RecipeRowObjectProtocol {
     func getImage(sizeSmall: Bool = true) async throws(FetchCacheError )-> Image? {
         return nil // try await recipeStore.getImage(for: recipeId, smallImage: sizeSmall)
     }
-}
-
-
-@MainActor
-protocol RecipeSourcesProtocol {
-    var recipeStore: RecipeStore { get }
-    var recipeId: UUID { get }
-}
-
-extension RecipeSourcesProtocol {
+    
     var sourceURL: URL? {
         recipeStore.sourceWebsiteURL(for: recipeId)
     }
@@ -135,16 +96,7 @@ extension RecipeSourcesProtocol {
     var videoURL: URL? {
         recipeStore.youtubeVideoURL(for: recipeId)
     }
-}
-
-@MainActor
-protocol RecipeMemoryItemProtocol: AnyObject {
-    var recipeStore: RecipeStore { get }
-    var recipeId: UUID { get }
-//    var isFavoriteBinding: Binding<Bool> { get set }
-}
-
-extension RecipeMemoryItemProtocol {
+    
     var notes: [RecipeNote] {
         recipeStore.notes(for: recipeId)
     }

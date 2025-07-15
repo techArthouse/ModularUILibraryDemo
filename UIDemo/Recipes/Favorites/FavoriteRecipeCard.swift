@@ -132,7 +132,7 @@ struct FavoriteRecipeCard: View {
 #if DEBUG
 struct FavoriteRecipesCard_Previews: PreviewProvider {
     static var previews: some View {
-        @StateObject var recipeStore = RecipeStore(memoryStore: MockRecipeMemoryDataSource(), fetchCache: MockFetchCache())
+        @StateObject var recipeStore = RecipeDataService(memoryStore: MockRecipeMemoryDataSource(), fetchCache: MockFetchCache())
         @StateObject var vm = RecipesViewModel(recipeStore: recipeStore, filterStrategy: AllRecipesFilter())
         @StateObject var nav = AppNavigation.shared
         

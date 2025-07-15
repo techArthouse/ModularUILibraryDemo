@@ -26,7 +26,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
-		71A95CCE2E231516001B52CC /* PBXContainerItemProxy */ = {
+		7189F0EA2E25DBC500D997F5 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 71D5EDFD2B8D407C004DE667 /* Project object */;
 			proxyType = 1;
@@ -39,8 +39,8 @@
 		7178C87E2E0C5AF3005C4571 /* RobotoMono-Italic-VariableFont_wght.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "RobotoMono-Italic-VariableFont_wght.ttf"; sourceTree = "<group>"; };
 		7178C87F2E0C5AF3005C4571 /* RobotoMono-VariableFont_wght.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "RobotoMono-VariableFont_wght.ttf"; sourceTree = "<group>"; };
 		7178C8932E0C5F80005C4571 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		7189F0E62E25DBC500D997F5 /* UIDemoTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = UIDemoTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		71A95C782E22FCC8001B52CC /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
-		71A95CCA2E231516001B52CC /* UIDemoTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = UIDemoTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		71D5EE052B8D407D004DE667 /* UIDemo.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = UIDemo.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		71D5EE082B8D407D004DE667 /* UIDemoApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UIDemoApp.swift; sourceTree = "<group>"; };
 		71D5EE0A2B8D407D004DE667 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
@@ -58,13 +58,13 @@
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		7132B89F2E20785E00001E69 /* Memory */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = Memory; sourceTree = "<group>"; };
-		71A95CCB2E231516001B52CC /* UIDemoTests */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = UIDemoTests; sourceTree = "<group>"; };
+		7189F0E72E25DBC500D997F5 /* UIDemoTests */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = UIDemoTests; sourceTree = "<group>"; };
 		71E7CD7F2DFC85C90075C883 /* RecipeMemoryStore */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = RecipeMemoryStore; sourceTree = "<group>"; };
 		71E7CD822DFC86D80075C883 /* Recipes */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = Recipes; sourceTree = "<group>"; };
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
-		71A95CC72E231516001B52CC /* Frameworks */ = {
+		7189F0E32E25DBC500D997F5 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -95,7 +95,7 @@
 			isa = PBXGroup;
 			children = (
 				71D5EE072B8D407D004DE667 /* UIDemo */,
-				71A95CCB2E231516001B52CC /* UIDemoTests */,
+				7189F0E72E25DBC500D997F5 /* UIDemoTests */,
 				71D5EE062B8D407D004DE667 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -104,7 +104,7 @@
 			isa = PBXGroup;
 			children = (
 				71D5EE052B8D407D004DE667 /* UIDemo.app */,
-				71A95CCA2E231516001B52CC /* UIDemoTests.xctest */,
+				7189F0E62E25DBC500D997F5 /* UIDemoTests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -153,27 +153,27 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		71A95CC92E231516001B52CC /* UIDemoTests */ = {
+		7189F0E52E25DBC500D997F5 /* UIDemoTests */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 71A95CD22E231516001B52CC /* Build configuration list for PBXNativeTarget "UIDemoTests" */;
+			buildConfigurationList = 7189F0EC2E25DBC500D997F5 /* Build configuration list for PBXNativeTarget "UIDemoTests" */;
 			buildPhases = (
-				71A95CC62E231516001B52CC /* Sources */,
-				71A95CC72E231516001B52CC /* Frameworks */,
-				71A95CC82E231516001B52CC /* Resources */,
+				7189F0E22E25DBC500D997F5 /* Sources */,
+				7189F0E32E25DBC500D997F5 /* Frameworks */,
+				7189F0E42E25DBC500D997F5 /* Resources */,
 			);
 			buildRules = (
 			);
 			dependencies = (
-				71A95CCF2E231516001B52CC /* PBXTargetDependency */,
+				7189F0EB2E25DBC500D997F5 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
-				71A95CCB2E231516001B52CC /* UIDemoTests */,
+				7189F0E72E25DBC500D997F5 /* UIDemoTests */,
 			);
 			name = UIDemoTests;
 			packageProductDependencies = (
 			);
 			productName = UIDemoTests;
-			productReference = 71A95CCA2E231516001B52CC /* UIDemoTests.xctest */;
+			productReference = 7189F0E62E25DBC500D997F5 /* UIDemoTests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
 		};
 		71D5EE042B8D407D004DE667 /* UIDemo */ = {
@@ -211,7 +211,7 @@
 				LastSwiftUpdateCheck = 1620;
 				LastUpgradeCheck = 1520;
 				TargetAttributes = {
-					71A95CC92E231516001B52CC = {
+					7189F0E52E25DBC500D997F5 = {
 						CreatedOnToolsVersion = 16.2;
 						TestTargetID = 71D5EE042B8D407D004DE667;
 					};
@@ -237,13 +237,13 @@
 			projectRoot = "";
 			targets = (
 				71D5EE042B8D407D004DE667 /* UIDemo */,
-				71A95CC92E231516001B52CC /* UIDemoTests */,
+				7189F0E52E25DBC500D997F5 /* UIDemoTests */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
-		71A95CC82E231516001B52CC /* Resources */ = {
+		7189F0E42E25DBC500D997F5 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -268,7 +268,7 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
-		71A95CC62E231516001B52CC /* Sources */ = {
+		7189F0E22E25DBC500D997F5 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -292,15 +292,15 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
-		71A95CCF2E231516001B52CC /* PBXTargetDependency */ = {
+		7189F0EB2E25DBC500D997F5 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = 71D5EE042B8D407D004DE667 /* UIDemo */;
-			targetProxy = 71A95CCE2E231516001B52CC /* PBXContainerItemProxy */;
+			targetProxy = 7189F0EA2E25DBC500D997F5 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
-		71A95CD02E231516001B52CC /* Debug */ = {
+		7189F0ED2E25DBC500D997F5 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
@@ -319,7 +319,7 @@
 			};
 			name = Debug;
 		};
-		71A95CD12E231516001B52CC /* Release */ = {
+		7189F0EE2E25DBC500D997F5 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
@@ -373,6 +373,7 @@
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEFINES_MODULE = YES;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
 				ENABLE_USER_SCRIPT_SANDBOXING = YES;
@@ -438,6 +439,7 @@
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEFINES_MODULE = YES;
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_USER_SCRIPT_SANDBOXING = YES;
@@ -468,6 +470,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEFINES_MODULE = YES;
 				DEVELOPMENT_ASSET_PATHS = "\"UIDemo/Preview Content\"";
 				DEVELOPMENT_TEAM = 624LT4VXCT;
 				ENABLE_PREVIEWS = YES;
@@ -499,6 +502,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEFINES_MODULE = YES;
 				DEVELOPMENT_ASSET_PATHS = "\"UIDemo/Preview Content\"";
 				DEVELOPMENT_TEAM = 624LT4VXCT;
 				ENABLE_PREVIEWS = YES;
@@ -526,11 +530,11 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		71A95CD22E231516001B52CC /* Build configuration list for PBXNativeTarget "UIDemoTests" */ = {
+		7189F0EC2E25DBC500D997F5 /* Build configuration list for PBXNativeTarget "UIDemoTests" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				71A95CD02E231516001B52CC /* Debug */,
-				71A95CD12E231516001B52CC /* Release */,
+				7189F0ED2E25DBC500D997F5 /* Debug */,
+				7189F0EE2E25DBC500D997F5 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

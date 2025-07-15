@@ -17,7 +17,7 @@ struct ContentView: View {
     /// Constructs ContentView with the given RecipeStore,
     /// creating a view model for all recipes and another for favorites.
     /// - Parameter recipeStore: The central store managing recipe data.
-    init(recipeStore: RecipeStore) {
+    init(recipeStore: RecipeDataService) {
         _homeVM = StateObject(wrappedValue: RecipesViewModel(
             recipeStore: recipeStore,
             filterStrategy: AllRecipesFilter()))
@@ -90,7 +90,7 @@ struct ContentView_Previews: PreviewProvider {
     static var previews: some View {
         let themeManager: ThemeManager = ThemeManager()
         
-        ContentView(recipeStore: RecipeStore(memoryStore: RecipeMemoryDataSource.shared, fetchCache: FetchCache(path: "DevelopmentImageCache")))
+        ContentView(recipeStore: RecipeDataService(memoryStore: RecipeMemoryDataSource(), fetchCache: FetchCache(path: "DevelopmentImageCache")))
             .environmentObject(themeManager)
     }
 }

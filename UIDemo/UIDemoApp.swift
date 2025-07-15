@@ -27,26 +27,37 @@ struct UIDemoApp: App {
     }
 
     /// Shared image fetch cache for the entire app.
-    @StateObject private var fetchCache = FetchCache(path: cachePath)
+//    @StateObject private var fetchCache = FetchCache(path: cachePath)
 
     /// Central source of truth for recipe data.
-    @StateObject private var recipeStore: RecipeStore
+    @StateObject private var recipeStore: RecipeDataService
 
     /// Initializes the application, setting up the shared data sources:
     /// - A memory-backed data source for recipes.
     /// - A single shared fetch cache for image loading.
     /// - A recipe store that coordinates between memory and network.
     init() {
-        let memoryStore = RecipeMemoryDataSource.shared
+        let memoryStore = RecipeMemoryDataSource(defaults: UserDefaults(suiteName: "work")!)
         let cache = FetchCache(path: Self.cachePath)
-        let store = RecipeStore(memoryStore: memoryStore, fetchCache: cache)
+        let store = RecipeDataService(memoryStore: memoryStore, fetchCache: cache)
         _recipeStore = StateObject(wrappedValue: store)
     }
     
+    
+    // NOTE: - Below we check for a flag that xcode sets during testing. Figuring this out was
+    // necessary as unit tests launched uiviews during one such test `RecipesViewModelTests`. The alternative to
+    // this is to move modular code to it's own package. At this time there's no reason to do that,
+    // but as the library grows i might. 
     var body: some Scene {
         WindowGroup {
-            ContentView(recipeStore: recipeStore)
-                .environmentObject(themeManager)
+            Group {
+                if ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] != nil {
+                    EmptyView()
+                } else {
+                    ContentView(recipeStore: recipeStore)
+                        .environmentObject(themeManager)
+                }
+            }
         }
     }
 }

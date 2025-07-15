@@ -9,14 +9,14 @@ import SwiftUI
 import UIKit
 
 @MainActor
-protocol ImageCache {
+protocol ImageCacheProtocol {
     func loadImage(for url: URL) async -> Result<Image, FetchCacheError>
     func openCacheDirectoryWithPath(path: String) throws(FetchCacheError)
     func refresh() async
 }
 
 @MainActor
-class FetchCache: ObservableObject, ImageCache {
+class FetchCache: ObservableObject, ImageCacheProtocol {
     private var memoryCache = [String: Image]() // in‐memory cache
     private var cacheDirectoryURL: URL?
     private let path: String
@@ -191,7 +191,7 @@ extension FetchCache {
 }
 
 #if DEBUG
-class MockFetchCache: ImageCache {
+class MockFetchCache: ImageCacheProtocol {
     func loadImage(for url: URL) async -> Result<Image, FetchCacheError> {.success(
         Image(systemName: "heart.fill")
             .resizable()

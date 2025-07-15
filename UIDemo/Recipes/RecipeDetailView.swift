@@ -240,8 +240,8 @@ struct RecipeDetailView_Previews: PreviewProvider {
         let recipe = Recipe.recipePreview(using: .good).first
         var recipeItem = RecipeItem(recipe!)
         
-        let recipeStore = RecipeStore(memoryStore: MockRecipeMemoryDataSource(), fetchCache: MockFetchCache())
-        recipeStore.loadRecipes(recipes: [recipe!])
+        let recipeStore = RecipeDataService(memoryStore: MockRecipeMemoryDataSource(), fetchCache: MockFetchCache())
+        recipeStore.setRecipes(recipes: [recipe!])
         
         return RecipeDetailView(recipeRowVM: RecipeRowViewModel(recipeId: recipe!.id, recipeStore: recipeStore))
         //    RecipeDetailView(item: recipeItem, onToggleFavorite: {

@@ -13,7 +13,7 @@ class RecipeItem: ObservableObject, Identifiable {
     let id: UUID // essential and nonmutating
 //    @Published var isFavorite: Bool = false // is favorite is potentially toggled often enough that we need to watch it.
 //    @Published var notes: [RecipeNote] = []
-    @Published var selected: Bool // we've discussed this one.
+    var selected: Bool // we've discussed this one.
 
     init(id: UUID, selected: Bool = true) {
         self.id = id
