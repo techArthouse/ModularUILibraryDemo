@@ -9,46 +9,37 @@ import Combine
 @testable import UIDemo
 
 /// A fake RecipeStore that lets us publish custom recipe arrays and observe how the view model reacts.
+
 @MainActor
-private class FakeRecipeDataService: RecipeDataServiceProtocol {
-    var imageCache: any ImageCacheProtocol = FakeImageCache()
-    
-    func setRecipes(recipes: [Recipe]) {
-        self.allItems = recipes
-    }
-    
+class FakeRecipeDataService: RecipeDataServiceProtocol {
     @Published var allItems: [Recipe] = []
+    @Published var imageCache: any ImageCacheProtocol = FakeImageCache()
     var itemsPublisher: AnyPublisher<[Recipe], Never> { $allItems.eraseToAnyPublisher() }
+    func setRecipes(recipes: [Recipe]) {
+        print("we loaded recipe with id: \(recipes.first!.id)")
+        allItems = recipes }
 
-    // MARK: – Metadata
-    func title(for id: UUID) -> String {
-      allItems.first(where: { $0.id == id })?.name ?? ""
-    }
-    func description(for id: UUID) -> String {
-      allItems.first(where: { $0.id == id })?.cuisine ?? ""
-    }
-    func isNotValid(for id: UUID) -> Bool {
-      allItems.first(where: { $0.id == id })?.isNotValid ?? false
-    }
+    // metadata stubs
+    func title(for id: UUID) -> String { allItems.first { $0.id == id }?.name ?? "" }
+    func description(for id: UUID) -> String { allItems.first { $0.id == id }?.cuisine ?? "" }
+    func isNotValid(for id: UUID) -> Bool { false }
 
-    private var memory: RecipeMemoryDataSource = RecipeMemoryDataSource(key: "Fake", defaults: UserDefaults(suiteName: "Fake")!)
-    func isFavorite(for id: UUID) -> Bool                  { memory.isFavorite(for: id) }
-    func toggleFavorite(_ id: UUID)                        { memory.toggleFavorite(recipeUUID: id) }
-    func setFavorite(_ fav: Bool, for id: UUID)            { memory.setFavorite(fav, for: id) }
-    func notes(for id: UUID) -> [RecipeNote]               { memory.notes(for: id) }
-    func addNote(_ text: String, for id: UUID)             { memory.addNote(text, for: id) }
-    func deleteNotes(for id: UUID)                         { memory.deleteNotes(for: id) }
+    // favorites & notes stub via in-memory
+    private var memory = RecipeMemoryDataSource(key: "Fake", defaults: UserDefaults(suiteName: "Fake")!)
+    func isFavorite(for id: UUID) -> Bool { memory.isFavorite(for: id) }
+    func toggleFavorite(_ id: UUID) { memory.toggleFavorite(recipeUUID: id) }
+    func setFavorite(_ fav: Bool, for id: UUID) { memory.setFavorite(fav, for: id) }
+    func notes(for id: UUID) -> [RecipeNote] { memory.notes(for: id) }
+    func addNote(_ text: String, for id: UUID) { memory.addNote(text, for: id) }
+    func deleteNotes(for id: UUID) { memory.deleteNotes(for: id) }
 
-    // MARK: – URLs
-    func smallImageURL(for id: UUID) -> URL?               { allItems.first(where: { $0.id == id })?.smallImageURL }
-    func largeImageURL(for id: UUID) -> URL?               { allItems.first(where: { $0.id == id })?.largeImageURL }
-    func sourceWebsiteURL(for id: UUID) -> URL?            { allItems.first(where: { $0.id == id })?.sourceWebsiteURL }
-    func youtubeVideoURL(for id: UUID) -> URL?             { allItems.first(where: { $0.id == id })?.youtubeVideoURL }
+    // URLs
+    func smallImageURL(for id: UUID) -> URL? { nil }
+    func largeImageURL(for id: UUID) -> URL? { nil }
+    func sourceWebsiteURL(for id: UUID) -> URL? { nil }
+    func youtubeVideoURL(for id: UUID) -> URL? { nil }
 
-    // MARK: – Image Cache
-    private var _didRefresh = false
-    func refreshImageCache() async {
-      _didRefresh = true
-    }
-    var didRefresh: Bool { _didRefresh }
+    // image cache
+    private(set) var didRefresh = false
+    func refreshImageCache() async { didRefresh = true }
 }

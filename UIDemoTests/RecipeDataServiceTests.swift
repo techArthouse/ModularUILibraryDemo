@@ -21,7 +21,7 @@ final class RecipeDataServiceTests: XCTestCase {
 
     override func setUp() {
         super.setUp()
-        // 1) Ephemeral defaults
+        // 1) Defaults
         suiteName = "RecipeDataServiceTests.\(UUID())"
         defaults = UserDefaults(suiteName: suiteName)!
         memory = RecipeMemoryDataSource(key: "TestKey", defaults: defaults)
@@ -32,7 +32,7 @@ final class RecipeDataServiceTests: XCTestCase {
         // 3) System Under Test
         sut = RecipeDataService(memoryStore: memory, fetchCache: cache)
 
-        // 4) A sample recipe
+        // 4) Sample recipe
         sampleId = UUID()
         sample = Recipe(id: sampleId, name: "TestName", cuisine: "TestCuisine")
     }

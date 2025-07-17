@@ -103,7 +103,7 @@ struct FavoriteRecipeCard: View {
                     
                     Spacer()
                     VStack(spacing: 0){
-                        IconButton(icon: .system("video.fill"), isDisabled: .constant(false)) { }
+                        IconButton(icon: .system("video.fill"), isDisabled: .constant(!clickableLinks.youtube)) { }
                             .asStandardIconButtonStyle(withColor: .green)
                         
                         Text("Youtube")
@@ -112,7 +112,7 @@ struct FavoriteRecipeCard: View {
                     Spacer()
                     
                     VStack(spacing: 0){
-                        IconButton(icon: .system("safari.fill"), isDisabled: .constant(false)) { }
+                        IconButton(icon: .system("safari.fill"), isDisabled: .constant(!clickableLinks.source)) { }
                             .asStandardIconButtonStyle(withColor: .blue)
                         
                         Text("Web")
@@ -121,6 +121,7 @@ struct FavoriteRecipeCard: View {
                     Spacer()
                 }
                 .padding(EdgeInsets(top: 0, leading: 10, bottom: 5, trailing: 10))
+                .disabled(true)
             })
         .gesture(TapGesture().onEnded({ onTapRow() }), including: .gesture)
         .task {
@@ -133,7 +134,6 @@ struct FavoriteRecipeCard: View {
 struct FavoriteRecipesCard_Previews: PreviewProvider {
     static var previews: some View {
         @StateObject var recipeStore = RecipeDataService(memoryStore: MockRecipeMemoryDataSource(), fetchCache: MockFetchCache())
-        @StateObject var vm = RecipesViewModel(recipeStore: recipeStore, filterStrategy: AllRecipesFilter())
         @StateObject var nav = AppNavigation.shared
         
         @StateObject var themeManager: ThemeManager = ThemeManager()

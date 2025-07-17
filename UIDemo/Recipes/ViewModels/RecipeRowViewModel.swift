@@ -12,7 +12,6 @@ import Combine
 final class RecipeRowViewModel: ObservableObject {
     private let imageLoader: ImageLoader
     var recipeId: UUID
-//    @ObservedObject private var vm: RecipesViewModel
     var recipeStore: any RecipeDataServiceProtocol
     @Published private(set) var image: Image?
     @Published var isFavorite: Bool = false
@@ -39,12 +38,10 @@ final class RecipeRowViewModel: ObservableObject {
     func load() async {
         bindImageLoader()
         await self.imageLoader.load()
-//        isFavoriteBinding = recipeStore.isFavorite(for: recipeId)
     }
     
     var isDisabledBinding: Binding<Bool> {
         Binding(get: {
-//            print("wait why are we here")
             return self.isNotValid
         }, set: { _ in
         })
@@ -55,21 +52,19 @@ final class RecipeRowViewModel: ObservableObject {
     }
     
     var isFavoriteBinding: Binding<Bool> {
-      Binding(
-        get: { [weak self] in
-            guard let self = self else { return false }
-            print( "get favorite for id \(self.recipeId) is \(isFavorite)")
-            return isRecipFavorited },
-        set: { [weak self] newValue in
-            guard let self = self else { return }
-            print("set favorite \(newValue) for id \(self.recipeId)")
-            self.objectWillChange.send()
-            self.recipeStore.setFavorite(newValue, for: self.recipeId)
-//            isFavorite = newValue
-        }
-      )
+        Binding(
+            get: { [weak self] in
+                guard let self = self else { return false }
+                print( "get favorite for id \(self.recipeId) is \(isFavorite)")
+                return isRecipFavorited },
+            set: { [weak self] newValue in
+                guard let self = self else { return }
+                print("set favorite \(newValue) for id \(self.recipeId)")
+                self.objectWillChange.send()
+                self.recipeStore.setFavorite(newValue, for: self.recipeId)
+            }
+        )
     }
-
 }
 
 extension RecipeRowViewModel {
@@ -83,10 +78,6 @@ extension RecipeRowViewModel {
     
     var isNotValid: Bool {
         recipeStore.isNotValid(for: recipeId)
-    }
-    
-    func getImage(sizeSmall: Bool = true) async throws(FetchCacheError )-> Image? {
-        return nil // try await recipeStore.getImage(for: recipeId, smallImage: sizeSmall)
     }
     
     var sourceURL: URL? {
@@ -111,12 +102,9 @@ extension RecipeRowViewModel {
     
     func setFavorite(_ favorite: Bool) {
         recipeStore.setFavorite(favorite, for: recipeId)
-//        isFavoriteBinding = favorite
-//        isFavoriteBinding.wrappedValue = favorite
     }
     
     func toggleFavorite() {
         recipeStore.toggleFavorite(recipeId)
-//        isFavoriteBinding.toggle()
     }
 }

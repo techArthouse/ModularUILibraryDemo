@@ -61,6 +61,7 @@ struct ContentView: View {
                             EmptyView()
                         }
                     }
+                    .background(.gray.opacity(0.09))
             }
             .tag(Tab.favorites)
             .tabItem { Label("Favorites", systemImage: "star.fill") }

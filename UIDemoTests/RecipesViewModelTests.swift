@@ -176,41 +176,7 @@ final class RecipesViewModelTests: XCTestCase {
     }
 }
 
-// MARK: - Test doubles
 
-@MainActor
-private class FakeRecipeDataService: RecipeDataServiceProtocol {
-    @Published var allItems: [Recipe] = []
-    @Published var imageCache: any ImageCacheProtocol = FakeImageCache()
-    var itemsPublisher: AnyPublisher<[Recipe], Never> { $allItems.eraseToAnyPublisher() }
-    func setRecipes(recipes: [Recipe]) {
-        print("we loaded recipe with id: \(recipes.first!.id)")
-        allItems = recipes }
-
-    // metadata stubs
-    func title(for id: UUID) -> String { allItems.first { $0.id == id }?.name ?? "" }
-    func description(for id: UUID) -> String { allItems.first { $0.id == id }?.cuisine ?? "" }
-    func isNotValid(for id: UUID) -> Bool { false }
-
-    // favorites & notes stub via in-memory
-    private var memory = RecipeMemoryDataSource(key: "Fake", defaults: UserDefaults(suiteName: "Fake")!)
-    func isFavorite(for id: UUID) -> Bool { memory.isFavorite(for: id) }
-    func toggleFavorite(_ id: UUID) { memory.toggleFavorite(recipeUUID: id) }
-    func setFavorite(_ fav: Bool, for id: UUID) { memory.setFavorite(fav, for: id) }
-    func notes(for id: UUID) -> [RecipeNote] { memory.notes(for: id) }
-    func addNote(_ text: String, for id: UUID) { memory.addNote(text, for: id) }
-    func deleteNotes(for id: UUID) { memory.deleteNotes(for: id) }
-
-    // URLs
-    func smallImageURL(for id: UUID) -> URL? { nil }
-    func largeImageURL(for id: UUID) -> URL? { nil }
-    func sourceWebsiteURL(for id: UUID) -> URL? { nil }
-    func youtubeVideoURL(for id: UUID) -> URL? { nil }
-
-    // image cache
-    private(set) var didRefresh = false
-    func refreshImageCache() async { didRefresh = true }
-}
 
 @MainActor
 private class TestableRecipesViewModel: RecipesViewModel {
