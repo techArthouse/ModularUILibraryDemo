@@ -94,7 +94,7 @@ struct ContentView_Previews: PreviewProvider {
         }, makeFavoritesVM: {
             RecipesViewModel(
                 recipeStore: recipeStore,
-                filterStrategy: AllRecipesFilter(),
+                filterStrategy: FavoriteRecipesFilter(),
                 networkService: NetworkService())
         })
         .environmentObject(themeManager)

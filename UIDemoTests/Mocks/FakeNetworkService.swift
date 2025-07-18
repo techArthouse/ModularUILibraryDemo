@@ -11,10 +11,11 @@ import Foundation
 final class FakeNetworkService: NetworkServiceProtocol {
     var shouldThrow = false
     var fakeData: Data?
+    var error: NetworkError?
 
     func requestData(from url: URL, using method: NetworkService.HTTPMethodType = .get) async throws(NetworkError) -> Data {
-        if shouldThrow {
-            throw NetworkError.statusCodeFailure(500)
+        if shouldThrow, let error = self.error {
+            throw error
         }
         return fakeData ?? Data()
     }

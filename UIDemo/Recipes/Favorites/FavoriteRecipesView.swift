@@ -18,8 +18,9 @@ struct FavoriteRecipesView: View {
     }
     
     var body: some View {
-        List{
-            Section(header: searchHeaderView) {
+        ScrollView(showsIndicators: false) {
+            LazyVStack(spacing: 15) {
+                searchHeaderView
                 ForEach(vm.items, id: \.id) { item in
                     if item.selected {
                         FavoriteRecipeCard(viewmodel: RecipeRowViewModel(recipeId: item.id, recipeStore: vm.recipeStore)) {
@@ -35,12 +36,13 @@ struct FavoriteRecipesView: View {
                 .listRowInsets(.init(top: 10, leading: 10, bottom: 10, trailing: 10))
                 .listRowBackground(Color.clear)
             }
+            .padding(.horizontal, 10)
         }
         .animation(.easeInOut, value: vm.items.map(\.selected))
         .listStyle(.plain)
         .task {
             print("tasking again in favorites")
-            vm.loadAll()
+            await vm.loadAll()
         }
         .refreshable { await vm.reloadAll() }
         .navigationTitle("Favorite Recipes")
@@ -51,10 +53,7 @@ struct FavoriteRecipesView: View {
                     isDisabled: .constant(false)
                 ) {
                     withAnimation(.spring()) {
-                        vm.searchModel = SearchViewModel(
-                            text: vm.searchQuery,
-                            categories: vm.cusineCategories
-                        )
+                        vm.openFilterOptions()
                     }
                 }
                 .asStandardIconButtonStyle(withColor: vm.selectedCuisine != nil ? .blue : .gray)
@@ -68,11 +67,11 @@ struct FavoriteRecipesView: View {
                 selectedCuisine: vm.selectedCuisine,
                 onSelect: { cuisine in
                     vm.searchModel = nil
-                    vm.selectedCuisine = cuisine
+                    vm.applyFilters(cuisine: cuisine)
                 },
                 onReset: {
                     vm.searchModel = nil
-                    vm.selectedCuisine = nil
+                    vm.applyFilters(cuisine: nil)
                 }
             )
         }
@@ -95,5 +94,6 @@ struct FavoriteRecipesView: View {
         .padding(8)
         .background(Color(.systemGray6))
         .cornerRadius(10)
+        .border(.black, width: 0.5)
     }
 }

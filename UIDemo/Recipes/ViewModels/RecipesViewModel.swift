@@ -105,18 +105,9 @@ class RecipesViewModel: ObservableObject {
     // MARK: - Public API
     
     /// Called on first appearance. Start the cache and load recipes.
-    func loadAll() {
+    func loadAll() async {
         loadPhase = .loading
-
-        Task {
-            do {
-                try await self.loadRecipes()
-                loadPhase = .success
-            }
-            catch {
-                loadPhase = .failure(error.localizedDescription)
-            }
-        }
+        await self.loadRecipes()
     }
     
     func reloadAll() async {
@@ -124,16 +115,24 @@ class RecipesViewModel: ObservableObject {
         
         do {
             try await Task.sleep(for: .seconds(0.5)) // for UX feedback
-            await recipeStore.refreshImageCache() // clear imagecache
-            try await self.loadRecipes()
-            self.searchQuery = ""
-            self.selectedCuisine = nil
-            self.searchModel = nil
-            loadPhase = .success
         }
         catch {
-            loadPhase = .failure(error.localizedDescription)
+            // just continue
         }
+        
+        await recipeStore.refreshImageCache() // clear imagecache
+        await self.loadRecipes()
+        self.searchQuery = ""
+        self.selectedCuisine = nil
+        self.searchModel = nil
+    }
+    
+    func openFilterOptions() {
+        self.searchModel = SearchViewModel(text: self.searchQuery, categories: self.cusineCategories)
+    }
+    
+    func applyFilters(cuisine: String?) {
+        self.selectedCuisine = cuisine
     }
     
     var cusineCategories: [String] {
@@ -148,7 +147,7 @@ class RecipesViewModel: ObservableObject {
     }
     
     /// Load and wrap your recipes in order
-    internal func loadRecipes(from url: URL? = nil) async throws {
+    internal func loadRecipes(from url: URL? = nil) async {
         do {
             //        FetchCache.shared.load()
             let data = try await networkService.requestData(from: url ?? URL(string: "https://d3jbb8n5wk0qxi.cloudfront.net/recipes.json")!, using: .get)
@@ -157,8 +156,9 @@ class RecipesViewModel: ObservableObject {
             
             let recipes = list.recipes + list.invalidRecipes
             recipeStore.setRecipes(recipes: recipes)
+            loadPhase = .success
         } catch {
-            throw RecipeDecodeError.unexpectedErrorWithDataModel("")
+            loadPhase = .failure(error.localizedDescription)
         }
     }
 }

@@ -36,7 +36,9 @@ struct RecipesView: View {
                 contentList
             }
         }
-        .task { vm.loadAll() }
+        .task {
+            await vm.loadAll()
+        }
         .refreshable { _ = await vm.reloadAll() }
         .navigationTitle("Recipes")
         .toolbar { toolbarItems }
@@ -46,11 +48,11 @@ struct RecipesView: View {
                 selectedCuisine: vm.selectedCuisine,
                 onSelect: { cuisine in
                     vm.searchModel = nil
-                    vm.selectedCuisine = cuisine
+                    vm.applyFilters(cuisine: cuisine)
                 },
                 onReset: {
                     vm.searchModel = nil
-                    vm.selectedCuisine = nil
+                    vm.applyFilters(cuisine: nil)
                 }
             )
         }
@@ -118,10 +120,7 @@ struct RecipesView: View {
                 isDisabled: .constant(false)
             ) {
                 withAnimation(.spring()) {
-                    vm.searchModel = SearchViewModel(
-                        text: vm.searchQuery,
-                        categories: vm.cusineCategories
-                    )
+                    vm.openFilterOptions()
                 }
             }
             .asStandardIconButtonStyle(
@@ -138,7 +137,11 @@ struct RecipesView: View {
         VStack(spacing: 16) {
             Text("Error: \(message)")
                 .multilineTextAlignment(.center)
-            Button("Retry", action: vm.loadAll)
+            Button("Retry", action: {
+                Task {
+                    await vm.loadAll()
+                }
+            })
         }
         .padding()
         .frame(maxWidth: .infinity, maxHeight: .infinity)
