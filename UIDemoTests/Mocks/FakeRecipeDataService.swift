@@ -22,7 +22,10 @@ class FakeRecipeDataService: RecipeDataServiceProtocol {
     // metadata stubs
     func title(for id: UUID) -> String { allItems.first { $0.id == id }?.name ?? "" }
     func description(for id: UUID) -> String { allItems.first { $0.id == id }?.cuisine ?? "" }
-    func isNotValid(for id: UUID) -> Bool { false }
+    func isNotValid(for id: UUID) -> Bool {
+        guard let isInvalid = allItems.first(where: { $0.id == id })?.isNotValid else { return false }
+        return isInvalid
+    }
 
     // favorites & notes stub via in-memory
     private var memory = RecipeMemoryDataSource(key: "Fake", defaults: UserDefaults(suiteName: "Fake")!)

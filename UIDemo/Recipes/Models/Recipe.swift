@@ -145,7 +145,7 @@ extension Recipe {
 #if DEBUG
 extension Recipe {
     /// Test  initializer
-    init(id: UUID, name: String, cuisine: String) {
+    init(id: UUID, name: String?, cuisine: String?) {
         self._id            = id
         self._name          = name
         self._cuisine       = cuisine

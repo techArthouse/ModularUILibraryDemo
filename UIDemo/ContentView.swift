@@ -17,14 +17,9 @@ struct ContentView: View {
     /// Constructs ContentView with the given RecipeStore,
     /// creating a view model for all recipes and another for favorites.
     /// - Parameter recipeStore: The central store managing recipe data.
-    init(recipeStore: RecipeDataService) {
-        _homeVM = StateObject(wrappedValue: RecipesViewModel(
-            recipeStore: recipeStore,
-            filterStrategy: AllRecipesFilter()))
-        
-        _favoritesVM = StateObject(wrappedValue: RecipesViewModel(
-            recipeStore: recipeStore,
-            filterStrategy: FavoriteRecipesFilter()))
+    init(makeHomeVM: @escaping () -> RecipesViewModel, makeFavoritesVM: @escaping () -> RecipesViewModel) {
+        _homeVM = StateObject(wrappedValue: makeHomeVM())
+        _favoritesVM = StateObject(wrappedValue: makeFavoritesVM())
     }
 
     var body: some View {
@@ -89,10 +84,20 @@ final class AppNavigation: ObservableObject {
 #if DEBUG
 struct ContentView_Previews: PreviewProvider {
     static var previews: some View {
+        @StateObject var recipeStore: RecipeDataService = RecipeDataService(memoryStore: RecipeMemoryDataSource(), fetchCache: FetchCache(path: "DevelopmentImageCache", networkService: NetworkService()))
         let themeManager: ThemeManager = ThemeManager()
-        
-        ContentView(recipeStore: RecipeDataService(memoryStore: RecipeMemoryDataSource(), fetchCache: FetchCache(path: "DevelopmentImageCache")))
-            .environmentObject(themeManager)
+        ContentView(makeHomeVM: {
+            RecipesViewModel(
+                recipeStore: recipeStore,
+                filterStrategy: AllRecipesFilter(),
+                networkService: NetworkService())
+        }, makeFavoritesVM: {
+            RecipesViewModel(
+                recipeStore: recipeStore,
+                filterStrategy: AllRecipesFilter(),
+                networkService: NetworkService())
+        })
+        .environmentObject(themeManager)
     }
 }
 #endif

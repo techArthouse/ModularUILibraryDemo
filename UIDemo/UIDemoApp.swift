@@ -31,16 +31,19 @@ struct UIDemoApp: App {
 
     /// Central source of truth for recipe data.
     @StateObject private var recipeStore: RecipeDataService
+    private let networkService: NetworkService
 
     /// Initializes the application, setting up the shared data sources:
     /// - A memory-backed data source for recipes.
     /// - A single shared fetch cache for image loading.
     /// - A recipe store that coordinates between memory and network.
     init() {
-        let memoryStore = RecipeMemoryDataSource(defaults: UserDefaults(suiteName: "work")!)
-        let cache = FetchCache(path: Self.cachePath)
+        let networkService = NetworkService()
+        let memoryStore = RecipeMemoryDataSource()
+        let cache = FetchCache(path: Self.cachePath, networkService: networkService)
         let store = RecipeDataService(memoryStore: memoryStore, fetchCache: cache)
         _recipeStore = StateObject(wrappedValue: store)
+        self.networkService = networkService
     }
     
     
@@ -54,8 +57,21 @@ struct UIDemoApp: App {
                 if ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] != nil {
                     EmptyView()
                 } else {
-                    ContentView(recipeStore: recipeStore)
-                        .environmentObject(themeManager)
+                    ContentView(
+                        makeHomeVM: {
+                            RecipesViewModel(
+                                recipeStore: recipeStore,
+                                filterStrategy: AllRecipesFilter(),
+                                networkService: networkService)
+                        },
+                        makeFavoritesVM: {
+                            RecipesViewModel(
+                                recipeStore: recipeStore,
+                                filterStrategy: FavoriteRecipesFilter(),
+                                networkService: networkService)
+                        }
+                    )
+                    .environmentObject(themeManager)
                 }
             }
         }

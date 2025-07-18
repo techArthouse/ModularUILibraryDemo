@@ -7,11 +7,8 @@
 
 import Foundation
 
-final class NetworkService {
-    static let shared: NetworkService = NetworkService()
+final class NetworkService: NetworkServiceProtocol {
     let statusCodeSuccessRange = Array(200...300) + Array(arrayLiteral: 304)
-    
-    private init() { }
     
     /// throws custom NetworkError for more control and relevant info to caller
     func requestData(from url: URL, using method: HTTPMethodType = .get) async throws(NetworkError) -> Data {
@@ -55,4 +52,8 @@ final class NetworkService {
             }
         }
     }
+}
+
+protocol NetworkServiceProtocol {
+    func requestData(from url: URL, using method: NetworkService.HTTPMethodType) async throws(NetworkError) -> Data
 }

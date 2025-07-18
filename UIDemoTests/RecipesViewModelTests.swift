@@ -27,7 +27,8 @@ final class RecipesViewModelTests: XCTestCase {
         super.setUp()
         service = FakeRecipeDataService()
         cancellables = []
-        vm = RecipesViewModel(recipeStore: service, filterStrategy: AllRecipesFilter())
+        let fakeNetwork = FakeNetworkService()
+        vm = RecipesViewModel(recipeStore: service, filterStrategy: AllRecipesFilter(), networkService: fakeNetwork)
     }
 
     override func tearDown() {
@@ -140,7 +141,7 @@ final class RecipesViewModelTests: XCTestCase {
 
     func test_loadAll_transitionsToSuccess() {
         // subclass to override loadRecipes
-        let testVM = TestableRecipesViewModel(recipeStore: service, filterStrategy: AllRecipesFilter())
+        let testVM = TestableRecipesViewModel(recipeStore: service, filterStrategy: AllRecipesFilter(), networkService: FakeNetworkService())
         var phases: [RecipesViewModel.LoadPhase] = []
         let exp = expectation(description: "phase change")
 
@@ -162,7 +163,7 @@ final class RecipesViewModelTests: XCTestCase {
 
     func test_reloadAll_resetsFiltersAndCallsRefresh() async {
         // prepare
-        let testVM = TestableRecipesViewModel(recipeStore: service, filterStrategy: AllRecipesFilter())
+        let testVM = TestableRecipesViewModel(recipeStore: service, filterStrategy: AllRecipesFilter(), networkService: FakeNetworkService())
         testVM.searchQuery = "x"
         testVM.selectedCuisine = "y"
         testVM.shouldThrow = false

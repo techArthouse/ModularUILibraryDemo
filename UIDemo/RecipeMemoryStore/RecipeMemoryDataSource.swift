@@ -65,8 +65,6 @@ final class RecipeMemoryDataSource: RecipeMemoryDataSourceProtocol {
     func toggleFavorite(recipeUUID: UUID) {
         if var mem = memories[recipeUUID] {
             mem.isFavorite.toggle()
-            // if unfavoriting, should we delete notes?
-            // mem.notes.removeAll()
             memories[recipeUUID] = mem
         } else {
             memories[recipeUUID] = RecipeMemory(isFavorite: true, notes: [])

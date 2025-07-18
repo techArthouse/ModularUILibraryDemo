@@ -24,8 +24,8 @@ class RecipesViewModel: ObservableObject {
     @Published var selectedCuisine: String?
     @Published var searchModel: SearchViewModel?
 
+    private let networkService: NetworkServiceProtocol
     var recipeStore: any RecipeDataServiceProtocol
-//    private let memoryStore: RecipeMemoryStoreProtocol
     private let filterStrategy: RecipeFilterStrategy
     private var cancellables = Set<AnyCancellable>()
     let filterTrigger = PassthroughSubject<Void, Never>()
@@ -34,9 +34,10 @@ class RecipesViewModel: ObservableObject {
     
     // MARK: - Init
     
-    init(recipeStore: any RecipeDataServiceProtocol, filterStrategy: RecipeFilterStrategy) {
+    init(recipeStore: any RecipeDataServiceProtocol, filterStrategy: RecipeFilterStrategy, networkService: NetworkServiceProtocol) {
         self.recipeStore = recipeStore
         self.filterStrategy = filterStrategy
+        self.networkService = networkService
         
         subscribe()
     }
@@ -54,8 +55,6 @@ class RecipesViewModel: ObservableObject {
                 // create one RecipeItem per recipe. no filter
                 self.items = recipes.map { recipe in
                     let item = RecipeItem(recipe)
-//                    item.isFavorite = self.recipeStore.isFavorite(for: recipe.id)
-//                    item.notes = self.recipeStore.notes(for: recipe.id)
                     return item
                 }
                 self.applyFilter(animated: false)
@@ -125,7 +124,7 @@ class RecipesViewModel: ObservableObject {
         
         do {
             try await Task.sleep(for: .seconds(0.5)) // for UX feedback
-            await recipeStore.refreshImageCache()                 // clear imagecache
+            await recipeStore.refreshImageCache() // clear imagecache
             try await self.loadRecipes()
             self.searchQuery = ""
             self.selectedCuisine = nil
@@ -147,21 +146,12 @@ class RecipesViewModel: ObservableObject {
         }
         return Array(categories)
     }
-#if DEBUG
-    
-    /// Load recipes and update listeners through `RecipeStore`
-    
-    internal func loadRecipes(from url: URL? = nil) async throws {
-        let recipes = try await Recipe.allFromJSON(using: .malformed)
-        recipeStore.setRecipes(recipes: recipes)
-    }
-#else
     
     /// Load and wrap your recipes in order
     internal func loadRecipes(from url: URL? = nil) async throws {
         do {
             //        FetchCache.shared.load()
-            let data = try await NetworkService.shared.requestData(from: url ?? URL(string: "https://d3jbb8n5wk0qxi.cloudfront.net/recipes.json")!)
+            let data = try await networkService.requestData(from: url ?? URL(string: "https://d3jbb8n5wk0qxi.cloudfront.net/recipes.json")!, using: .get)
             
             let list = try JSONDecoder().decode(RecipeList.self, from: data)
             
@@ -171,8 +161,6 @@ class RecipesViewModel: ObservableObject {
             throw RecipeDecodeError.unexpectedErrorWithDataModel("")
         }
     }
-    
-#endif
 }
 
 struct SearchViewModel: Identifiable {

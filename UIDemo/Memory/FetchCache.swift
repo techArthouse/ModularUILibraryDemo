@@ -17,11 +17,13 @@ protocol ImageCacheProtocol {
 
 @MainActor
 class FetchCache: ObservableObject, ImageCacheProtocol {
+    private let networkService: NetworkServiceProtocol
     private var memoryCache = [String: Image]() // in‐memory cache
     private var cacheDirectoryURL: URL?
     private let path: String
     
-    init(path: String) {
+    init(path: String, networkService: NetworkServiceProtocol) {
+        self.networkService = networkService
         self.path = path
         try? self.openCacheDirectoryWithPath(path: path)
     }
@@ -127,7 +129,7 @@ class FetchCache: ObservableObject, ImageCacheProtocol {
                                          using method: NetworkService.HTTPMethodType = .get) async throws(FetchCacheError) -> Image {
         var imageDataBlob: Data
         do {
-            imageDataBlob = try await NetworkService.shared.requestData(from: networkSourceURL, using: method) // may throw NetworkError
+            imageDataBlob = try await networkService.requestData(from: networkSourceURL, using: method) // may throw NetworkError
         } catch let e {
             print("FetchCache - NetworkError: \(e.localizedDescription)")
             switch e {
