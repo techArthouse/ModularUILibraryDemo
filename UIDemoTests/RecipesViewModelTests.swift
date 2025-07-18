@@ -175,6 +175,94 @@ final class RecipesViewModelTests: XCTestCase {
         XCTAssertNil(testVM.selectedCuisine)
         XCTAssertEqual(testVM.loadPhase, .success)
     }
+    
+    func test_loadRecipes_realIntegration_returnData_good() async throws {
+        let json = try RecipeTestJSON.loadRecipes(.good)
+        let fakeNetwork = FakeNetworkService()
+        fakeNetwork.fakeData = json
+
+        let vm = RecipesViewModel(recipeStore: service, filterStrategy: AllRecipesFilter(), networkService: fakeNetwork)
+
+        try await vm.loadRecipes()
+
+        XCTAssertEqual(service.allItems.count, 3)
+        XCTAssertEqual(service.allItems.first?.name, "Apam Balik")
+        XCTAssertEqual(service.allItems.last?.cuisine, "British")
+    }
+    
+    func test_loadRecipes_realIntegration_returnData_expectedUUID() async throws {
+        let expectedUUID = UUID()
+        let fakeJSON = """
+            {
+                "recipes": [
+                    { "uuid": "\(expectedUUID)", "name": "Fake Recipe", "cuisine": "Test" }
+                ]
+            }
+            """.data(using: .utf8)!
+        
+        let fakeNetwork = FakeNetworkService()
+        fakeNetwork.fakeData = fakeJSON
+
+        let vm = RecipesViewModel(recipeStore: service, filterStrategy: AllRecipesFilter(), networkService: fakeNetwork)
+
+        try await vm.loadRecipes()
+
+        XCTAssertEqual(service.allItems.count, 1)
+        XCTAssertEqual(service.allItems.first?.id, expectedUUID)
+        XCTAssertEqual(service.allItems.first?._id, expectedUUID)
+    }
+    
+    func test_loadRecipes_realIntegration_returnData_malformed() async throws {
+        let json = try RecipeTestJSON.loadRecipes(.malformed)
+        let fakeNetwork = FakeNetworkService()
+        fakeNetwork.fakeData = json
+
+        let vm = RecipesViewModel(recipeStore: service, filterStrategy: AllRecipesFilter(), networkService: fakeNetwork)
+
+        try await vm.loadRecipes()
+
+        XCTAssertEqual(service.allItems.count, 3)
+        
+        // recipe missing cuisine
+        XCTAssertEqual(service.allItems.first?.name, "Missing Cuisine")
+        XCTAssertEqual(service.allItems.first?.cuisine, "N/A")
+        XCTAssertNil(service.allItems.first?._cuisine)
+        
+        // recipe missing name
+        XCTAssertEqual(service.allItems[1].cuisine, "Missing Name")
+        XCTAssertEqual(service.allItems[1].name, "N/A")
+        XCTAssertNil(service.allItems[1]._name)
+        
+    }
+    
+    func test_loadRecipes_realIntegration_returnData_malformed_UUID() async throws {
+        let json = try RecipeTestJSON.loadRecipes(.malformed)
+        let fakeNetwork = FakeNetworkService()
+        fakeNetwork.fakeData = json
+
+        let vm = RecipesViewModel(recipeStore: service, filterStrategy: AllRecipesFilter(), networkService: fakeNetwork)
+
+        try await vm.loadRecipes()
+
+        XCTAssertEqual(service.allItems.count, 3)
+        
+        // recipe missing uuid
+        XCTAssertEqual(service.allItems.last?.name, "Missing UUID")
+        XCTAssertNil(service.allItems.last?._id)
+        XCTAssertNotNil(service.allItems.last?.id)
+    }
+    
+    func test_loadRecipes_realIntegration_returnData_empty() async throws {
+        let json = try RecipeTestJSON.loadRecipes(.empty)
+        let fakeNetwork = FakeNetworkService()
+        fakeNetwork.fakeData = json
+
+        let vm = RecipesViewModel(recipeStore: service, filterStrategy: AllRecipesFilter(), networkService: fakeNetwork)
+
+        try await vm.loadRecipes()
+
+        XCTAssertEqual(service.allItems.count, 0)
+    }
 }
 
 
@@ -189,5 +277,23 @@ private class TestableRecipesViewModel: RecipesViewModel {
         if shouldThrow {
             throw NSError(domain: "", code: -1, userInfo: nil)
         }
+    }
+}
+
+enum RecipeTestJSON {
+    enum TestCase: String {
+        case good = "recipesGood"
+        case malformed = "recipesMalformed"
+        case empty = "recipesEmpty"
+
+        var fileName: String { rawValue }
+    }
+
+    static func loadRecipes(_ caseType: TestCase) throws -> Data {
+        let bundle = Bundle(for: UIDemoTests.self)
+        guard let url = bundle.url(forResource: caseType.fileName, withExtension: "json") else {
+            throw NSError(domain: "File not found", code: 404)
+        }
+        return try Data(contentsOf: url)
     }
 }

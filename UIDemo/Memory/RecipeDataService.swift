@@ -24,7 +24,6 @@ class RecipeDataService: RecipeDataServiceProtocol {
     }
     
     func setRecipes(recipes: [Recipe]) {
-        print("we loaded recipe with id: \(recipes.first!.id)")
         allItems = recipes
     }
     

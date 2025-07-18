@@ -1,0 +1,24 @@
+{
+  "configurations" : [
+    {
+      "id" : "503162A6-7093-43F4-B674-D6CBCB29A2A2",
+      "name" : "Configuration 1",
+      "options" : {
+
+      }
+    }
+  ],
+  "defaultOptions" : {
+
+  },
+  "testTargets" : [
+    {
+      "target" : {
+        "containerPath" : "container:UIDemo.xcodeproj",
+        "identifier" : "7189F0E52E25DBC500D997F5",
+        "name" : "UIDemoTests"
+      }
+    }
+  ],
+  "version" : 1
+}

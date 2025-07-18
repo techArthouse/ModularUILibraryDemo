@@ -16,7 +16,6 @@ class FakeRecipeDataService: RecipeDataServiceProtocol {
     @Published var imageCache: any ImageCacheProtocol = FakeImageCache()
     var itemsPublisher: AnyPublisher<[Recipe], Never> { $allItems.eraseToAnyPublisher() }
     func setRecipes(recipes: [Recipe]) {
-        print("we loaded recipe with id: \(recipes.first!.id)")
         allItems = recipes }
 
     // metadata stubs
