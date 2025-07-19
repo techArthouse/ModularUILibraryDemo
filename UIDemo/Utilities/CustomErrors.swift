@@ -15,10 +15,7 @@ indirect enum ImageCacheError: Error {
     case failedToGetImageFromNetworkRequest(NetworkError)
     case failedToGetDataFromContentsOf(sourceURL: URL, sourceLocation: URLSource)
     case failedToWriteImageDataToDisk(image: Image, error: Error)
-    case failedToAppendEncodedRemoteURLToCacheDirectoryURL(
-        remoteURL: URL,
-        cacheDirectoryURL: URL?
-    )
+    case failedToEnodeURLString(remoteURL: URL)
     case failedToConvertDataBlobToImage(
         sourceURL: URL,
         blob: Data,
@@ -78,14 +75,12 @@ extension ImageCacheError: LocalizedError {
             // We don't need to show the Image, just include the error detail.
             return "Failed to write image data to disk: \(underlyingError.localizedDescription)"
 
-        case .failedToAppendEncodedRemoteURLToCacheDirectoryURL(
-                let remoteURL,
-                let cacheDirectoryURL
+        case .failedToEnodeURLString(
+                let remoteURL
             ):
             return """
-                   Could not form a valid cache filename for remote URL.
+                   Could not enode remote URL absoluteString.
                    remoteURL = \(remoteURL.absoluteString)
-                   cacheDirectory = \(cacheDirectoryURL?.path ?? "nil")
                    """
 
         case .failedToConvertDataBlobToImage(let sourceURL, let blob, let sourceLocation):

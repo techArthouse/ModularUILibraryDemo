@@ -15,7 +15,7 @@ internal class FakeImageCache: ImageCacheProtocol {
         .success(Image("square.and.arrow.up"))
     }
     
-    func openCacheDirectoryWithPath(path: String) throws(ImageCacheError){
+    func ensureCacheDirectoryExists() throws(ImageCacheError){
         // nothing yet
     }
     func refresh() async { didRefresh = true }

@@ -146,7 +146,7 @@ class MockFetchCacheGOODandBAD: ImageCacheProtocol {
         Logger.log(tag: "MockFetchCache", "refreshing")
     }
     
-    func openCacheDirectoryWithPath(path: String) throws(ImageCacheError) {
+    func ensureCacheDirectoryExists() throws(ImageCacheError) {
         // nothing yet
     }
 }
