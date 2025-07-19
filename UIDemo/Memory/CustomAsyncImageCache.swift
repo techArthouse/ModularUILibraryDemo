@@ -195,18 +195,18 @@ extension CustomAsyncImageCache {
 
 #if DEBUG
 class MockFetchCache: ImageCacheProtocol {
-    func loadImage(for url: URL) async -> Result<Image, ImageCacheError> {.success(
-        Image(systemName: "heart.fill")
+    func loadImage(for url: URL) async -> Result<Image, ImageCacheError> {
+        .success(Image(systemName: "heart.fill")
             .resizable()
             .renderingMode(.template))
     }
     
     func refresh() async {
-        Logger.log("refreshing")
+        Logger.log(tag: "Mock", "refreshing")
     }
     
     func ensureCacheDirectoryExists() throws(ImageCacheError) {
-        Logger.log("mock fetchcache directory opened")
+        Logger.log(tag: "Mock", "mock fetchcache directory opened")
     }
 }
 #endif
