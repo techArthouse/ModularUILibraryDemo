@@ -9,16 +9,19 @@ import SwiftUI
 import Combine
 
 /// RecipeStore is a domain data service, not just a data loader. It’s the central place to query recipe identity, status, and cached data.
+/// It is the source of truth for `Recipe` models shared across VM's.
 @MainActor
-class RecipeDataService: RecipeDataServiceProtocol {
-    @Published private(set) var allItems: [Recipe] = []
-    @Published var memoryDataSource: RecipeMemoryDataSourceProtocol // should i use protocol for testing?
+final class RecipeDataService: RecipeDataServiceProtocol {
+    @Published private(set) var allItems: [Recipe] = [] // Models decoded from network
+    @Published private(set) var memoryDataSource: RecipeMemoryDataSourceProtocol // Stores RecipMemory data
     @Published private(set) var imageCache: ImageCacheProtocol
     
     init(memoryStore: any RecipeMemoryDataSourceProtocol, fetchCache: ImageCacheProtocol) {
         self.memoryDataSource = memoryStore
         self.imageCache = fetchCache
     }
+    
+    // Used to subscribe to updates to recipe array
     var itemsPublisher: AnyPublisher<[Recipe], Never> {
         $allItems.eraseToAnyPublisher()
     }
@@ -29,30 +32,44 @@ class RecipeDataService: RecipeDataServiceProtocol {
     
     // MARK: - Recipe Acessors
     func title(for id: UUID) -> String {
-        guard let title = allItems.first(where: { $0.id == id })?.name else { return "" }
-        return title
+        itemIfexists(for: id)?.name ?? ""
     }
     
     func description(for id: UUID) -> String {
-        guard let title = allItems.first(where: { $0.id == id })?.cuisine else { return "" }
-        return title
+        itemIfexists(for: id)?.cuisine ?? ""
+    }
+    
+    func smallImageURL(for id: UUID) -> URL? {
+        itemIfexists(for: id)?.smallImageURL
+    }
+    
+    func largeImageURL(for id: UUID) -> URL? {
+        itemIfexists(for: id)?.largeImageURL
+    }
+    
+    func sourceWebsiteURL(for id: UUID) -> URL? {
+        itemIfexists(for: id)?.sourceWebsiteURL
+    }
+    
+    func youtubeVideoURL(for id: UUID) -> URL? {
+        itemIfexists(for: id)?.youtubeVideoURL
     }
     
     func isNotValid(for id: UUID) -> Bool {
-        guard let isInvalid = allItems.first(where: { $0.id == id })?.isNotValid else { return false }
-        return isInvalid
+        itemIfexists(for: id)?.isNotValid ?? false
     }
     
+    // MARK: - Memory Accessors
     func isFavorite(for id: UUID) -> Bool {
-        return memoryDataSource.isFavorite(for: id)
+        memoryDataSource.isFavorite(for: id)
     }
     
     func toggleFavorite(_ id: UUID) {
         memoryDataSource.toggleFavorite(recipeUUID: id)
     }
     
-    func setFavorite(_ favorite: Bool, for recipeUUID: UUID) {
-        memoryDataSource.setFavorite(favorite, for: recipeUUID)
+    func setFavorite(_ favorite: Bool, for id: UUID) {
+        memoryDataSource.setFavorite(favorite, for: id)
     }
     
     func notes(for id: UUID) -> [RecipeNote] {
@@ -67,27 +84,12 @@ class RecipeDataService: RecipeDataServiceProtocol {
         memoryDataSource.deleteNotes(for: id)
     }
     
-    func smallImageURL(for id: UUID) -> URL? {
-        guard let url = allItems.first(where: { $0.id == id })?.smallImageURL else { return nil }
-        return url
-    }
-    
-    func largeImageURL(for recipeId: UUID) -> URL? {
-        guard let url = allItems.first(where: { $0.id == recipeId })?.largeImageURL else { return nil }
-        return url
-    }
-    
-    func sourceWebsiteURL(for recipeId: UUID) -> URL? {
-        guard let url = allItems.first(where: { $0.id == recipeId })?.sourceWebsiteURL else { return nil }
-        return url
-    }
-    
-    func youtubeVideoURL(for recipeId: UUID) -> URL? {
-        guard let url = allItems.first(where: { $0.id == recipeId })?.youtubeVideoURL else { return nil }
-        return url
-    }
-    
     func refreshImageCache() async {
         await imageCache.refresh()
+    }
+    
+    // MARK: - Helpers
+    private func itemIfexists(for id: UUID) -> Recipe? {
+        allItems.first(where: { $0.id == id })
     }
 }

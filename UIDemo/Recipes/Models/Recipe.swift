@@ -109,7 +109,7 @@ extension Recipe {
             let data = try Data(contentsOf: url)
             let list = try JSONDecoder().decode(RecipeList.self, from: data)
             return list.recipes
-        } catch let error as RecipeDecodeError {
+        } catch _ as RecipeDecodeError {
             return []
         }
         catch {

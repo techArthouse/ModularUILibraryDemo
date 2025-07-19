@@ -9,19 +9,16 @@ import SwiftUI
 
 /// RecipeItem is a lightweight projection model that holds the state of ui observed varaibles and shared across views.
 @MainActor
-class RecipeItem: ObservableObject, Identifiable {
+class RecipeItem: ObservableObject, Identifiable, Equatable {
     let id: UUID // essential and nonmutating
-//    @Published var isFavorite: Bool = false // is favorite is potentially toggled often enough that we need to watch it.
-//    @Published var notes: [RecipeNote] = []
-    @Published var selected: Bool // we've discussed this one.
-
-//    init(id: UUID, selected: Bool = true) {
-//        self.id = id
-//        self.selected = selected
-//    }
+    @Published var selected: Bool
     
     init(_ recipe: Recipe) {
         self.id = recipe.id
         self.selected = false
+    }
+    
+    nonisolated static func == (lhs: RecipeItem, rhs: RecipeItem) -> Bool {
+        lhs.id == rhs.id
     }
 }

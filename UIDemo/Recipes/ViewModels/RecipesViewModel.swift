@@ -13,8 +13,14 @@ class RecipesViewModel: ObservableObject {
     enum LoadPhase: Equatable {
         case idle
         case loading
-        case success
+        case success(LoadSuccess)
         case failure(String)
+        
+        // LoadSuccess is a signal of where did we load from.
+        enum LoadSuccess: Equatable {
+            case itemsLoaded([Recipe])     // Simple reassign
+            case itemsFiltered([UUID])   // Mutate items in place for view identity
+        }
     }
 
     @Published var items: [RecipeItem] = []
@@ -46,15 +52,11 @@ class RecipesViewModel: ObservableObject {
         // 1.
         recipeStore
             .itemsPublisher
+            .dropFirst()
             .receive(on: RunLoop.main)
             .sink { [weak self] recipes in
                 guard let self = self else { return }
-                // create one RecipeItem per recipe. no filter
-                self.items = recipes.map { recipe in
-                    let item = RecipeItem(recipe)
-                    return item
-                }
-                self.applyFilter(animated: false)
+                self.loadPhase = .success(.itemsLoaded(recipes))
             }
             .store(in: &cancellables)
         
@@ -64,39 +66,44 @@ class RecipesViewModel: ObservableObject {
                 $selectedCuisine,
                 $searchQuery // .debounce(for: .milliseconds(300), scheduler: RunLoop.main)
             )
+            .dropFirst()
             .receive(on: RunLoop.main)
             .sink { [weak self] _, _ in
-                self?.applyFilter(animated: true)
+                guard let self = self else { return }
+                let visibleIDs = self.filterStrategy
+                    .filter(recipeStore.allItems, cuisine: selectedCuisine, query: searchQuery)
+                    .filter { id in
+                        self.filterStrategy.isFavorite ? self.recipeStore.isFavorite(for: id) : true
+                    }
+                Logger.log("visibleIDs: \(visibleIDs)")
+                self.loadPhase = .success(.itemsFiltered(visibleIDs))
             }
             .store(in: &cancellables)
-    }
-    
-    private func applyFilter(animated: Bool) {
-        // computes which recipe ids should be visible
-        let visibleIDs = self.filterStrategy.filter(recipeStore.allItems,
-                                                    cuisine: selectedCuisine,
-                                                    query: searchQuery).filter({ id in
-            if self.filterStrategy.isFavorite {
-                return self.recipeStore.isFavorite(for: id)
-            } else {
-                return true
-            }
-        })
         
-        // update each item's `selected` in place to preserve animations and prevent odd ui flickers
-        for (idx, item) in items.enumerated() {
-            let shouldShow = visibleIDs.contains(item.id)
-
-            if animated {
-                // stagger them by index for a “fan-out” effect (TODO: - animation not reflecting fan out)
-                let delay = Double(idx) * 0.03
-                withAnimation(.easeInOut.delay(delay)) {
-                    items[idx].selected = shouldShow
+        // 3. centralizes item assignment and in place mutations.
+        $loadPhase
+            .receive(on: RunLoop.main)
+            .sink { [weak self] phase in
+                guard let self = self else { return }
+                
+                switch phase {
+                case .success(.itemsLoaded(let recipes)):
+                    let newItems = recipes.map {
+                        var item = RecipeItem($0)
+                        item.selected = self.filterStrategy.isFavorite ? self.recipeStore.isFavorite(for: item.id) : true
+                        return item
+                    }
+                    self.items = newItems
+                    
+                case .success(.itemsFiltered(let ids)):
+                    for (i, item) in self.items.enumerated() {
+                        self.items[i].selected = ids.contains(item.id)
+                    }
+                    
+                default: break
                 }
-            } else {
-                items[idx].selected = shouldShow
             }
-        }
+            .store(in: &cancellables)
     }
     
     // MARK: - Public API
@@ -128,6 +135,8 @@ class RecipesViewModel: ObservableObject {
     var cusineCategories: [String] {
         var categories = Set<String>()
         let selectedItemIds = items.filter(\.selected).map { $0.id }
+        
+        // chose the recipes that are selected and gather all their cuisines.
         for item in recipeStore.allItems.filter({ selectedItemIds.contains($0.id) }) {
             categories.insert(item.cuisine)
         }
@@ -143,7 +152,6 @@ class RecipesViewModel: ObservableObject {
             
             let recipes = list.recipes + list.invalidRecipes
             recipeStore.setRecipes(recipes: recipes)
-            loadPhase = .success
         } catch {
             loadPhase = .failure(error.localizedDescription)
         }

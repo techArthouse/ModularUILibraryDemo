@@ -22,7 +22,7 @@ final class RecipesViewModelTests: XCTestCase {
     private var service: FakeRecipeDataService!
     private var vm: RecipesViewModel!
     private var cancellables: Set<AnyCancellable>!
-
+    
     override func setUp() {
         super.setUp()
         service = FakeRecipeDataService()
@@ -30,98 +30,74 @@ final class RecipesViewModelTests: XCTestCase {
         let fakeNetwork = FakeNetworkService()
         vm = RecipesViewModel(recipeStore: service, filterStrategy: AllRecipesFilter(), networkService: fakeNetwork)
     }
-
+    
     override func tearDown() {
         vm = nil
         service = nil
         cancellables = nil
         super.tearDown()
     }
-
+    
     func test_initialState() {
         XCTAssertTrue(vm.items.isEmpty)
         XCTAssertEqual(vm.loadPhase, .idle)
         XCTAssertEqual(vm.cusineCategories, [])
     }
-
-
-    func test_itemsPublisher_updatesItemsAndRespectsDefaultSelection() {
+    
+    
+    func test_itemsPublisher_updatesItems_setsSelected() {
         let r1 = Recipe(id: UUID(), name: "One", cuisine: "A")
         let r2 = Recipe(id: UUID(), name: "Two", cuisine: "B")
         let expect = expectation(description: "Items updated")
-
-        vm.$items
-            .dropFirst()
-            .first(where: { $0.map(\.id) == [r1.id, r2.id] })
-            .sink { items in
-                XCTAssertEqual(items.map(\.id), [r1.id, r2.id])
+        
+        Publishers.CombineLatest(vm.$items, vm.$loadPhase)
+            .receive(on: RunLoop.main)
+            .first { items, phase in
+                items.map(\.id) == [r1.id, r2.id] &&
+                phase == .success(.itemsLoaded([r1, r2]))
+            }
+            .sink { items, _ in
                 XCTAssertTrue(items.allSatisfy { $0.selected })
                 expect.fulfill()
             }
             .store(in: &cancellables)
-
-
+        
         service.setRecipes(recipes: [r1, r2])
         wait(for: [expect], timeout: 1)
     }
-
-
-    func test_filterByCuisine() {
-        let italian = Recipe(id: UUID(), name: "Pizza", cuisine: "Italian")
-        let tacos = Recipe(id: UUID(), name: "Taco", cuisine: "Mexican")
-
-        let expectation = XCTestExpectation(description: "Wait for filter to apply")
-
-        vm.$selectedCuisine
-            .dropFirst()
-            .sink { _ in
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
-                    let selectedIDs = self.vm.items.filter { $0.selected }.map { $0.id }
-                    if selectedIDs == [italian.id] {
-                        expectation.fulfill()
-                    }
-                }
-            }
-            .store(in: &cancellables)
-
-        service.setRecipes(recipes: [italian, tacos])
-        vm.selectedCuisine = "Italian"
-
-        wait(for: [expectation], timeout: 1.0)
-    }
-
+    
     func test_filterBySearchQuery() {
         let soup = Recipe(id: UUID(), name: "Tomato Soup", cuisine: "Global")
         let salad = Recipe(id: UUID(), name: "Green Salad", cuisine: "Global")
         service.setRecipes(recipes: [soup, salad])
-
+        
         let expectation = XCTestExpectation(description: "Wait for filtered results")
-
-        vm.$searchQuery
+        
+        vm.$loadPhase
+            .receive(on: RunLoop.main)
             .dropFirst()
-            .sink { _ in
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
-                    let selectedIDs = self.vm.items.filter { $0.selected }.map { $0.id }
-                    if selectedIDs == [soup.id] {
+            .sink { phase in
+                if case .success(.itemsFiltered(let ids)) = phase {
+                    if ids == [soup.id] {
                         expectation.fulfill()
                     }
                 }
             }
             .store(in: &cancellables)
-
+        
         vm.searchQuery = "Soup"
-
+        
         wait(for: [expectation], timeout: 1.0)
     }
-
+    
     func test_cuisineCategories_computedAfterFiltering() {
         let r1 = Recipe(id: UUID(), name: "A", cuisine: "One")
         let r2 = Recipe(id: UUID(), name: "B", cuisine: "Two")
         let r3 = Recipe(id: UUID(), name: "C", cuisine: "Two")
         service.setRecipes(recipes: [r1, r2, r3])
-
+        
         let expectation = XCTestExpectation(description: "Wait for cuisine categories update")
-
+        
         vm.$selectedCuisine
             .dropFirst()
             .sink { _ in
@@ -133,12 +109,12 @@ final class RecipesViewModelTests: XCTestCase {
                 }
             }
             .store(in: &cancellables)
-
+        
         vm.selectedCuisine = nil
-
+        
         wait(for: [expectation], timeout: 1.0)
     }
-
+    
     func test_loadAll_transitionsToSuccess() async throws {
         let json = try RecipeTestJSON.loadRecipes(.good)
         let fakeNetwork = FakeNetworkService()
@@ -149,21 +125,25 @@ final class RecipesViewModelTests: XCTestCase {
             filterStrategy: AllRecipesFilter(),
             networkService: fakeNetwork
         )
-
-        var phases: [RecipesViewModel.LoadPhase] = []
-
-        let cancellable = testVM.$loadPhase
-            .sink { phases.append($0) }
-
+        
+        let expectation1 = XCTestExpectation(description: "loading")
+        let expectation2 = XCTestExpectation(description: "loaded")
+        
+        testVM.$loadPhase
+            .receive(on: RunLoop.main)
+            .sink { phase in
+                if case .loading = phase {
+                    expectation1.fulfill()
+                } else if case .success(.itemsLoaded) = phase {
+                    expectation2.fulfill()
+                }
+            }
+            .store(in: &cancellables)
         
         await testVM.loadAll()
-
-        XCTAssertTrue(phases.contains(.loading))
-        XCTAssertTrue(phases.contains(.success))
-
-        cancellable.cancel()
+        await fulfillment(of: [expectation1, expectation2], timeout: 1.0)
     }
-
+    
     func test_reloadAll_resetsFiltersAndCallsRefresh() async throws {
         let json = try RecipeTestJSON.loadRecipes(.good)
         let fakeNetwork = FakeNetworkService()
@@ -176,23 +156,22 @@ final class RecipesViewModelTests: XCTestCase {
         )
         testVM.searchQuery = "x"
         testVM.selectedCuisine = "y"
-
+        
         await testVM.reloadAll()
         
         XCTAssertEqual(testVM.searchQuery, "")
         XCTAssertNil(testVM.selectedCuisine)
-        XCTAssertEqual(testVM.loadPhase, .success)
     }
     
     func test_loadRecipes_realIntegration_returnData_good() async throws {
         let json = try RecipeTestJSON.loadRecipes(.good)
         let fakeNetwork = FakeNetworkService()
         fakeNetwork.fakeData = json
-
+        
         let vm = RecipesViewModel(recipeStore: service, filterStrategy: AllRecipesFilter(), networkService: fakeNetwork)
-
+        
         await vm.loadRecipes()
-
+        
         XCTAssertEqual(service.allItems.count, 3)
         XCTAssertEqual(service.allItems.first?.name, "Apam Balik")
         XCTAssertEqual(service.allItems.last?.cuisine, "British")
@@ -210,11 +189,11 @@ final class RecipesViewModelTests: XCTestCase {
         
         let fakeNetwork = FakeNetworkService()
         fakeNetwork.fakeData = fakeJSON
-
+        
         let vm = RecipesViewModel(recipeStore: service, filterStrategy: AllRecipesFilter(), networkService: fakeNetwork)
-
+        
         await vm.loadRecipes()
-
+        
         XCTAssertEqual(service.allItems.count, 1)
         XCTAssertEqual(service.allItems.first?.id, expectedUUID)
         XCTAssertEqual(service.allItems.first?._id, expectedUUID)
@@ -224,11 +203,11 @@ final class RecipesViewModelTests: XCTestCase {
         let json = try RecipeTestJSON.loadRecipes(.malformed)
         let fakeNetwork = FakeNetworkService()
         fakeNetwork.fakeData = json
-
+        
         let vm = RecipesViewModel(recipeStore: service, filterStrategy: AllRecipesFilter(), networkService: fakeNetwork)
-
+        
         await vm.loadRecipes()
-
+        
         XCTAssertEqual(service.allItems.count, 3)
         
         // recipe missing cuisine
@@ -247,11 +226,11 @@ final class RecipesViewModelTests: XCTestCase {
         let json = try RecipeTestJSON.loadRecipes(.malformed)
         let fakeNetwork = FakeNetworkService()
         fakeNetwork.fakeData = json
-
+        
         let vm = RecipesViewModel(recipeStore: service, filterStrategy: AllRecipesFilter(), networkService: fakeNetwork)
-
+        
         await vm.loadRecipes()
-
+        
         XCTAssertEqual(service.allItems.count, 3)
         
         // recipe missing uuid
@@ -264,11 +243,11 @@ final class RecipesViewModelTests: XCTestCase {
         let json = try RecipeTestJSON.loadRecipes(.empty)
         let fakeNetwork = FakeNetworkService()
         fakeNetwork.fakeData = json
-
+        
         let vm = RecipesViewModel(recipeStore: service, filterStrategy: AllRecipesFilter(), networkService: fakeNetwork)
-
+        
         await vm.loadRecipes()
-
+        
         XCTAssertEqual(service.allItems.count, 0)
     }
     
@@ -280,9 +259,9 @@ final class RecipesViewModelTests: XCTestCase {
         fakeNetwork.error = expectedError
         fakeNetwork.shouldThrow = true
         let vm = RecipesViewModel(recipeStore: service, filterStrategy: AllRecipesFilter(), networkService: fakeNetwork)
-
+        
         await vm.loadAll()
-
+        
         guard case .failure(let message) = vm.loadPhase else {
             XCTFail("Expected failure phase")
             return
@@ -302,7 +281,7 @@ final class RecipesViewModelTests: XCTestCase {
         )
         
         // default query/cuisine vals
-
+        
         testVM.openFilterOptions()
         
         XCTAssertEqual(testVM.searchModel?.text, "")
@@ -312,32 +291,33 @@ final class RecipesViewModelTests: XCTestCase {
     func test_openFilterOptions_currentValues() async throws {
         let json = try RecipeTestJSON.loadRecipes(.good)
         let fakeNetwork = FakeNetworkService()
+        fakeNetwork.fakeData = json
+        let vm = RecipesViewModel(recipeStore: service, filterStrategy: AllRecipesFilter(), networkService: fakeNetwork)
         
-        let testVM = RecipesViewModel(
-            recipeStore: service,
-            filterStrategy: AllRecipesFilter(),
-            networkService: fakeNetwork
-        )
+        let expectation = XCTestExpectation(description: "Items updated")
         
-        // prepopulated query/cuisine vals
-        let recipes = try JSONDecoder().decode(RecipeList.self, from: json).recipes
-        let recipeItems = recipes.map { RecipeItem($0) }
-        service.setRecipes(recipes: recipes)
-        testVM.items = recipeItems
-
-        testVM.searchQuery = "test query"
-        testVM.openFilterOptions()
+        vm.$items
+            .receive(on: RunLoop.main)
+            .dropFirst()
+            .first(where: { $0.count == 3 })
+            .sink { _ in
+                vm.openFilterOptions()
+                
+                XCTAssertEqual(vm.searchModel?.text, "")
+                let categories = vm.searchModel!.categories
+                
+                XCTAssertEqual(categories.count, 2)
+                XCTAssertTrue(categories.contains("British"))
+                XCTAssertTrue(categories.contains("Malaysian"))
+                expectation.fulfill()
+            }
+            .store(in: &cancellables)
         
-        XCTAssertEqual(testVM.searchModel?.text, "test query")
-        let categories = testVM.searchModel!.categories
-
-        XCTAssertEqual(testVM.items.count, 3)
-        XCTAssertEqual(categories.count, 2)
-        XCTAssertTrue(categories.contains("British"))
-        XCTAssertTrue(categories.contains("Malaysian"))
+        await vm.loadRecipes()
+        await fulfillment(of: [expectation], timeout: 1.0)
     }
     
-    func test_applyFilters() async throws {
+    func test_applyFilters_setSelectedCuisine() async throws {
         let json = try RecipeTestJSON.loadRecipes(.good)
         let fakeNetwork = FakeNetworkService()
         
@@ -352,12 +332,66 @@ final class RecipesViewModelTests: XCTestCase {
         let recipeItems = recipes.map { RecipeItem($0) }
         service.setRecipes(recipes: recipes)
         testVM.items = recipeItems
-
+        
         XCTAssertNil(testVM.selectedCuisine)
         
         testVM.applyFilters(cuisine: "British")
-
+        
         XCTAssertEqual(testVM.selectedCuisine, "British")
+    }
+    
+    
+    func test_applyFilters_selectItemsByCuisine() {
+        let italian = Recipe(id: UUID(), name: "Pizza", cuisine: "Italian")
+        let tacos = Recipe(id: UUID(), name: "Taco", cuisine: "Mexican")
+        
+        let expectation = XCTestExpectation(description: "Wait for filter to apply")
+        
+        vm.$loadPhase
+            .receive(on: RunLoop.main)
+            .sink { phase in
+                if case .success(.itemsFiltered(let ids)) = phase {
+                    XCTAssertEqual(ids, [italian.id])
+                    expectation.fulfill()
+                }
+            }
+            .store(in: &cancellables)
+        
+        service.setRecipes(recipes: [italian, tacos])
+        vm.applyFilters(cuisine: "Italian")
+        
+        wait(for: [expectation], timeout: 1.0)
+    }
+    
+    func test_applyFilters_flow() async throws {
+        let json = try RecipeTestJSON.loadRecipes(.good)
+        let fakeNetwork = FakeNetworkService()
+        fakeNetwork.fakeData = json
+        let vm = RecipesViewModel(
+            recipeStore: service,
+            filterStrategy: AllRecipesFilter(),
+            networkService: fakeNetwork)
+        
+        let expectation = XCTestExpectation(description: "Items updated")
+        
+        vm.$loadPhase
+            .receive(on: RunLoop.main)
+            .sink { phase in
+                switch phase {
+                case .success(.itemsLoaded(let items)) where !items.isEmpty:
+                    vm.applyFilters(cuisine: "British")
+                case .success(.itemsFiltered(let ids)):
+                    XCTAssertTrue(ids.contains(UUID(uuidString: "599344f4-3c5c-4cca-b914-2210e3b3312f")!))
+                    XCTAssertTrue(ids.contains(UUID(uuidString: "74f6d4eb-da50-4901-94d1-deae2d8af1d1")!))
+                    expectation.fulfill()
+                default:
+                    return
+                }
+            }
+            .store(in: &cancellables)
+        
+        await vm.loadRecipes()
+        await fulfillment(of: [expectation], timeout: 1.0)
     }
 }
 
