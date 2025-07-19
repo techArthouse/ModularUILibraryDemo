@@ -16,7 +16,7 @@ final class RecipeTests: XCTestCase {
         XCTAssertEqual(recipe.id, id)
         XCTAssertEqual(recipe.name, "TestName")
         XCTAssertEqual(recipe.cuisine, "TestCuisine")
-        XCTAssertFalse(recipe.isNotValid)
+        XCTAssertTrue(recipe.isValid)
 
         // URLs should be nil
         XCTAssertNil(recipe.smallImageURL)
@@ -45,7 +45,7 @@ final class RecipeTests: XCTestCase {
         XCTAssertEqual(recipe.id.uuidString, uuidString)
         XCTAssertEqual(recipe.name, "ValidName")
         XCTAssertEqual(recipe.cuisine, "ValidCuisine")
-        XCTAssertFalse(recipe.isNotValid)
+        XCTAssertTrue(recipe.isValid)
         XCTAssertEqual(recipe.smallImageURL?.absoluteString, "https://example.com/small.jpg")
         XCTAssertEqual(recipe.largeImageURL?.absoluteString, "https://example.com/large.jpg")
         XCTAssertEqual(recipe.sourceWebsiteURL?.absoluteString, "https://example.com")
@@ -59,7 +59,7 @@ final class RecipeTests: XCTestCase {
         let recipe = try decoder.decode(Recipe.self, from: data)
 
         // No underlying values -> invalid
-        XCTAssertTrue(recipe.isNotValid)
+        XCTAssertFalse(recipe.isValid)
         XCTAssertEqual(recipe.name, "N/A")
         XCTAssertEqual(recipe.cuisine, "N/A")
     }
@@ -75,7 +75,7 @@ final class RecipeTests: XCTestCase {
         let recipe = try decoder.decode(Recipe.self, from: data)
 
         // Malformed uuid -> invalid but retains name & cuisine
-        XCTAssertTrue(recipe.isNotValid)
+        XCTAssertFalse(recipe.isValid)
         XCTAssertEqual(recipe.name, "A")
         XCTAssertEqual(recipe.cuisine, "B")
     }
@@ -92,6 +92,6 @@ final class RecipeTests: XCTestCase {
         XCTAssertEqual(recipe.name, "N/A") // We give the N/A val for both if nil/empty
         XCTAssertEqual(recipe.cuisine, "N/A")
         XCTAssertEqual(recipe.id, id)
-        XCTAssertTrue(recipe.isNotValid)
+        XCTAssertFalse(recipe.isValid)
     }
 }

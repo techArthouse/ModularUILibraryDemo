@@ -55,8 +55,8 @@ final class RecipeDataService: RecipeDataServiceProtocol {
         itemIfexists(for: id)?.youtubeVideoURL
     }
     
-    func isNotValid(for id: UUID) -> Bool {
-        itemIfexists(for: id)?.isNotValid ?? false
+    func isRecipeValid(for id: UUID) -> Bool {
+        itemIfexists(for: id)?.isValid ?? false
     }
     
     // MARK: - Memory Accessors

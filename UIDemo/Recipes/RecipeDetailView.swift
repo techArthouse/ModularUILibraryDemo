@@ -49,7 +49,7 @@ struct RecipeDetailView: View {
 //                VStack {
                 ImageCard(image: vm.image, size: nil, title: vm.title, description: vm.description)
                         .overlay {
-                            if !vm.isNotValid {
+                            if vm.isValid {
                                 HStack(alignment: .top) {
                                     Spacer()
                                     VStack {

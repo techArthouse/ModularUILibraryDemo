@@ -19,10 +19,10 @@ struct RecipeList: Decodable {
         var validRecipes = [Recipe]()
         
         for recipe in recipes {
-            if recipe.isNotValid {
-                invalidRecipes.append(recipe)
-            } else {
+            if recipe.isValid {
                 validRecipes.append(recipe)
+            } else {
+                invalidRecipes.append(recipe)
             }
         }
         

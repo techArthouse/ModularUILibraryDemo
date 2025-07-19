@@ -79,15 +79,15 @@ final class RecipeRowViewModelTests: XCTestCase {
         XCTAssertNotNil(vm.image)
     }
 
-    func test_isNotValid_true() {
+    func test_isValid_true() {
+        XCTAssertTrue(vm.isValid)
+    }
+    
+    func test_isValid_false() {
         invalideRecipe = Recipe(id: UUID(), name: nil, cuisine: "Latin")
         store.setRecipes(recipes: [invalideRecipe])
         vm = RecipeRowViewModel(recipeId: invalideRecipe.id, recipeStore: store)
         
-        XCTAssertTrue(vm.isNotValid)
-    }
-
-    func test_isNotValid_false() {
-        XCTAssertFalse(vm.isNotValid)
+        XCTAssertFalse(vm.isValid)
     }
 }

@@ -8,8 +8,8 @@
 import SwiftUI
 
 struct Recipe: Decodable, Identifiable, Hashable, CanBeInvalid {
-    var isNotValid: Bool {
-        _id == nil || _cuisine == nil || _name == nil
+    var isValid: Bool {
+        _id != nil && _cuisine != nil && _name != nil
     }
     
     // Required Fields. Note that they take their value from underlying assumptions that these are required.

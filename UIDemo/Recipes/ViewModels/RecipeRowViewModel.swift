@@ -39,7 +39,7 @@ final class RecipeRowViewModel: ObservableObject {
     
     var isDisabledBinding: Binding<Bool> {
         Binding(get: {
-            return self.isNotValid
+            return !self.isValid
         }, set: { _ in
         })
     }
@@ -71,8 +71,8 @@ extension RecipeRowViewModel {
         recipeStore.description(for: recipeId)
     }
     
-    var isNotValid: Bool {
-        recipeStore.isNotValid(for: recipeId)
+    var isValid: Bool {
+        recipeStore.isRecipeValid(for: recipeId)
     }
     
     var sourceURL: URL? {

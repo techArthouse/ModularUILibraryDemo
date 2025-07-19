@@ -48,7 +48,7 @@ struct RecipeRowView: View {
                     }
             },
             trailing: {
-                if vm.isNotValid {
+                if !vm.isValid {
                     EmptyView()
                 } else {
                     ToggleIconButton(

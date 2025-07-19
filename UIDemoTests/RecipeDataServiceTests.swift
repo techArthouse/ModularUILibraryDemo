@@ -50,7 +50,7 @@ final class RecipeDataServiceTests: XCTestCase {
         sut.setRecipes(recipes: [sample])
         XCTAssertEqual(sut.title(for: sampleId), "TestName")
         XCTAssertEqual(sut.description(for: sampleId), "TestCuisine")
-        XCTAssertFalse(sut.isNotValid(for: sampleId))
+        XCTAssertTrue(sut.isRecipeValid(for: sampleId))
 
         // URLs come straight off the Recipe model
         XCTAssertNil(sut.smallImageURL(for: sampleId))

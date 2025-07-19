@@ -18,7 +18,7 @@ protocol RecipeDataServiceProtocol: ObservableObject {
     // MARK: – Metadata
     func title(for id: UUID) -> String // title for recipe
     func description(for id: UUID) -> String // cuisine
-    func isNotValid(for id: UUID) -> Bool // whether decoded model meets requirments
+    func isRecipeValid(for id: UUID) -> Bool // whether decoded model meets requirments
     // (i.e. has title, description, and id)
     
     // MARK: – Favorites

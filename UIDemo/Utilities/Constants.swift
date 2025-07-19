@@ -10,7 +10,7 @@ import Foundation
 import ModularUILibrary
 
 protocol CanBeInvalid {
-    var isNotValid: Bool { get }
+    var isValid: Bool { get }
 }
 
 extension DynamicTypeSize {
