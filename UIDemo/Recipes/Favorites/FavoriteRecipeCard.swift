@@ -130,6 +130,8 @@ struct FavoriteRecipeCard: View {
     }
 }
 
+// MARK: - DEBUG Structures/Previews
+
 #if DEBUG
 struct FavoriteRecipesCard_Previews: PreviewProvider {
     static var previews: some View {

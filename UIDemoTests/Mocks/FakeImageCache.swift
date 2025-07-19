@@ -11,11 +11,11 @@ import SwiftUI
 
 @MainActor
 internal class FakeImageCache: ImageCacheProtocol {
-    func loadImage(for url: URL) async -> Result<Image, FetchCacheError> {
+    func loadImage(for url: URL) async -> Result<Image, ImageCacheError> {
         .success(Image("square.and.arrow.up"))
     }
     
-    func openCacheDirectoryWithPath(path: String) throws(FetchCacheError){
+    func openCacheDirectoryWithPath(path: String) throws(ImageCacheError){
         // nothing yet
     }
     func refresh() async { didRefresh = true }

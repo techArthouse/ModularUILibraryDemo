@@ -148,6 +148,7 @@ struct RecipesView: View {
     }
 }
 
+// MARK: - DEBUG Structures/Previews
 
 #if DEBUG
 struct RecipesView_Previews: PreviewProvider {

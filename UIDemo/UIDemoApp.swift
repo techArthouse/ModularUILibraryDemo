@@ -40,7 +40,7 @@ struct UIDemoApp: App {
     init() {
         let networkService = NetworkService()
         let memoryStore = RecipeMemoryDataSource()
-        let cache = FetchCache(path: Self.cachePath, networkService: networkService)
+        let cache = CustomAsyncImageCache(path: Self.cachePath, networkService: networkService)
         let store = RecipeDataService(memoryStore: memoryStore, fetchCache: cache)
         _recipeStore = StateObject(wrappedValue: store)
         self.networkService = networkService

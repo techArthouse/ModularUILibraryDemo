@@ -142,6 +142,8 @@ extension Recipe {
     }
 }
 
+// MARK: - DEBUG Structures/Previews
+
 #if DEBUG
 extension Recipe {
     /// Test  initializer

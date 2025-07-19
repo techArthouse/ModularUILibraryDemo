@@ -79,7 +79,7 @@ final class AppNavigation: ObservableObject {
     private init() {}
 }
 
-// MARK: - Preview
+// MARK: - DEBUG Structures/Previews
 
 #if DEBUG
 struct ContentView_Previews: PreviewProvider {
@@ -88,7 +88,7 @@ struct ContentView_Previews: PreviewProvider {
         let networkService = NetworkService()
         let recipeStore = RecipeDataService(
             memoryStore: memoryStore,
-            fetchCache: FetchCache(path: "PreviewCache", networkService: networkService)
+            fetchCache: CustomAsyncImageCache(path: "PreviewCache", networkService: networkService)
         )
         let themeManager: ThemeManager = ThemeManager()
 

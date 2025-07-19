@@ -44,7 +44,6 @@ class RecipeDataService: RecipeDataServiceProtocol {
     }
     
     func isFavorite(for id: UUID) -> Bool {
-        Logger.log("asdf asdf in datasource checking favorite")
         return memoryDataSource.isFavorite(for: id)
     }
     

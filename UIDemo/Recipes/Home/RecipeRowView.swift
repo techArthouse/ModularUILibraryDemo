@@ -86,6 +86,8 @@ struct RecipeRowView: View {
     }
 }
 
+// MARK: - DEBUG Structures/Previews
+
 #if DEBUG
 
 struct RecipeRowView_Previews: PreviewProvider {
@@ -127,7 +129,7 @@ struct RecipeRowView_Previews: PreviewProvider {
 
 class MockFetchCacheGOODandBAD: ImageCacheProtocol {
     
-    func loadImage(for url: URL) async -> Result<Image, FetchCacheError> {
+    func loadImage(for url: URL) async -> Result<Image, ImageCacheError> {
         if url.absoluteString != "https://d3jbb8n5wk0qxi.cloudfront.net/photos/b9ab0071-b281-4bee-b361-ec340d405320/small.jpg" {
             return
                 .failure(.failedToFetchImageFrom(source: url, withError: .failedToFindImageFromSystemMemoryBanks))
@@ -144,7 +146,7 @@ class MockFetchCacheGOODandBAD: ImageCacheProtocol {
         Logger.log(tag: "MockFetchCache", "refreshing")
     }
     
-    func openCacheDirectoryWithPath(path: String) throws(FetchCacheError) {
+    func openCacheDirectoryWithPath(path: String) throws(ImageCacheError) {
         // nothing yet
     }
 }

@@ -10,13 +10,13 @@ import UIKit
 
 @MainActor
 protocol ImageCacheProtocol {
-    func loadImage(for url: URL) async -> Result<Image, FetchCacheError>
-    func openCacheDirectoryWithPath(path: String) throws(FetchCacheError)
+    func loadImage(for url: URL) async -> Result<Image, ImageCacheError>
+    func openCacheDirectoryWithPath(path: String) throws(ImageCacheError)
     func refresh() async
 }
 
 @MainActor
-class FetchCache: ObservableObject, ImageCacheProtocol {
+class CustomAsyncImageCache: ObservableObject, ImageCacheProtocol {
     private let networkService: any NetworkServiceProtocol
     private var memoryCache = [String: Image]() // in‐memory cache
     private var cacheDirectoryURL: URL?
@@ -28,12 +28,12 @@ class FetchCache: ObservableObject, ImageCacheProtocol {
         try? self.openCacheDirectoryWithPath(path: path)
     }
     
-    /// Helper Method to open the cacheDirectory for FetchCache. If cache already has an open directory then error is thrown.
-    internal func openCacheDirectoryWithPath(path: String) throws(FetchCacheError) {
+    /// Helper Method to open the cacheDirectory for CustomAsyncImageCache. If cache already has an open directory then error is thrown.
+    internal func openCacheDirectoryWithPath(path: String) throws(ImageCacheError) {
         try initializeDiskMemory(with: path)
     }
     
-    private func initializeDiskMemory(with pathComponent: String) throws(FetchCacheError) {
+    private func initializeDiskMemory(with pathComponent: String) throws(ImageCacheError) {
         let cacheDomainBaseURL = try baseDirectoryURLForDomainCache()
         let cacheDirectoryURL = cacheDomainBaseURL.appendingPathComponent(
             pathComponent,
@@ -43,34 +43,34 @@ class FetchCache: ObservableObject, ImageCacheProtocol {
         try loadCacheDirectory(at: cacheDirectoryURL)
     }
     
-    private func baseDirectoryURLForDomainCache() throws(FetchCacheError) -> URL {
+    private func baseDirectoryURLForDomainCache() throws(ImageCacheError) -> URL {
         let cachesDirectory = FileManager.SearchPathDirectory.cachesDirectory
         guard let cachesBase = FileManager.default
             .urls(for: cachesDirectory, in: .userDomainMask)
             .first
         else {
-            throw FetchCacheError.noURLsFoundInDirectory(cachesDirectory)
+            throw ImageCacheError.noURLsFoundInDirectory(cachesDirectory)
         }
         return cachesBase
     }
     
-    private func loadCacheDirectory(at cacheDirectoryURL: URL) throws(FetchCacheError) {
+    private func loadCacheDirectory(at cacheDirectoryURL: URL) throws(ImageCacheError) {
         do {
             try FileManager.default.createDirectory(at: cacheDirectoryURL, withIntermediateDirectories: true)
             self.cacheDirectoryURL = cacheDirectoryURL
         } catch {
-            throw FetchCacheError.fileManagerError(withURL: cacheDirectoryURL)
+            throw ImageCacheError.fileManagerError(withURL: cacheDirectoryURL)
         }
     }
     
     /// Creates an encoded string from the sourceURL and appends it to cacheDirectoryURL that results local file url.
     /// Can throw `FetchCacheError` of types: `cachedDirectoryURLisNil` or `failedToAppendEncodedRemoteURLToCacheDirectoryURL`
-    private func generateElementURLFromDiskMemoryURL(using elementSourceURL: URL) throws(FetchCacheError) -> URL {
+    private func generateElementURLFromDiskMemoryURL(using elementSourceURL: URL) throws(ImageCacheError) -> URL {
         guard
             let pathAddress = elementSourceURL.absoluteString.addingPercentEncoding(withAllowedCharacters: .alphanumerics),
             let cacheURL = cacheDirectoryURL
         else {
-            throw FetchCacheError.failedToAppendEncodedRemoteURLToCacheDirectoryURL(remoteURL: elementSourceURL, cacheDirectoryURL: cacheDirectoryURL)
+            throw ImageCacheError.failedToAppendEncodedRemoteURLToCacheDirectoryURL(remoteURL: elementSourceURL, cacheDirectoryURL: cacheDirectoryURL)
         }
         
         let url = cacheURL.appendingPathComponent(pathAddress, isDirectory: false)
@@ -80,7 +80,7 @@ class FetchCache: ObservableObject, ImageCacheProtocol {
     // MARK: - Public API
     
     /// returns image from source or
-    func loadImage(for url: URL) async -> Result<Image, FetchCacheError> {
+    func loadImage(for url: URL) async -> Result<Image, ImageCacheError> {
         do {
             if let image = checkLocalMemory(using: url) {
                 return .success(image)
@@ -126,7 +126,7 @@ class FetchCache: ObservableObject, ImageCacheProtocol {
     /// throws FetchCacheError if failure, otherwise returns image found
     private func requestImageFromNetwork(at networkSourceURL: URL,
                                          saveTo localFileURL: URL,
-                                         using method: NetworkService.HTTPMethodType = .get) async throws(FetchCacheError) -> Image {
+                                         using method: NetworkService.HTTPMethodType = .get) async throws(ImageCacheError) -> Image {
         var imageDataBlob: Data
         do {
             imageDataBlob = try await networkService.requestData(from: networkSourceURL, using: method) // may throw NetworkError
@@ -134,9 +134,9 @@ class FetchCache: ObservableObject, ImageCacheProtocol {
             Logger.log(level: .error, "FetchCache - NetworkError: \(e.localizedDescription)")
             switch e {
             case .taskCancelled:
-                throw FetchCacheError.taskCancelled
+                throw ImageCacheError.taskCancelled
             default:
-                throw FetchCacheError.failedToGetImageFromNetworkRequest(e)
+                throw ImageCacheError.failedToGetImageFromNetworkRequest(e)
             }
         }
         
@@ -148,11 +148,11 @@ class FetchCache: ObservableObject, ImageCacheProtocol {
                 Logger.log("Successfully wrote image to disk at \(localFileURL).  Cache size: \(memoryCache.count)")
             } catch {
                 Logger.log(level: .error, "\(error.localizedDescription)")
-                throw FetchCacheError.failedToWriteImageDataToDisk(image: image, error: error)
+                throw ImageCacheError.failedToWriteImageDataToDisk(image: image, error: error)
             }
             return image
         } else {
-            throw FetchCacheError.failedToConvertDataBlobToImage(sourceURL: networkSourceURL, blob: imageDataBlob, sourceLocation: .remote)
+            throw ImageCacheError.failedToConvertDataBlobToImage(sourceURL: networkSourceURL, blob: imageDataBlob, sourceLocation: .remote)
         }
     }
     
@@ -176,25 +176,27 @@ class FetchCache: ObservableObject, ImageCacheProtocol {
 
 // MARK: - methods for local fetches of images/data
 
-extension FetchCache {
+extension CustomAsyncImageCache {
     private func checkLocalMemory(using remoteSourceURL: URL) -> Image? {
         memoryCache[remoteSourceURL.absoluteString] // simple check for element. subscript safely returns nil if optional force unwrap fails.
     }
     
-    private func checkDiskMemory(localFileURL: URL) async throws(FetchCacheError) -> Image? {
+    private func checkDiskMemory(localFileURL: URL) async throws(ImageCacheError) -> Image? {
         guard FileManager.default.fileExists(atPath: localFileURL.path()) else {
             return nil
         }
         guard let data = try? Data(contentsOf: localFileURL) else {
-            throw FetchCacheError.failedToGetDataFromContentsOf(sourceURL: localFileURL, sourceLocation: .local)
+            throw ImageCacheError.failedToGetDataFromContentsOf(sourceURL: localFileURL, sourceLocation: .local)
         }
         return data.imageIfImageData
     }
 }
 
+// MARK: - DEBUG Structures
+
 #if DEBUG
 class MockFetchCache: ImageCacheProtocol {
-    func loadImage(for url: URL) async -> Result<Image, FetchCacheError> {.success(
+    func loadImage(for url: URL) async -> Result<Image, ImageCacheError> {.success(
         Image(systemName: "heart.fill")
             .resizable()
             .renderingMode(.template))
@@ -204,7 +206,7 @@ class MockFetchCache: ImageCacheProtocol {
         Logger.log("refreshing")
     }
     
-    func openCacheDirectoryWithPath(path: String) throws(FetchCacheError) {
+    func openCacheDirectoryWithPath(path: String) throws(ImageCacheError) {
         Logger.log("mock fetchcache directory opened")
     }
 }

@@ -9,9 +9,9 @@ import SwiftUI
 import UIKit
 
 // MARK: - Error cases for FetchCache
-indirect enum FetchCacheError: Error {
+indirect enum ImageCacheError: Error {
     case failedToFindImageFromSystemMemoryBanks
-    case failedToFetchImageFrom(source: URL, withError: FetchCacheError)
+    case failedToFetchImageFrom(source: URL, withError: ImageCacheError)
     case failedToGetImageFromNetworkRequest(NetworkError)
     case failedToGetDataFromContentsOf(sourceURL: URL, sourceLocation: URLSource)
     case failedToWriteImageDataToDisk(image: Image, error: Error)
@@ -28,7 +28,7 @@ indirect enum FetchCacheError: Error {
     case taskCancelled
     
     // following errors are related. our use is that when we catch `failedToInitializeDiskMemory` it will nest a more verbose error
-    case failedToInitializeDiskMemory(withError: FetchCacheError) // root error for any but usually one of the following
+    case failedToInitializeDiskMemory(withError: ImageCacheError) // root error for any but usually one of the following
     case noURLsFoundInDirectory(FileManager.SearchPathDirectory)
     case invalidPathForCacheURL(String)
     case directoryAlreadyOpenWithPathComponent(String)
@@ -51,7 +51,7 @@ indirect enum FetchCacheError: Error {
 
 // MARK: - FetchCacheError Localized strings for description
 
-extension FetchCacheError: LocalizedError {
+extension ImageCacheError: LocalizedError {
     var errorDescription: String? {
         switch self {
         case .failedToFindImageFromSystemMemoryBanks:
