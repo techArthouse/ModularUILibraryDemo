@@ -24,8 +24,8 @@ class RecipesViewModel: ObservableObject {
     @Published var selectedCuisine: String?
     @Published var searchModel: SearchViewModel?
 
-    private let networkService: NetworkServiceProtocol
-    var recipeStore: any RecipeDataServiceProtocol
+    private let networkService: any NetworkServiceProtocol
+    @Published var recipeStore: any RecipeDataServiceProtocol
     private let filterStrategy: RecipeFilterStrategy
     private var cancellables = Set<AnyCancellable>()
     let filterTrigger = PassthroughSubject<Void, Never>()
@@ -34,7 +34,7 @@ class RecipesViewModel: ObservableObject {
     
     // MARK: - Init
     
-    init(recipeStore: any RecipeDataServiceProtocol, filterStrategy: RecipeFilterStrategy, networkService: NetworkServiceProtocol) {
+    init(recipeStore: any RecipeDataServiceProtocol, filterStrategy: RecipeFilterStrategy, networkService: any NetworkServiceProtocol) {
         self.recipeStore = recipeStore
         self.filterStrategy = filterStrategy
         self.networkService = networkService
@@ -57,6 +57,7 @@ class RecipesViewModel: ObservableObject {
                     let item = RecipeItem(recipe)
                     return item
                 }
+                print("apfilt recieving itempublisher\n")
                 self.applyFilter(animated: false)
             }
             .store(in: &cancellables)
@@ -76,20 +77,27 @@ class RecipesViewModel: ObservableObject {
     
     private func applyFilter(animated: Bool) {
         // computes which recipe ids should be visible
+        print("apfilt 🧠 Favorite check for D1:", recipeStore.isFavorite(for: UUID(uuidString: "74F6D4EB-DA50-4901-94D1-DEAE2D8AF1D1")!))
+
         let visibleIDs = self.filterStrategy.filter(recipeStore.allItems,
                                                     cuisine: selectedCuisine,
                                                     query: searchQuery).filter({ id in
             if self.filterStrategy.isFavorite {
+                print("apfilt is fav \(self.recipeStore.isFavorite(for: id))")
                 return self.recipeStore.isFavorite(for: id)
             } else {
                 return true
             }
         })
         
+        
+        print("apfilt Store favorites: \(recipeStore.memoryDataSource.memories.filter { $0.value.isFavorite })")
+        
         // update each item's `selected` in place to preserve animations and prevent odd ui flickers
         for (idx, item) in items.enumerated() {
             let shouldShow = visibleIDs.contains(item.id)
-            
+            print("apfilt Favorites VM is filtering on IDs: \(visibleIDs)")
+
             if animated {
                 // stagger them by index for a “fan-out” effect (TODO: - animation not reflecting fan out)
                 let delay = Double(idx) * 0.03
@@ -113,12 +121,12 @@ class RecipesViewModel: ObservableObject {
     func reloadAll() async {
         loadPhase = .loading
         
-        do {
-            try await Task.sleep(for: .seconds(0.5)) // for UX feedback
-        }
-        catch {
-            // just continue
-        }
+//        do {
+//            try await Task.sleep(for: .seconds(0.5)) // for UX feedback
+//        }
+//        catch {
+//            // just continue
+//        }
         
         await recipeStore.refreshImageCache() // clear imagecache
         await self.loadRecipes()
@@ -137,10 +145,8 @@ class RecipesViewModel: ObservableObject {
     
     var cusineCategories: [String] {
         var categories = Set<String>()
-        let itemIds = self.items.filter({ item in
-            item.selected
-        }).map { $0.id }
-        for item in recipeStore.allItems.filter({ itemIds.contains($0.id) }) {
+        let selectedItemIds = items.filter(\.selected).map { $0.id }
+        for item in recipeStore.allItems.filter({ selectedItemIds.contains($0.id) }) {
             categories.insert(item.cuisine)
         }
         return Array(categories)
@@ -149,13 +155,15 @@ class RecipesViewModel: ObservableObject {
     /// Load and wrap your recipes in order
     internal func loadRecipes(from url: URL? = nil) async {
         do {
-            //        FetchCache.shared.load()
-            let data = try await networkService.requestData(from: url ?? URL(string: "https://d3jbb8n5wk0qxi.cloudfront.net/recipes.json")!, using: .get)
+//            let data = try await networkService.requestData(from: url ?? URL(string: "https://d3jbb8n5wk0qxi.cloudfront.net/recipes.json")!, using: .get)
+//            
+//            let list = try JSONDecoder().decode(RecipeList.self, from: data)
+//            
+//            let recipes = list.recipes + list.invalidRecipes
+//            self.items = []
             
-            let list = try JSONDecoder().decode(RecipeList.self, from: data)
-            
-            let recipes = list.recipes + list.invalidRecipes
-            recipeStore.setRecipes(recipes: recipes)
+            let data = try await Recipe.allFromJSON(using: .good)
+            recipeStore.setRecipes(recipes: data)
             loadPhase = .success
         } catch {
             loadPhase = .failure(error.localizedDescription)

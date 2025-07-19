@@ -11,6 +11,7 @@ import Combine
 @MainActor
 protocol RecipeDataServiceProtocol: ObservableObject {
     var allItems: [Recipe] { get }
+    var memoryDataSource: any RecipeMemoryDataSourceProtocol { get }
     var imageCache: ImageCacheProtocol { get }
     var itemsPublisher: AnyPublisher<[Recipe], Never> { get }
     func setRecipes(recipes: [Recipe]) 

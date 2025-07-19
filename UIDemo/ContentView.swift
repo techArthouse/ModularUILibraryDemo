@@ -84,20 +84,28 @@ final class AppNavigation: ObservableObject {
 #if DEBUG
 struct ContentView_Previews: PreviewProvider {
     static var previews: some View {
-        @StateObject var recipeStore: RecipeDataService = RecipeDataService(memoryStore: RecipeMemoryDataSource(), fetchCache: FetchCache(path: "DevelopmentImageCache", networkService: NetworkService()))
+        let memoryStore = RecipeMemoryDataSource()
+        let networkService = NetworkService()
+        let recipeStore = RecipeDataService(
+            memoryStore: memoryStore,
+            fetchCache: FetchCache(path: "PreviewCache", networkService: networkService)
+        )
         let themeManager: ThemeManager = ThemeManager()
-        ContentView(makeHomeVM: {
-            RecipesViewModel(
-                recipeStore: recipeStore,
-                filterStrategy: AllRecipesFilter(),
-                networkService: NetworkService())
-        }, makeFavoritesVM: {
-            RecipesViewModel(
-                recipeStore: recipeStore,
-                filterStrategy: FavoriteRecipesFilter(),
-                networkService: NetworkService())
-        })
+
+        ContentView(
+            makeHomeVM: {
+                RecipesViewModel(recipeStore: recipeStore,
+                                 filterStrategy: AllRecipesFilter(),
+                                 networkService: networkService)
+            },
+            makeFavoritesVM: {
+                RecipesViewModel(recipeStore: recipeStore,
+                                 filterStrategy: FavoriteRecipesFilter(),
+                                 networkService: networkService)
+            }
+        )
         .environmentObject(themeManager)
     }
 }
+
 #endif

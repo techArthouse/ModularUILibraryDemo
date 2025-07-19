@@ -7,7 +7,7 @@
 
 import Foundation
 
-class RecipeMemory: Codable, ObservableObject {
+class RecipeMemory: Codable {
     var isFavorite: Bool
     var notes: [RecipeNote]
     

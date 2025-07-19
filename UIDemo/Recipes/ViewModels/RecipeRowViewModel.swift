@@ -12,7 +12,7 @@ import Combine
 final class RecipeRowViewModel: ObservableObject {
     private let imageLoader: ImageLoader
     var recipeId: UUID
-    var recipeStore: any RecipeDataServiceProtocol
+    @Published var recipeStore: any RecipeDataServiceProtocol
     @Published private(set) var image: Image?
     @Published var isFavorite: Bool = false
     
@@ -21,9 +21,10 @@ final class RecipeRowViewModel: ObservableObject {
     init(recipeId: UUID, recipeStore: any RecipeDataServiceProtocol) {
         print("omgomg2")
         self.recipeId = recipeId
-        self.recipeStore = recipeStore
         isFavorite = recipeStore.isFavorite(for: recipeId)
+        print("omgomg2 \(recipeStore.isFavorite(for: recipeId))")
         self.imageLoader = ImageLoader(url: recipeStore.smallImageURL(for: recipeId), cache: recipeStore.imageCache)
+        self.recipeStore = recipeStore
     }
     
     /// Binding: ViewModel.image ← ImageLoader.image
@@ -55,12 +56,12 @@ final class RecipeRowViewModel: ObservableObject {
         Binding(
             get: { [weak self] in
                 guard let self = self else { return false }
-                print( "get favorite for id \(self.recipeId) is \(isFavorite)")
-                return isRecipFavorited },
+                print( "asdf get favorite for id \(self.recipeId) is \(self.isFavorite)")
+                return recipeStore.isFavorite(for: recipeId) },
             set: { [weak self] newValue in
                 guard let self = self else { return }
-                print("set favorite \(newValue) for id \(self.recipeId)")
-                self.objectWillChange.send()
+                print("asdf set favorite \(newValue) for id \(self.recipeId)")
+                objectWillChange.send()
                 self.recipeStore.setFavorite(newValue, for: self.recipeId)
             }
         )

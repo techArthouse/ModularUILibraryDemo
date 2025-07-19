@@ -17,12 +17,12 @@ protocol ImageCacheProtocol {
 
 @MainActor
 class FetchCache: ObservableObject, ImageCacheProtocol {
-    private let networkService: NetworkServiceProtocol
+    private let networkService: any NetworkServiceProtocol
     private var memoryCache = [String: Image]() // in‐memory cache
     private var cacheDirectoryURL: URL?
     private let path: String
     
-    init(path: String, networkService: NetworkServiceProtocol) {
+    init(path: String, networkService: any NetworkServiceProtocol) {
         self.networkService = networkService
         self.path = path
         try? self.openCacheDirectoryWithPath(path: path)

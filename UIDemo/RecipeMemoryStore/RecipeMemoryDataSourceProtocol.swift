@@ -8,7 +8,7 @@
 import Foundation
 
 @MainActor
-protocol RecipeMemoryDataSourceProtocol: ObservableObject {
+protocol RecipeMemoryDataSourceProtocol {
     var memories: [UUID: RecipeMemory] { get }
     func load()
     func save()

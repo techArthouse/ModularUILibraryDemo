@@ -12,7 +12,7 @@ import Combine
 @MainActor
 class RecipeDataService: RecipeDataServiceProtocol {
     @Published private(set) var allItems: [Recipe] = []
-    var memoryDataSource: any RecipeMemoryDataSourceProtocol // should i use protocol for testing?
+    @Published var memoryDataSource: RecipeMemoryDataSourceProtocol // should i use protocol for testing?
     @Published private(set) var imageCache: ImageCacheProtocol
     
     init(memoryStore: any RecipeMemoryDataSourceProtocol, fetchCache: ImageCacheProtocol) {
@@ -44,7 +44,8 @@ class RecipeDataService: RecipeDataServiceProtocol {
     }
     
     func isFavorite(for id: UUID) -> Bool {
-        memoryDataSource.isFavorite(for: id)
+        print("asdf asdf in datasource checking favorite")
+        return memoryDataSource.isFavorite(for: id)
     }
     
     func toggleFavorite(_ id: UUID) {

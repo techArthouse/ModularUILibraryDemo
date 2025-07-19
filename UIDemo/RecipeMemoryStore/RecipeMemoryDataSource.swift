@@ -6,16 +6,22 @@
 //
 
 import SwiftUI
+import Combine
 
 @MainActor
-final class RecipeMemoryDataSource: RecipeMemoryDataSourceProtocol {
+final class RecipeMemoryDataSource: ObservableObject, RecipeMemoryDataSourceProtocol {
     private let defaults: UserDefaults
     private let key: String
     
     @Published private(set) var memories: [UUID: RecipeMemory] = [:]
+    var itemsPublisher: AnyPublisher<[UUID : RecipeMemory], Never> {
+        $memories
+            .eraseToAnyPublisher()
+    }
     
     /// The key for memory stored.
     init(key: String = "RecipeMemories", defaults: UserDefaults = .standard) {
+        print("oh damn we're instantiating memory")
         self.key = key
         self.defaults = defaults
         load()
@@ -43,7 +49,10 @@ final class RecipeMemoryDataSource: RecipeMemoryDataSourceProtocol {
         if let res = memories[recipeUUID] {
             return res
         } else {
-            return RecipeMemory(isFavorite: false, notes: [])
+            let mem = RecipeMemory(isFavorite: false, notes: [])
+            memories[recipeUUID] = mem
+            save()
+            return mem
         }
     }
     
@@ -57,7 +66,7 @@ final class RecipeMemoryDataSource: RecipeMemoryDataSourceProtocol {
             mem.isFavorite = favorite
             memories[recipeUUID] = mem
         } else if favorite {
-            memories[recipeUUID] = RecipeMemory(isFavorite: true, notes: [])
+            memories[recipeUUID] = RecipeMemory(isFavorite: favorite, notes: [])
         }
         save()
     }

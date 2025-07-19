@@ -13,7 +13,7 @@ import ModularUILibrary
 /// a link could be missing or did not evaluate to a usable object). Each FavoriteRecipeCard manages its VM lifecycle.
 struct FavoriteRecipeCard: View {
     @StateObject private var vm: RecipeRowViewModel
-    @State private var clickableLinks: ClickableLinks
+    private var clickableLinks: ClickableLinks
     
     let size: CGSize // Size of Image in `ImageCard`
     let onTapRow: () -> Void
@@ -32,7 +32,7 @@ struct FavoriteRecipeCard: View {
         _vm = StateObject(wrappedValue: viewmodel)
         self.size = size
         self.onTapRow = onTapRow
-        self.clickableLinks = ClickableLinks(favorite: viewmodel.isRecipFavorited,
+        self.clickableLinks = ClickableLinks(favorite: viewmodel.isFavorite,
                                              youtube: viewmodel.videoURL != nil ? true: false,
                                              source: viewmodel.sourceURL != nil ? true: false)
     }

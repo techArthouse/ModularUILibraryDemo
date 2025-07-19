@@ -54,6 +54,6 @@ final class NetworkService: NetworkServiceProtocol {
     }
 }
 
-protocol NetworkServiceProtocol {
+protocol NetworkServiceProtocol: ObservableObject {
     func requestData(from url: URL, using method: NetworkService.HTTPMethodType) async throws(NetworkError) -> Data
 }
