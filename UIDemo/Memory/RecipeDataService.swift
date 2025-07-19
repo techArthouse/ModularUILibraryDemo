@@ -8,7 +8,7 @@
 import SwiftUI
 import Combine
 
-/// RecipeStore is a domain data service, not just a data loader. It’s the central place to query recipe identity, status, and cache-insulated data.
+/// RecipeStore is a domain data service, not just a data loader. It’s the central place to query recipe identity, status, and cached data.
 @MainActor
 class RecipeDataService: RecipeDataServiceProtocol {
     @Published private(set) var allItems: [Recipe] = []

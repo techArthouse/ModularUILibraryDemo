@@ -7,8 +7,9 @@
 
 import SwiftUI
 
+/// Lightweight image loading component for any cache protocol
 final class ImageLoader: ObservableObject {
-    @Published var image: Image? = nil
+    @Published var image: Image? = nil // Image component bound to view
     private let cache: ImageCacheProtocol
     private let url: URL?
     
