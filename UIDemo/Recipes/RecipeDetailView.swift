@@ -141,7 +141,7 @@ struct RecipeDetailView: View {
                                     isAddingNote = true
                                 }
                             }
-                            .asBorderlessButton(padding: .manualPadding)
+                            .asBorderlessButton(padding: .single)
                             .transition(.scale.combined(with: .opacity))
                         } else {
                             CTAButton(title: "Add Recipe to Favorites to Add Notes") {
@@ -149,7 +149,7 @@ struct RecipeDetailView: View {
                                     vm.toggleFavorite()
                                 }
                             }
-                            .asBorderlessButton(padding: .manualPadding)
+                            .asBorderlessButton(padding: .single)
                             .padding(.horizontal, 10)
                             .transition(.scale.combined(with: .opacity))
                         }
@@ -160,7 +160,7 @@ struct RecipeDetailView: View {
                 .background(
                     RoundedRectangle(cornerRadius: 16)
                         .fill(Color.white)
-                        .shadow(color: .black.opacity(0.1), radius: 8, x: 0, y: -1) // lifts up
+                        .shadow(color: .black.opacity(0.1), radius: 8, x: 0, y: -1)
                 )
                 .padding()
                 .onDisabled(isDisabled: vm.isDisabledBinding)
