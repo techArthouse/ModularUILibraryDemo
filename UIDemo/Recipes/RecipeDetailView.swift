@@ -12,14 +12,10 @@ import SafariServices
 
 struct RecipeDetailView: View {
     @StateObject private var vm: RecipeRowViewModel
-//    let onToggleFavorite: () -> Void
-//    let onSubmitNote: (String) -> Void
-//    @State private var image: Image?
     @State private var source: URLType? = nil
     @State private var isLoading: Bool = false
     @State private var isAddingNote = false
     @State private var newNoteText = ""
-//    @State private var isDisabled: Bool
     
     init(recipeRowVM: RecipeRowViewModel) {
         print("recipedia 1-1")
@@ -54,7 +50,7 @@ struct RecipeDetailView: View {
 //                VStack {
                 ImageCard(image: vm.image, size: nil, title: vm.title, description: vm.description)
                         .overlay {
-                            if !vm.isDisabledBinding.wrappedValue {
+                            if !vm.isNotValid {
                                 HStack(alignment: .top) {
                                     Spacer()
                                     VStack {
@@ -139,7 +135,7 @@ struct RecipeDetailView: View {
                             }
                     }
                     else {
-                        if vm.isRecipFavorited {
+                        if vm.isFavorite {
                             CTAButton(title: "Add Note") {
                                 withAnimation {
                                     isAddingNote = true

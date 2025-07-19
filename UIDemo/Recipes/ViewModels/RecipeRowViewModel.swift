@@ -14,14 +14,12 @@ final class RecipeRowViewModel: ObservableObject {
     var recipeId: UUID
     @Published var recipeStore: any RecipeDataServiceProtocol
     @Published private(set) var image: Image?
-    @Published var isFavorite: Bool = false
     
     private var cancellables = Set<AnyCancellable>()
     
     init(recipeId: UUID, recipeStore: any RecipeDataServiceProtocol) {
         print("omgomg2")
         self.recipeId = recipeId
-        isFavorite = recipeStore.isFavorite(for: recipeId)
         print("omgomg2 \(recipeStore.isFavorite(for: recipeId))")
         self.imageLoader = ImageLoader(url: recipeStore.smallImageURL(for: recipeId), cache: recipeStore.imageCache)
         self.recipeStore = recipeStore
@@ -56,7 +54,6 @@ final class RecipeRowViewModel: ObservableObject {
         Binding(
             get: { [weak self] in
                 guard let self = self else { return false }
-                print( "asdf get favorite for id \(self.recipeId) is \(self.isFavorite)")
                 return recipeStore.isFavorite(for: recipeId) },
             set: { [weak self] newValue in
                 guard let self = self else { return }
@@ -97,7 +94,7 @@ extension RecipeRowViewModel {
         recipeStore.addNote(text, for: recipeId)
     }
     
-    var isRecipFavorited: Bool {
+    var isFavorite: Bool {
         recipeStore.isFavorite(for: recipeId)
     }
     

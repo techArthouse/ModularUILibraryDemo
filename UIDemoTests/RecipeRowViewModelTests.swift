@@ -39,7 +39,7 @@ final class RecipeRowViewModelTests: XCTestCase {
     }
 
     func test_isFavorite_binding_readsAndWritesCorrectly() {
-        XCTAssertFalse(vm.isRecipFavorited)  // Should default to false
+        XCTAssertFalse(vm.isFavorite)  // Should default to false
         XCTAssertFalse(vm.isFavoriteBinding.wrappedValue)
 
         // Now set to favorite through the binding

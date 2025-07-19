@@ -90,9 +90,6 @@ class RecipesViewModel: ObservableObject {
             }
         })
         
-        
-        print("apfilt Store favorites: \(recipeStore.memoryDataSource.memories.filter { $0.value.isFavorite })")
-        
         // update each item's `selected` in place to preserve animations and prevent odd ui flickers
         for (idx, item) in items.enumerated() {
             let shouldShow = visibleIDs.contains(item.id)
