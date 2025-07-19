@@ -28,9 +28,6 @@ class RecipesViewModel: ObservableObject {
     @Published var recipeStore: any RecipeDataServiceProtocol
     private let filterStrategy: RecipeFilterStrategy
     private var cancellables = Set<AnyCancellable>()
-    let filterTrigger = PassthroughSubject<Void, Never>()
-    
-    let recipesLoadedTrigger = PassthroughSubject<Void, Never>()
     
     // MARK: - Init
     
@@ -118,13 +115,6 @@ class RecipesViewModel: ObservableObject {
     func reloadAll() async {
         loadPhase = .loading
         
-//        do {
-//            try await Task.sleep(for: .seconds(0.5)) // for UX feedback
-//        }
-//        catch {
-//            // just continue
-//        }
-        
         await recipeStore.refreshImageCache() // clear imagecache
         await self.loadRecipes()
         self.searchQuery = ""
@@ -152,15 +142,12 @@ class RecipesViewModel: ObservableObject {
     /// Load and wrap your recipes in order
     internal func loadRecipes(from url: URL? = nil) async {
         do {
-//            let data = try await networkService.requestData(from: url ?? URL(string: "https://d3jbb8n5wk0qxi.cloudfront.net/recipes.json")!, using: .get)
-//            
-//            let list = try JSONDecoder().decode(RecipeList.self, from: data)
-//            
-//            let recipes = list.recipes + list.invalidRecipes
-//            self.items = []
+            let data = try await networkService.requestData(from: url ?? URL(string: "https://d3jbb8n5wk0qxi.cloudfront.net/recipes.json")!, using: .get)
             
-            let data = try await Recipe.allFromJSON(using: .good)
-            recipeStore.setRecipes(recipes: data)
+            let list = try JSONDecoder().decode(RecipeList.self, from: data)
+            
+            let recipes = list.recipes + list.invalidRecipes
+            recipeStore.setRecipes(recipes: recipes)
             loadPhase = .success
         } catch {
             loadPhase = .failure(error.localizedDescription)
