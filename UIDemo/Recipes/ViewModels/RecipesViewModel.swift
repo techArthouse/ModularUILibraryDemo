@@ -54,7 +54,6 @@ class RecipesViewModel: ObservableObject {
                     let item = RecipeItem(recipe)
                     return item
                 }
-                print("apfilt recieving itempublisher\n")
                 self.applyFilter(animated: false)
             }
             .store(in: &cancellables)
@@ -74,13 +73,10 @@ class RecipesViewModel: ObservableObject {
     
     private func applyFilter(animated: Bool) {
         // computes which recipe ids should be visible
-        print("apfilt 🧠 Favorite check for D1:", recipeStore.isFavorite(for: UUID(uuidString: "74F6D4EB-DA50-4901-94D1-DEAE2D8AF1D1")!))
-
         let visibleIDs = self.filterStrategy.filter(recipeStore.allItems,
                                                     cuisine: selectedCuisine,
                                                     query: searchQuery).filter({ id in
             if self.filterStrategy.isFavorite {
-                print("apfilt is fav \(self.recipeStore.isFavorite(for: id))")
                 return self.recipeStore.isFavorite(for: id)
             } else {
                 return true
@@ -90,7 +86,6 @@ class RecipesViewModel: ObservableObject {
         // update each item's `selected` in place to preserve animations and prevent odd ui flickers
         for (idx, item) in items.enumerated() {
             let shouldShow = visibleIDs.contains(item.id)
-            print("apfilt Favorites VM is filtering on IDs: \(visibleIDs)")
 
             if animated {
                 // stagger them by index for a “fan-out” effect (TODO: - animation not reflecting fan out)
@@ -167,17 +162,4 @@ protocol RecipeDataConsumer {
     var items: [RecipeItem] { get }
     var recipeStore: RecipeDataService { get }
     func loadRecipes(from url: URL?) async throws
-}
-
-
-
-extension RecipesViewModel: Filterable {
-    func filterSend() {
-        filterTrigger.send()
-    }
-}
-    
-@MainActor
-protocol Filterable {
-    func filterSend()
 }

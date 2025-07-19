@@ -24,7 +24,7 @@ struct Logger {
 #endif
     }()
     
-    static func log(_ level: LogLevel = .debug,
+    static func log(level: LogLevel = .debug,
                     tag: String? = nil,
                     _ message: @autoclosure () -> String,
                     file: String = #file,

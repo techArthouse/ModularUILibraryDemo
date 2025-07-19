@@ -140,7 +140,7 @@ struct FavoriteRecipesCard_Previews: PreviewProvider {
         // TODO: Test resizing here later.
         
         FavoriteRecipeCard(viewmodel: RecipeRowViewModel(recipeId: UUID(), recipeStore: recipeStore)) {
-            print("row tapped")
+            Logger.log("row tapped")
         }
         .environmentObject(themeManager)
     }

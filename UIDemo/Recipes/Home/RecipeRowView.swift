@@ -36,7 +36,7 @@ struct RecipeRowView: View {
             isDisabled: vm.isDisabledBinding.wrappedValue,
             config: config,
             action: {
-                print("FeatureItem: \(vm.title) row tapped")
+                Logger.log("FeatureItem: \(vm.title) row tapped")
                 onTapRow()
             },
             leading: {
@@ -44,7 +44,7 @@ struct RecipeRowView: View {
                     .equatable()
                     .border(.black.opacity(0.5), width: 1)
                     .onAppear{
-                        print("i appear imagecontainer with image \(vm.image != nil)")
+                        Logger.log("i appear imagecontainer with image \(vm.image != nil)")
                     }
             },
             trailing: {
@@ -107,7 +107,7 @@ struct RecipeRowView_Previews: PreviewProvider {
         
         return VStack {
             RecipeRowView(viewmodel: RecipeRowViewModel(recipeId: goodItem.id, recipeStore: recipeStore)) {
-                print("Tapped row with goodItem")
+                Logger.log("Tapped row with goodItem")
             }
             .background(.red)
             .previewDisplayName("Good Recipe")
@@ -115,7 +115,7 @@ struct RecipeRowView_Previews: PreviewProvider {
             .environmentObject(themeManager)
             
             RecipeRowView(viewmodel: RecipeRowViewModel(recipeId: badItem.id, recipeStore: recipeStore)) {
-                print("Tapped row with badItem")
+                Logger.log("Tapped row with badItem")
             }
             .background(.red)
             .previewDisplayName("Invalid Recipe")
@@ -141,7 +141,7 @@ class MockFetchCacheGOODandBAD: ImageCacheProtocol {
     }
     
     func refresh() async {
-        print("refreshing")
+        Logger.log(tag: "MockFetchCache", "refreshing")
     }
     
     func openCacheDirectoryWithPath(path: String) throws(FetchCacheError) {

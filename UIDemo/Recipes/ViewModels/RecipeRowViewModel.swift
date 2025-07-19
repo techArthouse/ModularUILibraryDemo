@@ -18,9 +18,7 @@ final class RecipeRowViewModel: ObservableObject {
     private var cancellables = Set<AnyCancellable>()
     
     init(recipeId: UUID, recipeStore: any RecipeDataServiceProtocol) {
-        print("omgomg2")
         self.recipeId = recipeId
-        print("omgomg2 \(recipeStore.isFavorite(for: recipeId))")
         self.imageLoader = ImageLoader(url: recipeStore.smallImageURL(for: recipeId), cache: recipeStore.imageCache)
         self.recipeStore = recipeStore
     }
@@ -29,7 +27,7 @@ final class RecipeRowViewModel: ObservableObject {
     private func bindImageLoader() {
         imageLoader.$image
             .receive(on: RunLoop.main)
-            .handleEvents(receiveOutput: { print("Combine: Received image from loader: \($0 != nil)") })
+            .handleEvents(receiveOutput: { Logger.log("Combine: Received image from loader: \($0 != nil)") })
             .assign(to: \.image, on: self)
             .store(in: &cancellables)
     }
@@ -57,7 +55,6 @@ final class RecipeRowViewModel: ObservableObject {
                 return recipeStore.isFavorite(for: recipeId) },
             set: { [weak self] newValue in
                 guard let self = self else { return }
-                print("asdf set favorite \(newValue) for id \(self.recipeId)")
                 objectWillChange.send()
                 self.recipeStore.setFavorite(newValue, for: self.recipeId)
             }

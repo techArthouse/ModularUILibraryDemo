@@ -15,15 +15,10 @@
 		71D5EE0D2B8D4081004DE667 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 71D5EE0C2B8D4081004DE667 /* Assets.xcassets */; };
 		71D5EE102B8D4081004DE667 /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 71D5EE0F2B8D4081004DE667 /* Preview Assets.xcassets */; };
 		71E7CD2D2DE7AFD20075C883 /* ModularUILibrary in Frameworks */ = {isa = PBXBuildFile; productRef = 71E7CD2C2DE7AFD20075C883 /* ModularUILibrary */; };
-		71E7CD2F2DEA13C10075C883 /* LandingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 71E7CD2E2DEA13C10075C883 /* LandingView.swift */; };
-		71E7CD312DEA15CC0075C883 /* Constants.swift in Sources */ = {isa = PBXBuildFile; fileRef = 71E7CD302DEA15CC0075C883 /* Constants.swift */; };
 		71E7CD342DEA16C90075C883 /* recipesGood.json in Resources */ = {isa = PBXBuildFile; fileRef = 71E7CD332DEA16C90075C883 /* recipesGood.json */; };
 		71E7CD362DEA16EC0075C883 /* recipesEmpty.json in Resources */ = {isa = PBXBuildFile; fileRef = 71E7CD352DEA16EC0075C883 /* recipesEmpty.json */; };
 		71E7CD382DEA17060075C883 /* recipesMalformed.json in Resources */ = {isa = PBXBuildFile; fileRef = 71E7CD372DEA17060075C883 /* recipesMalformed.json */; };
 		71E7CD3E2DEA70EB0075C883 /* NetworkService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 71E7CD3D2DEA70EB0075C883 /* NetworkService.swift */; };
-		71E7CD7A2DFBA5740075C883 /* Modifiers.swift in Sources */ = {isa = PBXBuildFile; fileRef = 71E7CD792DFBA5740075C883 /* Modifiers.swift */; };
-		71E7CD7C2DFBA5C00075C883 /* CustomErrors.swift in Sources */ = {isa = PBXBuildFile; fileRef = 71E7CD7B2DFBA5C00075C883 /* CustomErrors.swift */; };
-		71EC6E0A2E2B3B4400FFABBA /* Logger.swift in Sources */ = {isa = PBXBuildFile; fileRef = 71EC6E092E2B3B4400FFABBA /* Logger.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -47,15 +42,10 @@
 		71D5EE0A2B8D407D004DE667 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		71D5EE0C2B8D4081004DE667 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		71D5EE0F2B8D4081004DE667 /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
-		71E7CD2E2DEA13C10075C883 /* LandingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LandingView.swift; sourceTree = "<group>"; };
-		71E7CD302DEA15CC0075C883 /* Constants.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Constants.swift; sourceTree = "<group>"; };
 		71E7CD332DEA16C90075C883 /* recipesGood.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = recipesGood.json; sourceTree = "<group>"; };
 		71E7CD352DEA16EC0075C883 /* recipesEmpty.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = recipesEmpty.json; sourceTree = "<group>"; };
 		71E7CD372DEA17060075C883 /* recipesMalformed.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = recipesMalformed.json; sourceTree = "<group>"; };
 		71E7CD3D2DEA70EB0075C883 /* NetworkService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NetworkService.swift; sourceTree = "<group>"; };
-		71E7CD792DFBA5740075C883 /* Modifiers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Modifiers.swift; sourceTree = "<group>"; };
-		71E7CD7B2DFBA5C00075C883 /* CustomErrors.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomErrors.swift; sourceTree = "<group>"; };
-		71EC6E092E2B3B4400FFABBA /* Logger.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Logger.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -63,6 +53,7 @@
 		7189F0E72E25DBC500D997F5 /* UIDemoTests */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = UIDemoTests; sourceTree = "<group>"; };
 		71E7CD7F2DFC85C90075C883 /* RecipeMemoryStore */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = RecipeMemoryStore; sourceTree = "<group>"; };
 		71E7CD822DFC86D80075C883 /* Recipes */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = Recipes; sourceTree = "<group>"; };
+		71EC6E0B2E2B419E00FFABBA /* Utilities */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = Utilities; sourceTree = "<group>"; };
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -114,16 +105,12 @@
 		71D5EE072B8D407D004DE667 /* UIDemo */ = {
 			isa = PBXGroup;
 			children = (
-				71EC6E092E2B3B4400FFABBA /* Logger.swift */,
+				71EC6E0B2E2B419E00FFABBA /* Utilities */,
 				7132B89F2E20785E00001E69 /* Memory */,
 				71E7CD822DFC86D80075C883 /* Recipes */,
 				71E7CD7F2DFC85C90075C883 /* RecipeMemoryStore */,
-				71E7CD7B2DFBA5C00075C883 /* CustomErrors.swift */,
-				71E7CD792DFBA5740075C883 /* Modifiers.swift */,
 				71E7CD3D2DEA70EB0075C883 /* NetworkService.swift */,
 				71E7CD322DEA16A50075C883 /* Resources */,
-				71E7CD302DEA15CC0075C883 /* Constants.swift */,
-				71E7CD2E2DEA13C10075C883 /* LandingView.swift */,
 				71D5EE082B8D407D004DE667 /* UIDemoApp.swift */,
 				71D5EE0A2B8D407D004DE667 /* ContentView.swift */,
 				71A95C782E22FCC8001B52CC /* README.md */,
@@ -195,6 +182,7 @@
 				7132B89F2E20785E00001E69 /* Memory */,
 				71E7CD7F2DFC85C90075C883 /* RecipeMemoryStore */,
 				71E7CD822DFC86D80075C883 /* Recipes */,
+				71EC6E0B2E2B419E00FFABBA /* Utilities */,
 			);
 			name = UIDemo;
 			packageProductDependencies = (
@@ -282,14 +270,9 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				71E7CD2F2DEA13C10075C883 /* LandingView.swift in Sources */,
-				71E7CD7C2DFBA5C00075C883 /* CustomErrors.swift in Sources */,
 				71D5EE0B2B8D407D004DE667 /* ContentView.swift in Sources */,
-				71EC6E0A2E2B3B4400FFABBA /* Logger.swift in Sources */,
 				71E7CD3E2DEA70EB0075C883 /* NetworkService.swift in Sources */,
 				71D5EE092B8D407D004DE667 /* UIDemoApp.swift in Sources */,
-				71E7CD312DEA15CC0075C883 /* Constants.swift in Sources */,
-				71E7CD7A2DFBA5740075C883 /* Modifiers.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

@@ -26,10 +26,10 @@ final class ImageLoader: ObservableObject {
         let result = await cache.loadImage(for: url)
         switch result {
         case .success(let fetchedImage):
-            print("successfully loaded image")
+            Logger.log("successfully loaded image")
             self.image = fetchedImage
         case .failure(let error):
-            print("Image loading failed: \(error.localizedDescription)")
+            Logger.log("Image loading failed: \(error.localizedDescription)")
             self.image = Image("imageNotFound")
         }
     }

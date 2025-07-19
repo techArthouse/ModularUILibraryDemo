@@ -111,13 +111,13 @@ class FetchCache: ObservableObject, ImageCacheProtocol {
     func refresh() async {
         deleteLocalMemory()
         deleteDiskMemory()
-        print("refresh delete diskandlocal mem")
+        Logger.log("refresh delete diskandlocal mem")
         
         do {
             try initializeDiskMemory(with: path) // maybe make it a optional init if folder fails to start?
         } catch {
             /// TODO: In the future we should thow the error so caller can make informed step.
-            print(error.localizedDescription)
+            Logger.log(level: .error, error.localizedDescription)
         }
     }
     
@@ -131,7 +131,7 @@ class FetchCache: ObservableObject, ImageCacheProtocol {
         do {
             imageDataBlob = try await networkService.requestData(from: networkSourceURL, using: method) // may throw NetworkError
         } catch let e {
-            print("FetchCache - NetworkError: \(e.localizedDescription)")
+            Logger.log(level: .error, "FetchCache - NetworkError: \(e.localizedDescription)")
             switch e {
             case .taskCancelled:
                 throw FetchCacheError.taskCancelled
@@ -145,9 +145,9 @@ class FetchCache: ObservableObject, ImageCacheProtocol {
             do {
                 // save data to disk directory using local file url
                 try imageDataBlob.write(to: localFileURL, options: .atomic)
-                print("Successfully wrote image to disk at \(localFileURL).  Cache size: \(memoryCache.count)")
+                Logger.log("Successfully wrote image to disk at \(localFileURL).  Cache size: \(memoryCache.count)")
             } catch {
-                print("\(error.localizedDescription)")
+                Logger.log(level: .error, "\(error.localizedDescription)")
                 throw FetchCacheError.failedToWriteImageDataToDisk(image: image, error: error)
             }
             return image
@@ -164,7 +164,7 @@ class FetchCache: ObservableObject, ImageCacheProtocol {
             try FileManager.default.removeItem(at: diskMemoryURL)
             self.cacheDirectoryURL = nil
         } catch {
-            print(error.localizedDescription)
+            Logger.log(level: .error, error.localizedDescription)
         }
     }
     
@@ -201,11 +201,11 @@ class MockFetchCache: ImageCacheProtocol {
     }
     
     func refresh() async {
-        print("refreshing")
+        Logger.log("refreshing")
     }
     
     func openCacheDirectoryWithPath(path: String) throws(FetchCacheError) {
-        print("mock fetchcache directory opened")
+        Logger.log("mock fetchcache directory opened")
     }
 }
 #endif

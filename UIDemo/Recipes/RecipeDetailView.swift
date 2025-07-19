@@ -18,7 +18,6 @@ struct RecipeDetailView: View {
     @State private var newNoteText = ""
     
     init(recipeRowVM: RecipeRowViewModel) {
-        print("recipedia 1-1")
         self._vm = StateObject(wrappedValue: recipeRowVM)
     }
 
@@ -240,32 +239,7 @@ struct RecipeDetailView_Previews: PreviewProvider {
         recipeStore.setRecipes(recipes: [recipe!])
         
         return RecipeDetailView(recipeRowVM: RecipeRowViewModel(recipeId: recipe!.id, recipeStore: recipeStore))
-        //    RecipeDetailView(item: recipeItem, onToggleFavorite: {
-        //        print(recipeItem.isFavorite)
-        //        if !recipeItem.isFavorite {
-        //        }
-        //    }, onSubmitNote: { note in
-        //        recipeItem.notes.append(RecipeNote(id: UUID(), text: note, date: Date()))
-        //    })
-//            .task {
-//                
-//                do {
-//                    // Pick the correct folder name: "DevelopmentFetchImageCache" "FetchImageCache"
-//#if DEBUG
-//                    try FetchCache.shared.openCacheDirectoryWithPath(path: "DevelopmentFetchImageCache")
-//#else
-//                    try vm.startCache(path: "FetchImageCache")
-//#endif
-//                } catch {
-//                    return
-//                    // failed to start cache. what do i do here? is vm.items = [] appropriate?
-//                }
-//            }
             .environmentObject(ThemeManager())
-        //        .onAppear {
-        //            recipeItem.isFavorite = true
-        //            recipeItem.notes.append( contentsOf: [RecipeNote(id: UUID(), text: "first note", date: Date()), RecipeNote(id: UUID(), text: "second note", date: Date())])
-        //        }
     }
 }
 #endif

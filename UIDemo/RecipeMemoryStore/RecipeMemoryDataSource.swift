@@ -21,7 +21,6 @@ final class RecipeMemoryDataSource: ObservableObject, RecipeMemoryDataSourceProt
     
     /// The key for memory stored.
     init(key: String = "RecipeMemories", defaults: UserDefaults = .standard) {
-        print("oh damn we're instantiating memory")
         self.key = key
         self.defaults = defaults
         load()

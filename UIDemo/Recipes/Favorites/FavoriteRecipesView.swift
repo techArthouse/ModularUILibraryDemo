@@ -41,7 +41,7 @@ struct FavoriteRecipesView: View {
         .animation(.easeInOut, value: vm.items.map(\.selected))
         .listStyle(.plain)
         .task {
-            print("tasking again in favorites")
+            Logger.log("tasking again in favorites")
             await vm.loadAll()
         }
         .refreshable { await vm.reloadAll() }
