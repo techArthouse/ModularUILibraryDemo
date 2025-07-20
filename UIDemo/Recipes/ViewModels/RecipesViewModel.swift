@@ -89,7 +89,11 @@ class RecipesViewModel: ObservableObject {
                 
                 switch phase {
                 case .success(.itemsLoaded(let recipes)):
-                    let newItems = recipes.map {
+                    let filtered = filterStrategy.isFavorite
+                    ? recipes.filter { self.recipeStore.isFavorite(for: $0.id) }
+                    : recipes
+                    
+                    let newItems = filtered.map {
                         let item = RecipeItem($0)
                         item.selected = true
                         return item
@@ -153,11 +157,8 @@ class RecipesViewModel: ObservableObject {
             
             let list = try JSONDecoder().decode(RecipeList.self, from: data)
             
-            var recipes = list.recipes + list.invalidRecipes
+            let recipes = list.recipes + list.invalidRecipes
 //            var recipes = try await Recipe.allFromJSON(using: .empty)
-            recipes = recipes.filter { recipe in
-                self.filterStrategy.isFavorite ? self.recipeStore.isFavorite(for: recipe.id) : true
-            }
             recipeStore.setRecipes(recipes: recipes)
         } catch {
             loadPhase = .failure(error.localizedDescription)
