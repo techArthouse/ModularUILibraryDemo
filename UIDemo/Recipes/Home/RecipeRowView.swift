@@ -19,11 +19,11 @@ struct RecipeRowView: View {
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
         
     init(
-        viewmodel: RecipeRowViewModel,
+        makeRecipeRowVM: @escaping () -> RecipeRowViewModel,
         config: FeatureItemConfig = .init(rounded: true, withBorder: false),
         onTapRow: @escaping () -> Void
     ) {
-        _vm = StateObject(wrappedValue: viewmodel)
+        _vm = StateObject(wrappedValue: makeRecipeRowVM())
         self.config = config
         self.onTapRow = onTapRow
     }
@@ -108,7 +108,7 @@ struct RecipeRowView_Previews: PreviewProvider {
         recipeStore.setRecipes(recipes: [goodRecipe, invalidRecipe])
         
         return VStack {
-            RecipeRowView(viewmodel: RecipeRowViewModel(recipeId: goodItem.id, recipeStore: recipeStore)) {
+            RecipeRowView(makeRecipeRowVM: { RecipeRowViewModel(recipeId: goodItem.id, recipeStore: recipeStore)} ) {
                 Logger.log("Tapped row with goodItem")
             }
             .background(.red)
@@ -116,7 +116,7 @@ struct RecipeRowView_Previews: PreviewProvider {
             .environmentObject(nav)
             .environmentObject(themeManager)
             
-            RecipeRowView(viewmodel: RecipeRowViewModel(recipeId: badItem.id, recipeStore: recipeStore)) {
+            RecipeRowView(makeRecipeRowVM: { RecipeRowViewModel(recipeId: badItem.id, recipeStore: recipeStore)} ) {
                 Logger.log("Tapped row with badItem")
             }
             .background(.red)
