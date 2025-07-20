@@ -34,9 +34,9 @@ struct ContentView: View {
                         switch recipe {
                         case .recipeDetail(let uuid):
                             RecipeDetailView(
-                                recipeRowVM: RecipeRowViewModel(
+                                makeRecipeRowVM: { RecipeRowViewModel(
                                     recipeId: uuid,
-                                    recipeStore: homeVM.recipeStore))
+                                    recipeStore: homeVM.recipeStore) })
                         default:
                             EmptyView()
                         }
@@ -52,9 +52,9 @@ struct ContentView: View {
                         switch recipe {
                         case .recipeDetail(let uuid):
                             RecipeDetailView(
-                                recipeRowVM: RecipeRowViewModel(
+                                makeRecipeRowVM: { RecipeRowViewModel(
                                     recipeId: uuid,
-                                    recipeStore: favoritesVM.recipeStore))
+                                    recipeStore: favoritesVM.recipeStore) })
                         default:
                             EmptyView()
                         }
@@ -71,9 +71,9 @@ struct ContentView: View {
                         switch recipe {
                         case .recipeDetail(let uuid):
                             RecipeDetailView(
-                                recipeRowVM: RecipeRowViewModel(
+                                makeRecipeRowVM:{ RecipeRowViewModel(
                                     recipeId: uuid,
-                                    recipeStore: discoverVM.recipeStore))
+                                    recipeStore: discoverVM.recipeStore) })
                         default:
                             EmptyView()
                         }

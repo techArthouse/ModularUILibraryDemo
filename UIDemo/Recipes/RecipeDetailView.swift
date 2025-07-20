@@ -17,8 +17,8 @@ struct RecipeDetailView: View {
     @State private var isAddingNote = false
     @State private var newNoteText = ""
     
-    init(recipeRowVM: RecipeRowViewModel) {
-        self._vm = StateObject(wrappedValue: recipeRowVM)
+    init(makeRecipeRowVM: @escaping () -> RecipeRowViewModel) {
+        self._vm = StateObject(wrappedValue: makeRecipeRowVM())
     }
 
     enum URLType: Identifiable {
@@ -240,7 +240,7 @@ struct RecipeDetailView_Previews: PreviewProvider {
         let recipeStore = RecipeDataService(memoryStore: MockRecipeMemoryDataSource(), fetchCache: MockFetchCache())
         recipeStore.setRecipes(recipes: [recipe!])
         
-        return RecipeDetailView(recipeRowVM: RecipeRowViewModel(recipeId: recipe!.id, recipeStore: recipeStore))
+        return RecipeDetailView(makeRecipeRowVM: { RecipeRowViewModel(recipeId: recipe!.id, recipeStore: recipeStore) })
             .environmentObject(ThemeManager())
     }
 }

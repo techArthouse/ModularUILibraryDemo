@@ -13,28 +13,17 @@ import ModularUILibrary
 /// a link could be missing or did not evaluate to a usable object). Each FavoriteRecipeCard manages its VM lifecycle.
 struct FavoriteRecipeCard: View {
     @StateObject private var vm: RecipeRowViewModel
-    private var clickableLinks: ClickableLinks
     
     let size: CGSize // Size of Image in `ImageCard`
     let onTapRow: () -> Void
     
-    /// `ClickableLinks` evaluate if any optionable links are availabler per type (i.e. web, favorites...)
-    struct ClickableLinks {
-        var favorite: Bool
-        var youtube: Bool
-        var source: Bool
-    }
-    
-    init(viewmodel: RecipeRowViewModel,
+    init(makeRecipeRowVM: @escaping () -> RecipeRowViewModel,
          size: CGSize = .init(width: 150, height: 150),
          onTapRow: @escaping () -> Void
     ) {
-        _vm = StateObject(wrappedValue: viewmodel)
+        _vm = StateObject(wrappedValue: makeRecipeRowVM())
         self.size = size
         self.onTapRow = onTapRow
-        self.clickableLinks = ClickableLinks(favorite: viewmodel.isFavorite,
-                                             youtube: viewmodel.videoURL != nil ? true: false,
-                                             source: viewmodel.sourceURL != nil ? true: false)
     }
     
     var body: some View {
@@ -103,7 +92,7 @@ struct FavoriteRecipeCard: View {
                     
                     Spacer()
                     VStack(spacing: 0){
-                        IconButton(icon: .system("video.fill"), isDisabled: .constant(!clickableLinks.youtube)) { }
+                        IconButton(icon: .system("video.fill"), isDisabled: .constant(vm.videoURL == nil)) { }
                             .asStandardIconButtonStyle(withColor: .green)
                         
                         Text("Youtube")
@@ -112,7 +101,7 @@ struct FavoriteRecipeCard: View {
                     Spacer()
                     
                     VStack(spacing: 0){
-                        IconButton(icon: .system("safari.fill"), isDisabled: .constant(!clickableLinks.source)) { }
+                        IconButton(icon: .system("safari.fill"), isDisabled: .constant(vm.sourceURL == nil)) { }
                             .asStandardIconButtonStyle(withColor: .blue)
                         
                         Text("Web")
@@ -141,7 +130,7 @@ struct FavoriteRecipesCard_Previews: PreviewProvider {
         @StateObject var themeManager: ThemeManager = ThemeManager()
         // TODO: Test resizing here later.
         
-        FavoriteRecipeCard(viewmodel: RecipeRowViewModel(recipeId: UUID(), recipeStore: recipeStore)) {
+        FavoriteRecipeCard(makeRecipeRowVM: { RecipeRowViewModel(recipeId: UUID(), recipeStore: recipeStore) }) {
             Logger.log("row tapped")
         }
         .environmentObject(themeManager)

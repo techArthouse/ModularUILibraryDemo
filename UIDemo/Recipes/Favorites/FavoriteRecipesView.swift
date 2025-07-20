@@ -97,7 +97,7 @@ struct FavoriteRecipesView: View {
                 searchHeaderView
                 ForEach(vm.items, id: \.id) { item in
                     if item.selected {
-                        FavoriteRecipeCard(viewmodel: RecipeRowViewModel(recipeId: item.id, recipeStore: vm.recipeStore)) {
+                        FavoriteRecipeCard(makeRecipeRowVM: { RecipeRowViewModel(recipeId: item.id, recipeStore: vm.recipeStore) }) {
                             nav.favoritesPath.append(.recipeDetail(item.id))
                         }
                         .transition(.asymmetric(
