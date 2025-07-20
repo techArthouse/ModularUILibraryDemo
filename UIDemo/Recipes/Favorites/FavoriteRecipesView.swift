@@ -98,7 +98,7 @@ struct FavoriteRecipesView: View {
                 ForEach(vm.items, id: \.id) { item in
                     if item.selected {
                         FavoriteRecipeCard(viewmodel: RecipeRowViewModel(recipeId: item.id, recipeStore: vm.recipeStore)) {
-                            nav.path2.append(.recipeDetail(item.id))
+                            nav.favoritesPath.append(.recipeDetail(item.id))
                         }
                         .transition(.asymmetric(
                             insertion: .opacity,

@@ -74,7 +74,7 @@ struct RecipesView: View {
                     ForEach(vm.items, id: \.id) { item in
                         if item.selected {
                             RecipeRowView(viewmodel: RecipeRowViewModel(recipeId: item.id, recipeStore: vm.recipeStore)) {
-                                nav.path.append(.recipeDetail(item.id))
+                                nav.homePath.append(.recipeDetail(item.id))
                             }
                             .transition(.asymmetric(
                                 insertion: .opacity,

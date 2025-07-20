@@ -58,18 +58,20 @@ struct UIDemoApp: App {
                     EmptyView()
                 } else {
                     ContentView(
-                        makeHomeVM: {
+                        makeHomeVM:
                             RecipesViewModel(
                                 recipeStore: recipeStore,
                                 filterStrategy: AllRecipesFilter(),
                                 networkService: networkService)
-                        },
-                        makeFavoritesVM: {
+                        ,
+                        makeFavoritesVM:
                             RecipesViewModel(
                                 recipeStore: recipeStore,
                                 filterStrategy: FavoriteRecipesFilter(),
                                 networkService: networkService)
-                        }
+                        ,
+                        discoverVM: DiscoverViewModel(recipeStore: recipeStore)
+                        
                     )
                     .environmentObject(themeManager)
                 }

@@ -9,23 +9,43 @@ struct ContentView: View {
     @StateObject private var homeVM: RecipesViewModel
     /// ViewModel for displaying favorite recipes.
     @StateObject private var favoritesVM: RecipesViewModel
+    /// ViewModel for displaying favorite recipes.
+    @StateObject private var discoverVM: DiscoverViewModel
     /// Shared navigation controller for tab-based navigation.
     @StateObject private var nav: AppNavigation = .shared
     /// Injected theme manager for styling.
     @EnvironmentObject private var themeManager: ThemeManager
     
-    /// Constructs ContentView with the given RecipeStore,
+//    @ObservedObject var recipeStore: RecipeDataService
+    
+//    /// Constructs ContentView with the given RecipeStore,
+//    /// creating a view model for all recipes and another for favorites.
+//    /// - Parameter recipeStore: The central store managing recipe data.
+//    init(makeHomeVM: @escaping () -> RecipesViewModel, makeFavoritesVM: @escaping () -> RecipesViewModel) {
+//        _homeVM = StateObject(wrappedValue: makeHomeVM())
+//        _favoritesVM = StateObject(wrappedValue: makeFavoritesVM())
+//    }
+
+//    /// Constructs ContentView with the given RecipeStore,
+//    /// creating a view model for all recipes and another for favorites.
+//    /// - Parameter recipeStore: The central store managing recipe data.
+//    init(makeHomeVM: RecipesViewModel, makeFavoritesVM: RecipesViewModel) {
+//        _homeVM = StateObject(wrappedValue: makeHomeVM)
+//        _favoritesVM = StateObject(wrappedValue: makeFavoritesVM)
+//    }
+    
     /// creating a view model for all recipes and another for favorites.
     /// - Parameter recipeStore: The central store managing recipe data.
-    init(makeHomeVM: @escaping () -> RecipesViewModel, makeFavoritesVM: @escaping () -> RecipesViewModel) {
-        _homeVM = StateObject(wrappedValue: makeHomeVM())
-        _favoritesVM = StateObject(wrappedValue: makeFavoritesVM())
+    init(makeHomeVM: RecipesViewModel, makeFavoritesVM: RecipesViewModel, discoverVM: DiscoverViewModel) {
+        _homeVM = StateObject(wrappedValue: makeHomeVM)
+        _favoritesVM = StateObject(wrappedValue: makeFavoritesVM)
+        _discoverVM = StateObject(wrappedValue: discoverVM)
     }
-
+    
     var body: some View {
         TabView(selection: $nav.selectedTab) {
             // Home tab
-            NavigationStack(path: $nav.path) {
+            NavigationStack(path: $nav.homePath) {
                 RecipesView(vm: homeVM)
                     .navigationDestination(for: Route.self) { recipe in
                         switch recipe {
@@ -41,9 +61,9 @@ struct ContentView: View {
             }
             .tag(Tab.home)
             .tabItem { Label("Home", systemImage: "house.fill") }
-
+            
             // Favorites tab
-            NavigationStack(path: $nav.path2) {
+            NavigationStack(path: $nav.favoritesPath) {
                 FavoriteRecipesView(vm: favoritesVM)
                     .navigationDestination(for: Route.self) { recipe in
                         switch recipe {
@@ -60,6 +80,25 @@ struct ContentView: View {
             }
             .tag(Tab.favorites)
             .tabItem { Label("Favorites", systemImage: "star.fill") }
+            
+            // Discover tab
+            NavigationStack(path: $nav.discoverPath) {
+                DiscoverView(vm: discoverVM)
+                    .navigationDestination(for: Route.self) { recipe in
+                        switch recipe {
+                        case .recipeDetail(let uuid):
+                            RecipeDetailView(
+                                recipeRowVM: RecipeRowViewModel(
+                                    recipeId: uuid,
+                                    recipeStore: discoverVM.recipeStore))
+                        default:
+                            EmptyView()
+                        }
+                    }
+                    .background(.gray.opacity(0.09))
+            }
+            .tag(Tab.discover)
+            .tabItem { Label("Discover", systemImage: "rectangle.and.text.magnifyingglass") }
         }
         .environmentObject(nav)
     }
@@ -71,9 +110,11 @@ final class AppNavigation: ObservableObject {
     /// Shared singleton instance.
     static let shared = AppNavigation()
     /// Navigation path for the Home tab.
-    @Published var path: [Route] = []
+    @Published var homePath: [Route] = []
     /// Navigation path for the Favorites tab.
-    @Published var path2: [Route] = []
+    @Published var favoritesPath: [Route] = []
+    /// Navigation path for the Discover tab.
+    @Published var discoverPath: [Route] = []
     /// Currently selected tab.
     @Published var selectedTab: Tab = .home
     private init() {}
@@ -93,16 +134,16 @@ struct ContentView_Previews: PreviewProvider {
         let themeManager: ThemeManager = ThemeManager()
 
         ContentView(
-            makeHomeVM: {
+            makeHomeVM:
                 RecipesViewModel(recipeStore: recipeStore,
                                  filterStrategy: AllRecipesFilter(),
                                  networkService: networkService)
-            },
-            makeFavoritesVM: {
+            , makeFavoritesVM:
                 RecipesViewModel(recipeStore: recipeStore,
                                  filterStrategy: FavoriteRecipesFilter(),
                                  networkService: networkService)
-            }
+            , discoverVM: DiscoverViewModel(recipeStore: recipeStore)
+            
         )
         .environmentObject(themeManager)
     }

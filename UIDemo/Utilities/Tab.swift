@@ -14,7 +14,7 @@ import ModularUILibrary
 // MARK: - Navigation State
 
 enum Tab: Hashable {
-    case home, favorites, profile
+    case home, favorites, discover
 }
 
 enum Route: Hashable {
