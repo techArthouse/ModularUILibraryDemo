@@ -9,38 +9,21 @@ struct ContentView: View {
     @StateObject private var homeVM: RecipesViewModel
     /// ViewModel for displaying favorite recipes.
     @StateObject private var favoritesVM: RecipesViewModel
-    /// ViewModel for displaying favorite recipes.
+    /// ViewModel for displaying random recipe.
     @StateObject private var discoverVM: DiscoverViewModel
     /// Shared navigation controller for tab-based navigation.
     @StateObject private var nav: AppNavigation = .shared
     /// Injected theme manager for styling.
     @EnvironmentObject private var themeManager: ThemeManager
     
-//    @ObservedObject var recipeStore: RecipeDataService
-    
-//    /// Constructs ContentView with the given RecipeStore,
-//    /// creating a view model for all recipes and another for favorites.
-//    /// - Parameter recipeStore: The central store managing recipe data.
-//    init(makeHomeVM: @escaping () -> RecipesViewModel, makeFavoritesVM: @escaping () -> RecipesViewModel) {
-//        _homeVM = StateObject(wrappedValue: makeHomeVM())
-//        _favoritesVM = StateObject(wrappedValue: makeFavoritesVM())
-//    }
-
-//    /// Constructs ContentView with the given RecipeStore,
-//    /// creating a view model for all recipes and another for favorites.
-//    /// - Parameter recipeStore: The central store managing recipe data.
-//    init(makeHomeVM: RecipesViewModel, makeFavoritesVM: RecipesViewModel) {
-//        _homeVM = StateObject(wrappedValue: makeHomeVM)
-//        _favoritesVM = StateObject(wrappedValue: makeFavoritesVM)
-//    }
-    
-    /// creating a view model for all recipes and another for favorites.
-    /// - Parameter recipeStore: The central store managing recipe data.
-    init(makeHomeVM: RecipesViewModel, makeFavoritesVM: RecipesViewModel, discoverVM: DiscoverViewModel) {
-        _homeVM = StateObject(wrappedValue: makeHomeVM)
-        _favoritesVM = StateObject(wrappedValue: makeFavoritesVM)
-        _discoverVM = StateObject(wrappedValue: discoverVM)
-    }
+    init(
+        makeHomeVM: @escaping () -> RecipesViewModel,
+        makeFavoritesVM: @escaping () -> RecipesViewModel,
+        makeDiscoveryVM: @escaping () -> DiscoverViewModel) {
+            _homeVM = StateObject(wrappedValue: makeHomeVM())
+            _favoritesVM = StateObject(wrappedValue: makeFavoritesVM())
+            _discoverVM = StateObject(wrappedValue: makeDiscoveryVM())
+        }
     
     var body: some View {
         TabView(selection: $nav.selectedTab) {
@@ -134,15 +117,15 @@ struct ContentView_Previews: PreviewProvider {
         let themeManager: ThemeManager = ThemeManager()
 
         ContentView(
-            makeHomeVM:
+            makeHomeVM: {
                 RecipesViewModel(recipeStore: recipeStore,
                                  filterStrategy: AllRecipesFilter(),
                                  networkService: networkService)
-            , makeFavoritesVM:
+            }, makeFavoritesVM: {
                 RecipesViewModel(recipeStore: recipeStore,
                                  filterStrategy: FavoriteRecipesFilter(),
                                  networkService: networkService)
-            , discoverVM: DiscoverViewModel(recipeStore: recipeStore)
+            }, makeDiscoveryVM: { DiscoverViewModel(recipeStore: recipeStore) }
             
         )
         .environmentObject(themeManager)
