@@ -18,28 +18,22 @@ struct FavoriteRecipesView: View {
     }
     
     var body: some View {
-        ScrollView(showsIndicators: false) {
-            LazyVStack(spacing: 15) {
-                searchHeaderView
-                ForEach(vm.items, id: \.id) { item in
-                    if item.selected {
-                        FavoriteRecipeCard(viewmodel: RecipeRowViewModel(recipeId: item.id, recipeStore: vm.recipeStore)) {
-                            nav.path2.append(.recipeDetail(item.id))
-                        }
-                        .transition(.asymmetric(
-                            insertion: .opacity,
-                            removal: .move(edge: .trailing))
-                        )
-                    }
+        Group {
+            switch vm.loadPhase {
+            case .idle, .loading:
+                ProgressView("Loading…")
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+            case .failure(let msg):
+                errorView(type: .error(msg))
+            case .success(let phase):
+                switch phase {
+                case .itemsLoaded(let recipes) where recipes.isEmpty:
+                    errorView(type: .noResults)
+                default:
+                    contentList
                 }
-                .listRowSeparator(.hidden)
-                .listRowInsets(.init(top: 10, leading: 10, bottom: 10, trailing: 10))
-                .listRowBackground(Color.clear)
             }
-            .padding(.horizontal, 10)
         }
-        .animation(.easeInOut, value: vm.items.map(\.selected))
-        .listStyle(.plain)
         .task {
             Logger.log("tasking again in favorites")
             await vm.loadAll()
@@ -95,5 +89,81 @@ struct FavoriteRecipesView: View {
         .background(Color(.systemGray6))
         .cornerRadius(10)
         .border(.black, width: 0.5)
+    }
+    
+    private var contentList: some View {
+        ScrollView(showsIndicators: false) {
+            LazyVStack(spacing: 15) {
+                searchHeaderView
+                ForEach(vm.items, id: \.id) { item in
+                    if item.selected {
+                        FavoriteRecipeCard(viewmodel: RecipeRowViewModel(recipeId: item.id, recipeStore: vm.recipeStore)) {
+                            nav.path2.append(.recipeDetail(item.id))
+                        }
+                        .transition(.asymmetric(
+                            insertion: .opacity,
+                            removal: .move(edge: .trailing))
+                        )
+                    }
+                }
+                .listRowSeparator(.hidden)
+                .listRowInsets(.init(top: 10, leading: 10, bottom: 10, trailing: 10))
+                .listRowBackground(Color.clear)
+            }
+            .padding(.horizontal, 10)
+        }
+        .animation(.easeInOut, value: vm.items.map(\.selected))
+        .listStyle(.plain)
+    }
+    
+    /// Renders an error state with a retry button.
+    /// - Parameter type: the type of error state to display
+    private func errorView(type: ErrorState) -> some View {
+        Group {
+            switch type {
+            case .error(let message):
+                VStack(spacing: 16) {
+                    VStack(spacing: 8) {
+                        Text("Error")
+                            .font(.robotoMono.regular(size: 30).bold())
+                            .foregroundStyle(.red)
+                            .multilineTextAlignment(.center)
+                        Text("\(message)")
+                            .font(.robotoMono.regular(size: 20).bold())
+                            .multilineTextAlignment(.center)
+                    }
+                    
+                    CTAButton(title: "Retry") {
+                        Task {
+                            await vm.reloadAll()
+                        }
+                    }
+                    .asDestructiveButton()
+                }
+                .padding()
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                
+            case .noResults:
+                VStack(spacing: 16) {
+                    Text("No Favorites")
+                        .font(.robotoMono.regular(size: 25).bold())
+                        .multilineTextAlignment(.center)
+                    Text("Save Recipes to your favorites by tapping the star icon next to a recipe.")
+                        .multilineTextAlignment(.center)
+                        
+                    CTAButton(title: "View Recipes") {
+                        nav.selectedTab = .home
+                    }
+                    .asPrimaryAlertButton()
+                }
+                .padding()
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+            }
+        }
+    }
+    
+    private enum ErrorState {
+        case error(String)
+        case noResults
     }
 }

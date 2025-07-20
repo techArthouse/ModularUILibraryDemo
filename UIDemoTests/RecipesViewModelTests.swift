@@ -94,14 +94,13 @@ final class RecipesViewModelTests: XCTestCase {
         let r1 = Recipe(id: UUID(), name: "A", cuisine: "One")
         let r2 = Recipe(id: UUID(), name: "B", cuisine: "Two")
         let r3 = Recipe(id: UUID(), name: "C", cuisine: "Two")
-        service.setRecipes(recipes: [r1, r2, r3])
         
         let expectation = XCTestExpectation(description: "Wait for cuisine categories update")
         
-        vm.$selectedCuisine
-            .dropFirst()
-            .sink { _ in
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
+        vm.$loadPhase
+            .receive(on: RunLoop.main)
+            .sink { phase in
+                if case .success(.itemsLoaded) = phase {
                     let categories = Set(self.vm.cusineCategories)
                     if categories == Set(["One", "Two"]) {
                         expectation.fulfill()
@@ -110,8 +109,7 @@ final class RecipesViewModelTests: XCTestCase {
             }
             .store(in: &cancellables)
         
-        vm.selectedCuisine = nil
-        
+        service.setRecipes(recipes: [r1, r2, r3])
         wait(for: [expectation], timeout: 1.0)
     }
     

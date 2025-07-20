@@ -53,7 +53,7 @@ class RecipesViewModel: ObservableObject {
         recipeStore
             .itemsPublisher
             .dropFirst()
-            .receive(on: RunLoop.main)
+            .debounce(for: .milliseconds(300), scheduler: RunLoop.main)
             .sink { [weak self] recipes in
                 guard let self = self else { return }
                 self.loadPhase = .success(.itemsLoaded(recipes))
@@ -63,18 +63,19 @@ class RecipesViewModel: ObservableObject {
         // 2.
         Publishers
             .CombineLatest(
-                $selectedCuisine,
-                $searchQuery // .debounce(for: .milliseconds(300), scheduler: RunLoop.main)
+                $selectedCuisine.removeDuplicates(),
+                $searchQuery.removeDuplicates()
             )
             .dropFirst()
             .receive(on: RunLoop.main)
             .sink { [weak self] _, _ in
                 guard let self = self else { return }
-                let visibleIDs = self.filterStrategy
-                    .filter(recipeStore.allItems, cuisine: selectedCuisine, query: searchQuery)
-                    .filter { id in
-                        self.filterStrategy.isFavorite ? self.recipeStore.isFavorite(for: id) : true
-                    }
+                let visibleIDs = self
+                    .filterStrategy
+                    .filter(recipeStore.allItems,
+                            cuisine: selectedCuisine,
+                            query: searchQuery)
+                
                 Logger.log("visibleIDs: \(visibleIDs)")
                 self.loadPhase = .success(.itemsFiltered(visibleIDs))
             }
@@ -89,8 +90,8 @@ class RecipesViewModel: ObservableObject {
                 switch phase {
                 case .success(.itemsLoaded(let recipes)):
                     let newItems = recipes.map {
-                        var item = RecipeItem($0)
-                        item.selected = self.filterStrategy.isFavorite ? self.recipeStore.isFavorite(for: item.id) : true
+                        let item = RecipeItem($0)
+                        item.selected = true
                         return item
                     }
                     self.items = newItems
@@ -146,11 +147,17 @@ class RecipesViewModel: ObservableObject {
     /// Load and wrap your recipes in order
     internal func loadRecipes(from url: URL? = nil) async {
         do {
-            let data = try await networkService.requestData(from: url ?? URL(string: "https://d3jbb8n5wk0qxi.cloudfront.net/recipes.json")!, using: .get)
+            let data = try await networkService.requestData(
+                from: url ?? URL(string: "https://d3jbb8n5wk0qxi.cloudfront.net/recipes.json")!,
+                using: .get)
             
             let list = try JSONDecoder().decode(RecipeList.self, from: data)
             
-            let recipes = list.recipes + list.invalidRecipes
+            var recipes = list.recipes + list.invalidRecipes
+//            var recipes = try await Recipe.allFromJSON(using: .empty)
+            recipes = recipes.filter { recipe in
+                self.filterStrategy.isFavorite ? self.recipeStore.isFavorite(for: recipe.id) : true
+            }
             recipeStore.setRecipes(recipes: recipes)
         } catch {
             loadPhase = .failure(error.localizedDescription)
@@ -162,12 +169,4 @@ struct SearchViewModel: Identifiable {
     var id: String { text }
     var text: String
     var categories: [String] = []
-}
-
-
-@MainActor
-protocol RecipeDataConsumer {
-    var items: [RecipeItem] { get }
-    var recipeStore: RecipeDataService { get }
-    func loadRecipes(from url: URL?) async throws
 }

@@ -31,9 +31,14 @@ struct RecipesView: View {
                 ProgressView("Loading…")
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
             case .failure(let msg):
-                errorView(message: msg)
-            case .success:
-                contentList
+                errorView(type: .error(msg))
+            case .success(let phase):
+                switch phase {
+                case .itemsLoaded(let recipes) where recipes.isEmpty:
+                    errorView(type: .noResults)
+                default:
+                    contentList
+                }
             }
         }
         .task {
@@ -132,19 +137,54 @@ struct RecipesView: View {
     }
     
     /// Renders an error state with a retry button.
-    /// - Parameter message: The error message to display.
-    private func errorView(message: String) -> some View {
-        VStack(spacing: 16) {
-            Text("Error: \(message)")
-                .multilineTextAlignment(.center)
-            Button("Retry", action: {
-                Task {
-                    await vm.loadAll()
+    /// - Parameter type: the type of error state to display
+    private func errorView(type: ErrorState) -> some View {
+        Group {
+            switch type {
+            case .error(let message):
+                VStack(spacing: 16) {
+                    VStack(spacing: 8) {
+                        Text("Error")
+                            .font(.robotoMono.regular(size: 30).bold())
+                            .foregroundStyle(.red)
+                            .multilineTextAlignment(.center)
+                        Text("\(message)")
+                            .font(.robotoMono.regular(size: 20).bold())
+                            .multilineTextAlignment(.center)
+                    }
+                    
+                    CTAButton(title: "Retry") {
+                        Task {
+                            await vm.reloadAll()
+                        }
+                    }
+                    .asDestructiveButton()
                 }
-            })
+                .padding()
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                
+            case .noResults:
+                VStack(spacing: 16) {
+                    Text("No recipes found.")
+                        .font(.robotoMono.regular(size: 20).bold())
+                        .multilineTextAlignment(.center)
+                        
+                    CTAButton(title: "Retry") {
+                        Task {
+                            await vm.reloadAll()
+                        }
+                    }
+                    .asPrimaryAlertButton()
+                }
+                .padding()
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+            }
         }
-        .padding()
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+    
+    private enum ErrorState {
+        case error(String)
+        case noResults
     }
 }
 
