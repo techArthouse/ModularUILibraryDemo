@@ -15,8 +15,17 @@ struct DiscoverView: View {
     
     var body: some View {
         VStack {
-            Text("Discover something new!")
-                .font(.title)
+            HStack(spacing: 0) {
+                Text("Discover something ")
+                    .font(.robotoMono.regular(size: 20))
+                    .padding(0)
+                Text("new")
+                    .font(.robotoMono.regular(size: 20).bold().italic())
+                    .foregroundStyle(.orange)
+                    .padding(0)
+                Text("!")
+                    .font(.robotoMono.regular(size: 20).italic())
+            }
             
             RandomRecipeButton(recipeStore: vm.recipeStore, selectedID: $selectedID)
                 .onChange(of: selectedID) { newId in
@@ -26,6 +35,7 @@ struct DiscoverView: View {
                 }
         }
         .padding()
+        .frame(maxHeight: .infinity)
     }
 }
 

@@ -151,14 +151,14 @@ class RecipesViewModel: ObservableObject {
     /// Load and wrap your recipes in order
     internal func loadRecipes(from url: URL? = nil) async {
         do {
-            let data = try await networkService.requestData(
-                from: url ?? URL(string: "https://d3jbb8n5wk0qxi.cloudfront.net/recipes.json")!,
-                using: .get)
-            
-            let list = try JSONDecoder().decode(RecipeList.self, from: data)
-            
-            let recipes = list.recipes + list.invalidRecipes
-//            var recipes = try await Recipe.allFromJSON(using: .empty)
+//            let data = try await networkService.requestData(
+//                from: url ?? URL(string: "https://d3jbb8n5wk0qxi.cloudfront.net/recipes.json")!,
+//                using: .get)
+//            
+//            let list = try JSONDecoder().decode(RecipeList.self, from: data)
+//            
+//            let recipes = list.recipes + list.invalidRecipes
+            var recipes = try await Recipe.allFromJSON(using: .good)
             recipeStore.setRecipes(recipes: recipes)
         } catch {
             loadPhase = .failure(error.localizedDescription)

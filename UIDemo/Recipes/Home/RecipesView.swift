@@ -86,15 +86,16 @@ struct RecipesView: View {
                     .padding(.bottom, 3)
                 }
                 .padding(.horizontal, 5)
-                .background(
-                    RoundedRectangle(cornerRadius: 0)
-                        .fill(.gray.opacity(0.09))
-                        .shadow(color: .black, radius: 1)
-                )
+//                .background(
+//                    RoundedRectangle(cornerRadius: 0)
+//                        .fill(.gray.opacity(0.09))
+//                        .shadow(color: .black, radius: 1)
+//                )
                 .cornerRadius(4)
                 .animation(.easeInOut, value: vm.items.map(\.selected))
             }
         }
+//        .background(.gray.opacity(0.25))
     }
     
     /// The search bar header placed at the top of the recipe list.
@@ -192,8 +193,6 @@ struct RecipesView: View {
 
 #if DEBUG
 struct RecipesView_Previews: PreviewProvider {
-    @State var strring = "https%3A//d3jbb8n5wk0qxi.cloudfront.net/photos/.../small.jpg"
-    
     static var previews: some View {
         @StateObject var recipeStore = RecipeDataService(memoryStore: RecipeMemoryDataSource(), fetchCache: MockFetchCache())
         @StateObject var vm = RecipesViewModel(recipeStore: recipeStore, filterStrategy: AllRecipesFilter(), networkService: NetworkService())

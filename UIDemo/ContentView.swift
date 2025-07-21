@@ -41,6 +41,11 @@ struct ContentView: View {
                             EmptyView()
                         }
                     }
+                    .background(
+                        RoundedRectangle(cornerRadius: 0)
+                            .fill(.gray.opacity(0.09))
+                            .shadow(color: .black, radius: 1)
+                    )
             }
             .tag(Tab.home)
             .tabItem { Label("Home", systemImage: "house.fill") }
@@ -59,7 +64,11 @@ struct ContentView: View {
                             EmptyView()
                         }
                     }
-                    .background(.gray.opacity(0.09))
+                    .background(
+                        RoundedRectangle(cornerRadius: 0)
+                            .fill(.gray.opacity(0.09))
+                            .shadow(color: .black, radius: 1)
+                    )
             }
             .tag(Tab.favorites)
             .tabItem { Label("Favorites", systemImage: "star.fill") }
@@ -78,7 +87,6 @@ struct ContentView: View {
                             EmptyView()
                         }
                     }
-                    .background(.gray.opacity(0.09))
             }
             .tag(Tab.discover)
             .tabItem { Label("Discover", systemImage: "rectangle.and.text.magnifyingglass") }
