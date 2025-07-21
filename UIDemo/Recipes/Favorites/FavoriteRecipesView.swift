@@ -8,7 +8,8 @@
 import SwiftUI
 import ModularUILibrary
 
-// MARK: - Recipes List View
+/// View shows a single recipe in a stylized view that reflects greater detail about each favorited recipe.
+/// More than a `RecipeRowView` it reflects clickable links and any notes added by user.
 struct FavoriteRecipesView: View {
     @ObservedObject private var vm: RecipesViewModel
     @EnvironmentObject private var nav: AppNavigation

@@ -83,16 +83,15 @@ struct FavoriteRecipeCard: View {
                             iconOn: .system("star.fill"),
                             iconOff: .system("star"),
                             isDisabled: vm.isDisabledBinding,
-                            isSelected: vm.isFavoriteBinding) {
-                            }
-                            .asStandardIconButtonStyle(withColor: .yellow)
+                            isSelected: vm.isFavoriteBinding)
+                        .asStandardIconButtonStyle(withColor: .yellow)
                         Text("Favorite")
                             .font(.robotoMono.regular(size: 16).bold())
                     }
                     
                     Spacer()
                     VStack(spacing: 0){
-                        IconButton(icon: .system("video.fill"), isDisabled: .constant(vm.videoURL == nil)) { }
+                        IconButton(icon: .system("video.fill"), isDisabled: .constant(vm.videoURL == nil))
                             .asStandardIconButtonStyle(withColor: .green)
                         
                         Text("Youtube")
@@ -101,7 +100,7 @@ struct FavoriteRecipeCard: View {
                     Spacer()
                     
                     VStack(spacing: 0){
-                        IconButton(icon: .system("safari.fill"), isDisabled: .constant(vm.sourceURL == nil)) { }
+                        IconButton(icon: .system("safari.fill"), isDisabled: .constant(vm.sourceURL == nil))
                             .asStandardIconButtonStyle(withColor: .blue)
                         
                         Text("Web")

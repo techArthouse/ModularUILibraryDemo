@@ -5,7 +5,7 @@
 //  Created by Arturo Aguilar on 7/11/25.
 //
 
-
+// Decodes response model for recipe list. Future proof: separates valid recipes from invalid recipes
 struct RecipeList: Decodable {
     let recipes: [Recipe]
     let invalidRecipes: [Recipe]

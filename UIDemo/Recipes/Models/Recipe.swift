@@ -21,7 +21,8 @@ struct Recipe: Decodable, Identifiable, Hashable, CanBeInvalid {
     let _id: UUID?
     let _cuisine: String?
     let _name: String?
-    let _uuidString: String? // The response model may have malformed uuid still.
+    let _uuidString: String? /* The response model may have malformed uuid still. our default behavior gives it an id
+                              to work with our logic, but this allows us to see what the original value was. */
     
     // Optional by API
     private let photoUrlSmall: String?
@@ -40,6 +41,7 @@ struct Recipe: Decodable, Identifiable, Hashable, CanBeInvalid {
     init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
         
+        // cuisine
         if let rawCuisine = try? c.decode(String.self, forKey: .cuisine)
             .trimmingCharacters(in: .whitespacesAndNewlines),
            !rawCuisine.isEmpty {
@@ -48,7 +50,7 @@ struct Recipe: Decodable, Identifiable, Hashable, CanBeInvalid {
             self._cuisine = nil
         }
         
-        // Decode & normalize name
+        // name
         if let rawName = try? c.decode(String.self, forKey: .name)
             .trimmingCharacters(in: .whitespacesAndNewlines),
            !rawName.isEmpty {
@@ -57,7 +59,7 @@ struct Recipe: Decodable, Identifiable, Hashable, CanBeInvalid {
             self._name = nil
         }
         
-        // UUID handling unchanged
+        // UUID
         self._uuidString = try? c.decode(String.self, forKey: .uuid)
         if let uuidString = self._uuidString {
             self._id = UUID(uuidString: uuidString)
@@ -72,6 +74,33 @@ struct Recipe: Decodable, Identifiable, Hashable, CanBeInvalid {
         youtubeUrl    = try? c.decodeIfPresent(String.self, forKey: .youtubeUrl)
     }
 }
+
+/// Convenience props for URLS that return URL if it exists.
+extension Recipe {
+    var smallImageURL: URL? {
+        guard let s = photoUrlSmall else { return nil }
+        return URL(string: s)
+    }
+    
+    var largeImageURL: URL? {
+        guard let s = photoUrlLarge else { return nil }
+        return URL(string: s)
+    }
+    
+    var sourceWebsiteURL: URL? {
+        guard let s = sourceUrl else { return nil }
+        return URL(string: s)
+    }
+    
+    var youtubeVideoURL: URL? {
+        guard let s = youtubeUrl else { return nil }
+        return URL(string: s)
+    }
+}
+
+// MARK: - DEBUG Structures/Previews
+
+#if DEBUG
 
 extension Recipe {
     
@@ -119,32 +148,6 @@ extension Recipe {
     }
 }
 
-/// Convenience props for URLS that return URL if it exists.
-extension Recipe {
-    var smallImageURL: URL? {
-        guard let s = photoUrlSmall else { return nil }
-        return URL(string: s)
-    }
-    
-    var largeImageURL: URL? {
-        guard let s = photoUrlLarge else { return nil }
-        return URL(string: s)
-    }
-    
-    var sourceWebsiteURL: URL? {
-        guard let s = sourceUrl else { return nil }
-        return URL(string: s)
-    }
-    
-    var youtubeVideoURL: URL? {
-        guard let s = youtubeUrl else { return nil }
-        return URL(string: s)
-    }
-}
-
-// MARK: - DEBUG Structures/Previews
-
-#if DEBUG
 extension Recipe {
     /// Test  initializer
     init(id: UUID, name: String?, cuisine: String?) {

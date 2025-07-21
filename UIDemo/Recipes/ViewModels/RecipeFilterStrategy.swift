@@ -16,9 +16,6 @@ extension RecipeFilterStrategy {
     var isFavorite: Bool {
         (self as? FavoriteRecipesFilter) != nil
     }
-}
-
-struct AllRecipesFilter: RecipeFilterStrategy {
     
     func filter(_ items: [Recipe], cuisine: String?, query: String?) -> [UUID] {
         var filtered = items
@@ -32,16 +29,6 @@ struct AllRecipesFilter: RecipeFilterStrategy {
     }
 }
 
+struct AllRecipesFilter: RecipeFilterStrategy { }
 
-struct FavoriteRecipesFilter: RecipeFilterStrategy {
-    func filter(_ items: [Recipe], cuisine: String?, query: String?) -> [UUID] {
-        var filtered = items // .filter({ $0.isFavorite })
-        if let cuisine = cuisine {
-            filtered = filtered.filter { $0.cuisine.lowercased() == cuisine.lowercased() }
-        }
-        if let query = query, !query.isEmpty {
-            filtered = filtered.filter { $0.name.localizedCaseInsensitiveContains(query) }
-        }
-        return filtered.map({$0.id})
-    }
-}
+struct FavoriteRecipesFilter: RecipeFilterStrategy { }

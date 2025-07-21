@@ -7,7 +7,8 @@
 
 import SwiftUI
 
-/// RecipeItem is a lightweight projection model that holds the state of ui observed varaibles and shared across views.
+/// RecipeItem is a lightweight projection model used by vms to show/hide recipe. it abstracts the recipes identity
+/// from data flow interactions with recipe views and handlers
 @MainActor
 class RecipeItem: ObservableObject, Identifiable, Equatable {
     let id: UUID // essential and nonmutating

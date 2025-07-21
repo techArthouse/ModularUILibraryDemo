@@ -8,6 +8,7 @@
 import SwiftUI
 import Combine
 
+///
 @MainActor
 class RecipesViewModel: ObservableObject {
     enum LoadPhase: Equatable {
@@ -25,7 +26,9 @@ class RecipesViewModel: ObservableObject {
 
     @Published var items: [RecipeItem] = []
     @Published var loadPhase: LoadPhase = .idle
+    private var cancellables = Set<AnyCancellable>()
     
+    // Search and Filtering
     @Published var searchQuery: String = ""
     @Published var selectedCuisine: String?
     @Published var searchModel: SearchViewModel?
@@ -33,7 +36,6 @@ class RecipesViewModel: ObservableObject {
     private let networkService: any NetworkServiceProtocol
     @Published var recipeStore: any RecipeDataServiceProtocol
     private let filterStrategy: RecipeFilterStrategy
-    private var cancellables = Set<AnyCancellable>()
     
     // MARK: - Init
     
@@ -151,14 +153,14 @@ class RecipesViewModel: ObservableObject {
     /// Load and wrap your recipes in order
     internal func loadRecipes(from url: URL? = nil) async {
         do {
-//            let data = try await networkService.requestData(
-//                from: url ?? URL(string: "https://d3jbb8n5wk0qxi.cloudfront.net/recipes.json")!,
-//                using: .get)
-//            
-//            let list = try JSONDecoder().decode(RecipeList.self, from: data)
-//            
-//            let recipes = list.recipes + list.invalidRecipes
-            var recipes = try await Recipe.allFromJSON(using: .good)
+            let data = try await networkService.requestData(
+                from: url ?? URL(string: "https://d3jbb8n5wk0qxi.cloudfront.net/recipes.json")!,
+                using: .get)
+            
+            let list = try JSONDecoder().decode(RecipeList.self, from: data)
+            
+            let recipes = list.recipes + list.invalidRecipes
+//            var recipes = try await Recipe.allFromJSON(using: .good)
             recipeStore.setRecipes(recipes: recipes)
         } catch {
             loadPhase = .failure(error.localizedDescription)

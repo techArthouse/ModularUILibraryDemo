@@ -13,8 +13,9 @@ import ModularUILibrary
 struct RecipeRowView: View {
     @StateObject private var vm: RecipeRowViewModel
     let config: FeatureItemConfig
-    @State private var badRecipe: Bool = false
     let onTapRow: () -> Void
+    
+    @State private var badRecipe: Bool = false
     @EnvironmentObject private var nav: AppNavigation
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
         
@@ -54,11 +55,10 @@ struct RecipeRowView: View {
                     ToggleIconButton(
                         iconOn: .system("star.fill"),
                         iconOff: .system("star"),
-                        isDisabled: vm.isDisabledBinding, // .constant(false),
-                        isSelected: vm.isFavoriteBinding) {
-                        }
-                        .asStandardIconButtonStyle(withColor: .yellow)
-                        .accessibilityLabel(Text("ToggleIconButton: \(vm.recipeId.uuidString)"))
+                        isDisabled: vm.isDisabledBinding,
+                        isSelected: vm.isFavoriteBinding)
+                    .asStandardIconButtonStyle(withColor: .yellow)
+                    .accessibilityLabel(Text("ToggleIconButton: \(vm.recipeId.uuidString)"))
                 }
             })
         

@@ -86,16 +86,10 @@ struct RecipesView: View {
                     .padding(.bottom, 3)
                 }
                 .padding(.horizontal, 5)
-//                .background(
-//                    RoundedRectangle(cornerRadius: 0)
-//                        .fill(.gray.opacity(0.09))
-//                        .shadow(color: .black, radius: 1)
-//                )
                 .cornerRadius(4)
                 .animation(.easeInOut, value: vm.items.map(\.selected))
             }
         }
-//        .background(.gray.opacity(0.25))
     }
     
     /// The search bar header placed at the top of the recipe list.
