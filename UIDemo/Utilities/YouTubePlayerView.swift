@@ -31,7 +31,7 @@ struct YouTubePlayerView: UIViewRepresentable {
     func makeUIView(context: Context) -> WKWebView {
         let webView = WKWebView()
         webView.navigationDelegate = context.coordinator
-        print("updateUIView")
+        Logger.log("updateUIView")
         isLoading.wrappedValue = true
         let request = URLRequest(url: url)
         webView.load(request)
@@ -54,23 +54,13 @@ struct YouTubePlayerView: UIViewRepresentable {
         
         // WKNavigationDelegate methods for tracking loading status
         func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
-            print("didFinish")
+            Logger.log("didFinish")
             parent.isLoading.wrappedValue = false
         }
         
         func webView(_ webView: WKWebView, didFail navigation: WKNavigation!, withError error: Error) {
-            print("didFail")
+            Logger.log("didFail")
             parent.isLoading.wrappedValue = false
-            // Handle error
-        }
-        
-        // KVO observer for estimatedProgress
-        override func observeValue(forKeyPath keyPath: String?, of object: Any?, change: [NSKeyValueChangeKey : Any]?, context: UnsafeMutableRawPointer?) {
-            if keyPath == "estimatedProgress" {
-                if let progress = object as? WKWebView {
-                    parent.progress = progress.estimatedProgress
-                }
-            }
         }
     }
 }

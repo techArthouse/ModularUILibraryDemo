@@ -13,6 +13,9 @@ previews ever could. It reinforced my belief that testability and architecture g
 Lastly, organization mattered. I treated this like real production code: folders, files, and responsibilities are 
 clearly divided. It should be immediately understandable to any engineer stepping in.
 
+![Screenshot of part of the Project Organization](Media/projectFileOrganization.png)
+
+
 ### Time Spent: Approximately how long did you spend working on this project? How did you allocate your time?
 
 Roughly 6 weeks total. A good portion of that overlapped with active development on my ModularUILibrary, which powers 
@@ -59,9 +62,9 @@ are more likely to appear like with state, logic, and input/output coordination.
 
 ### Weakest Part of the Project: What do you think is the weakest part of your project?
 
-If anything, it’s the incomplete test coverage. I didn’t write tests for every view or helper method, even though I normally
-strive for fuller coverage. Still, I stand by the decision while still focusing testing efforts where they mattered most. 
-It was a strategic omission, not an oversight.
+If anything, it’s the incomplete test coverage with a total of 35%. I didn’t write tests for every view or helper method, 
+even though I normally strive for fuller coverage. Still, I stand by the decision while still focusing testing efforts where 
+they mattered most. It was a strategic omission, not an oversight.
 
 ### Additional Information: Is there anything else we should know? Feel free to share any insights or constraints you encountered.
 
@@ -69,4 +72,7 @@ The UI component library used throughout this project is my own: ModularUILibrar
 Since you asked not to include third-party libraries, this seemed like a fair and productive exception: I authored it, I maintain it, 
 and it reflects how I build UI professionally.
 
-Also, any edge cases or brittle behaviors I encountered were opportunities to evolve the library itself so this project benefitted from that feedback loop.
+![Personal UI library as a dependency](Media/modularUILibraryDependency.png)
+
+Also, any edge cases or brittle behaviors I encountered were opportunities to evolve the library itself so this project benefitted 
+from that feedback loop.

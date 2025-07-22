@@ -54,6 +54,7 @@
 		71E7CD7F2DFC85C90075C883 /* RecipeMemoryStore */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = RecipeMemoryStore; sourceTree = "<group>"; };
 		71E7CD822DFC86D80075C883 /* Recipes */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = Recipes; sourceTree = "<group>"; };
 		71EC6E0B2E2B419E00FFABBA /* Utilities */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = Utilities; sourceTree = "<group>"; };
+		71FBF1012E2F42A700C7A174 /* Media */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = Media; sourceTree = "<group>"; };
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -90,6 +91,8 @@
 				71D5EE072B8D407D004DE667 /* UIDemo */,
 				7189F0E72E25DBC500D997F5 /* UIDemoTests */,
 				71D5EE062B8D407D004DE667 /* Products */,
+				71FBF1012E2F42A700C7A174 /* Media */,
+				71A95C782E22FCC8001B52CC /* README.md */,
 			);
 			sourceTree = "<group>";
 		};
@@ -113,7 +116,6 @@
 				71E7CD322DEA16A50075C883 /* Resources */,
 				71D5EE082B8D407D004DE667 /* UIDemoApp.swift */,
 				71D5EE0A2B8D407D004DE667 /* ContentView.swift */,
-				71A95C782E22FCC8001B52CC /* README.md */,
 				71D5EE0C2B8D4081004DE667 /* Assets.xcassets */,
 				71D5EE0E2B8D4081004DE667 /* Preview Content */,
 				7178C8932E0C5F80005C4571 /* Info.plist */,
@@ -183,6 +185,7 @@
 				71E7CD7F2DFC85C90075C883 /* RecipeMemoryStore */,
 				71E7CD822DFC86D80075C883 /* Recipes */,
 				71EC6E0B2E2B419E00FFABBA /* Utilities */,
+				71FBF1012E2F42A700C7A174 /* Media */,
 			);
 			name = UIDemo;
 			packageProductDependencies = (
