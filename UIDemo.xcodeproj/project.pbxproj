@@ -19,6 +19,7 @@
 		71E7CD362DEA16EC0075C883 /* recipesEmpty.json in Resources */ = {isa = PBXBuildFile; fileRef = 71E7CD352DEA16EC0075C883 /* recipesEmpty.json */; };
 		71E7CD382DEA17060075C883 /* recipesMalformed.json in Resources */ = {isa = PBXBuildFile; fileRef = 71E7CD372DEA17060075C883 /* recipesMalformed.json */; };
 		71E7CD3E2DEA70EB0075C883 /* NetworkService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 71E7CD3D2DEA70EB0075C883 /* NetworkService.swift */; };
+		71FBF1E42E2F651800C7A174 /* ModularUILibrary in Frameworks */ = {isa = PBXBuildFile; productRef = 71FBF1E32E2F651800C7A174 /* ModularUILibrary */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -70,6 +71,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				71E7CD2D2DE7AFD20075C883 /* ModularUILibrary in Frameworks */,
+				71FBF1E42E2F651800C7A174 /* ModularUILibrary in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -190,6 +192,7 @@
 			name = UIDemo;
 			packageProductDependencies = (
 				71E7CD2C2DE7AFD20075C883 /* ModularUILibrary */,
+				71FBF1E32E2F651800C7A174 /* ModularUILibrary */,
 			);
 			productName = UIDemo;
 			productReference = 71D5EE052B8D407D004DE667 /* UIDemo.app */;
@@ -224,7 +227,7 @@
 			);
 			mainGroup = 71D5EDFC2B8D407C004DE667;
 			packageReferences = (
-				71E7CD2B2DE7AFD20075C883 /* XCLocalSwiftPackageReference "../ModularUILibrary" */,
+				71FBF1E22E2F651800C7A174 /* XCRemoteSwiftPackageReference "ModularUILibrary" */,
 			);
 			productRefGroup = 71D5EE062B8D407D004DE667 /* Products */;
 			projectDirPath = "";
@@ -549,16 +552,25 @@
 		};
 /* End XCConfigurationList section */
 
-/* Begin XCLocalSwiftPackageReference section */
-		71E7CD2B2DE7AFD20075C883 /* XCLocalSwiftPackageReference "../ModularUILibrary" */ = {
-			isa = XCLocalSwiftPackageReference;
-			relativePath = ../ModularUILibrary;
+/* Begin XCRemoteSwiftPackageReference section */
+		71FBF1E22E2F651800C7A174 /* XCRemoteSwiftPackageReference "ModularUILibrary" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/techArthouse/ModularUILibrary";
+			requirement = {
+				kind = exactVersion;
+				version = 1.0.0;
+			};
 		};
-/* End XCLocalSwiftPackageReference section */
+/* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
 		71E7CD2C2DE7AFD20075C883 /* ModularUILibrary */ = {
 			isa = XCSwiftPackageProductDependency;
+			productName = ModularUILibrary;
+		};
+		71FBF1E32E2F651800C7A174 /* ModularUILibrary */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 71FBF1E22E2F651800C7A174 /* XCRemoteSwiftPackageReference "ModularUILibrary" */;
 			productName = ModularUILibrary;
 		};
 /* End XCSwiftPackageProductDependency section */

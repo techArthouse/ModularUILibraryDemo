@@ -1,0 +1,15 @@
+{
+  "originHash" : "0ab44ea4ea768eaf4ec42fa9246179afb93782adef7db8829f5833cf4f8b0ae8",
+  "pins" : [
+    {
+      "identity" : "modularuilibrary",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/techArthouse/ModularUILibrary",
+      "state" : {
+        "revision" : "16df1707e6c9fafb03dcd1a201738dae8a968690",
+        "version" : "1.0.0"
+      }
+    }
+  ],
+  "version" : 3
+}
