@@ -1,4 +1,5 @@
 ### Summary: Include screen shots or a video of your app highlighting its features
+QUICK NOTE: All code is original and mine, including the ModularUILibrary, which is also available on my github.
 
 # Core App Flow
 
