@@ -11,6 +11,9 @@ import SwiftUI
 // MARK: - the fake function simpulate what we sho0uld epect.
 @MainActor
 private class FakeMemoryDataSource: RecipeMemoryDataSourceProtocol {
+    func deleteNote(for recipeUUID: UUID, noteId: UUID) {
+    }
+    
     var memories: [UUID: RecipeMemory] = [:]
     func load() {}
     func save() {}

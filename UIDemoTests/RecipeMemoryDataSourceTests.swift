@@ -17,7 +17,7 @@ final class RecipeMemoryDataSourceTests: XCTestCase {
 
     override func setUp() {
         super.setUp()
-        // Use a unique suite for each test to isolate state
+        // Use a unique suite for each test
         suiteName = "RecipeMemoryTests.\(UUID().uuidString)"
         defaults = UserDefaults(suiteName: suiteName)!
         key = "TestKey"
@@ -81,7 +81,7 @@ final class RecipeMemoryDataSourceTests: XCTestCase {
 
     func test_addNote_onlyIfFavorite() {
         let id = UUID()
-        // Not favorite => no notes
+        // Not favorite = no notes
         sut.addNote("note", for: id)
         XCTAssertTrue(sut.notes(for: id).isEmpty)
 
