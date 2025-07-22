@@ -162,7 +162,7 @@ class RecipesViewModel: ObservableObject {
             let data = try await networkService.requestData(from: url, using: .get)
             let list = try JSONDecoder().decode(RecipeList.self, from: data)
             let recipes = list.recipes + list.invalidRecipes
-//            var recipes = try await Recipe.allFromJSON(using: .empty)
+//            var recipes = try await Recipe.allFromJSON(using: .good)
             recipeStore.setRecipes(recipes: recipes)
         } catch {
             loadPhase = .failure(error.localizedDescription)

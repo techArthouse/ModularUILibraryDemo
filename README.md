@@ -2,9 +2,7 @@
 
 # Core App Flow
 
-- App Launch
-
-![App Launch](Media/appLaunch.mov)
+- App Flow
 
 App launches without a hitch and loads the recipe list from the Network. Recipe rows load lazily.
 Images load asynchronously via a custom ImageCache. ProgressView provides feedback to user. First time cached images
@@ -12,6 +10,63 @@ predictably takes a moment, but on returning to previously loaded images it inst
 Pull-to-Refresh flushes cache and images request from network again. (see ProgressView for each image again while load).
 
 ![App Launch](Media/appLaunch.mov)
+
+Click on any recipe to view it in more detail. Detailed view shows larger image in a different composable view.
+If the recipe has a valid video or source url, you can visit each link by pressing each button. To view video a sheet
+opens to load source video. To view source, click on source and a safari window opens through Webkit. Notes section
+allows you to add notes about the recipe. To activate, the user needs to add the recipe to favorites by clicking on
+the start icon. Once added the notes window changes and guides the user to add note. The user may add any number of notes.
+To delete a note, prese and hold the notes and follow instructions. Notes persist as do favorites. 
+
+![Recipe Detailed View](Media/recipeDetailedView.mov)
+
+The Favorites tab is a place to view all your favorited recipes. It uses a different composable card view that gives 
+a quick but detailed overview of each for quick reference. The video and source Icons inform the user on what's available
+and the notes section features any notes the user has added. Click on a recipe to see it in more detail.
+
+![Favorites](Media/favoritesView.mov)
+
+Don't have a favorite recipe? No worries! Go to the discover tab and view a random one!
+
+![Discover Tab](Media/noFavorites.mov)
+
+Use the search bar to find a recipe by name. Alternately, press the filter button to open the filter sheet and look for
+a specific cuisine.
+
+![Search and Filter](Media/filter.mov)
+
+Some useful state feedback include loading error, empty results, and malformed data. Although you requested that a list
+of recipes be entirely disregarded if a recipe is malformed, I made the design decision to provide feedback for the
+malformed recipes rather than discard the list. I believe in user friendly design first, and discarding the entire list
+because of a few malformed entries provides an incomplete and frustrating experience. Instead, I display a row for the 
+malformed entries at the end of the list, and display anything that was available. Internally, the object holds useful
+feedback to the developer about which recipes are malformed and what parts of the required fields failed. 
+
+
+![Part of the Project Organization](Media/loadingError.png)
+![Part of the Project Organization](Media/loadingEmpty.png)
+![Part of the Project Organization](Media/loadingMalformed.png)
+
+How the the Recipe model is future proofed to provide useful feedback.
+
+```
+    var isValid: Bool {
+        _id != nil && _cuisine != nil && _name != nil
+    }
+    
+    // Required Fields. Note that they take their value from underlying assumptions that these are required.
+    var id: UUID { _id ?? UUID() }
+    var cuisine: String { _cuisine ?? "N/A" }
+    var name: String { _name ?? "N/A" }
+    
+    // Underlying required vars. We allow for the data model to not fail and still provide feedback on what failed.
+    let _id: UUID?
+    let _cuisine: String?
+    let _name: String?
+    let _uuidString: String? /* The response model may have malformed uuid still. our default behavior gives it an id
+                              to work with our logic, but this allows us to see what the original value was. */
+```
+
 
 ### Focus Areas: What specific areas of the project did you prioritize? Why did you choose to focus on these areas?
 
@@ -26,7 +81,7 @@ previews ever could. It reinforced my belief that testability and architecture g
 Lastly, organization mattered. I treated this like real production code: folders, files, and responsibilities are 
 clearly divided. It should be immediately understandable to any engineer stepping in.
 
-![Screenshot of part of the Project Organization](Media/projectFileOrganization.png)
+![Part of the Project Organization](Media/projectFileOrganization.png)
 
 
 ### Time Spent: Approximately how long did you spend working on this project? How did you allocate your time?
