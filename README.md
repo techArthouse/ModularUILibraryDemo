@@ -9,7 +9,7 @@ Images load asynchronously via a custom ImageCache. ProgressView provides feedba
 predictably takes a moment, but on returning to previously loaded images it instantly loads from local memory.
 Pull-to-Refresh flushes cache and images request from network again. (see ProgressView for each image again while load).
 
-![App Launch](Media/appLaunch.mov)
+![App Launch](Media/appLaunch.mp4)
 
 Click on any recipe to view it in more detail. Detailed view shows larger image in a different composable view.
 If the recipe has a valid video or source url, you can visit each link by pressing each button. To view video a sheet
@@ -18,22 +18,22 @@ allows you to add notes about the recipe. To activate, the user needs to add the
 the start icon. Once added the notes window changes and guides the user to add note. The user may add any number of notes.
 To delete a note, prese and hold the notes and follow instructions. Notes persist as do favorites. 
 
-![Recipe Detailed View](Media/recipeDetailedView.mov)
+![Recipe Detailed View](Media/recipeDetailedView.mp4)
 
 The Favorites tab is a place to view all your favorited recipes. It uses a different composable card view that gives 
 a quick but detailed overview of each for quick reference. The video and source Icons inform the user on what's available
 and the notes section features any notes the user has added. Click on a recipe to see it in more detail.
 
-![Favorites](Media/favoritesView.mov)
+![Favorites](Media/favoritesView.mp4)
 
 Don't have a favorite recipe? No worries! Go to the discover tab and view a random one!
 
-![Discover Tab](Media/noFavorites.mov)
+![Discover Tab](Media/noFavorites.mp4)
 
 Use the search bar to find a recipe by name. Alternately, press the filter button to open the filter sheet and look for
 a specific cuisine.
 
-![Search and Filter](Media/filter.mov)
+![Search and Filter](Media/filter.mp4)
 
 Some useful state feedback include loading error, empty results, and malformed data. Although you requested that a list
 of recipes be entirely disregarded if a recipe is malformed, I made the design decision to provide feedback for the
