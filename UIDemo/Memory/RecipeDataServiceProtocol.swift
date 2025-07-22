@@ -9,7 +9,7 @@ import SwiftUI
 import Combine
 
 @MainActor
-protocol RecipeDataServiceProtocol: ObservableObject {
+protocol RecipeDataServiceProtocol {
     var allItems: [Recipe] { get }
     var imageCache: ImageCacheProtocol { get }
     var itemsPublisher: AnyPublisher<[Recipe], Never> { get }

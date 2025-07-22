@@ -36,7 +36,8 @@ struct ContentView: View {
                             RecipeDetailView(
                                 makeRecipeRowVM: { RecipeRowViewModel(
                                     recipeId: uuid,
-                                    recipeStore: homeVM.recipeStore) })
+                                    recipeStore: homeVM.recipeStore,
+                                    imageSize: .large) })
                         default:
                             EmptyView()
                         }
@@ -59,7 +60,8 @@ struct ContentView: View {
                             RecipeDetailView(
                                 makeRecipeRowVM: { RecipeRowViewModel(
                                     recipeId: uuid,
-                                    recipeStore: favoritesVM.recipeStore) })
+                                    recipeStore: favoritesVM.recipeStore,
+                                    imageSize: .large) })
                         default:
                             EmptyView()
                         }
@@ -82,7 +84,8 @@ struct ContentView: View {
                             RecipeDetailView(
                                 makeRecipeRowVM:{ RecipeRowViewModel(
                                     recipeId: uuid,
-                                    recipeStore: discoverVM.recipeStore) })
+                                    recipeStore: discoverVM.recipeStore,
+                                    imageSize: .large) })
                         default:
                             EmptyView()
                         }

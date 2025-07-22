@@ -10,6 +10,7 @@ import UIKit
 import ModularUILibrary
 import SafariServices
 
+/// Shows Recipe in greater detail and allows write operations on recipe data source (i.e. favorite, notes)
 struct RecipeDetailView: View {
     @StateObject private var vm: RecipeRowViewModel
     @State private var source: URLType? = nil
@@ -20,19 +21,19 @@ struct RecipeDetailView: View {
     init(makeRecipeRowVM: @escaping () -> RecipeRowViewModel) {
         self._vm = StateObject(wrappedValue: makeRecipeRowVM())
     }
-
+    
     enum URLType: Identifiable {
-        public var id: URL {
-            switch self {
-            case .video(let url), .webPage(let url):
-                    return url
-            }
-        }
-        
         case video(URL)
         case webPage(URL)
+        
+        var id: URL {
+            switch self {
+            case .video(let url), .webPage(let url):
+                return url
+            }
+        }
     }
-
+    
     var body: some View {
         ScrollView {
             VStack(spacing: 20) {
@@ -46,33 +47,31 @@ struct RecipeDetailView: View {
                     .padding(.vertical)
                 
                 // MARK: — Image + Cuisine + favorite
-//                VStack {
                 ImageCard(image: vm.image, size: nil, title: vm.title, description: vm.description)
-                        .overlay {
-                            if vm.isValid {
-                                HStack(alignment: .top) {
+                    .overlay {
+                        if vm.isValid {
+                            HStack(alignment: .top) {
+                                Spacer()
+                                VStack {
+                                    ToggleIconButton(
+                                        iconOn: .system("star.fill"),
+                                        iconOff: .system("star"),
+                                        isDisabled: vm.isDisabledBinding,
+                                        isSelected: vm.isFavoriteBinding) {
+                                        }
+                                        .asStandardIconButtonStyle(withColor: .yellow)
+                                        .accessibilityLabel(Text("ToggleIconButton: \(vm.accessibilityId)"))
+                                        .padding(.trailing)
+                                        .padding(.top)
                                     Spacer()
-                                    VStack {
-                                        ToggleIconButton(
-                                            iconOn: .system("star.fill"),
-                                            iconOff: .system("star"),
-                                            isDisabled: vm.isDisabledBinding,
-                                            isSelected: vm.isFavoriteBinding) {
-                                            }
-                                            .asStandardIconButtonStyle(withColor: .yellow)
-                                            .accessibilityLabel(Text("ToggleIconButton: \(vm.accessibilityId)"))
-                                            .padding(.trailing)
-                                            .padding(.top)
-                                        Spacer()
-                                    }
                                 }
                             }
                         }
-                        .task {
-                            await vm.load()
-                        }
-//                }
-                        .onDisabled(isDisabled: vm.isDisabledBinding)
+                    }
+                    .task {
+                        await vm.load()
+                    }
+                    .onDisabled(isDisabled: vm.isDisabledBinding)
                 
                 // MARK: — Buttons
                 VStack(spacing: 12) {
@@ -82,8 +81,8 @@ struct RecipeDetailView: View {
                                 source = .video(url)
                             }.asPrimaryButton(padding: .stacked)
                         } else {
-                            CTAButton(title: "Video Unavailable", isDisabled: .constant(true), icon: .system("video.fill")) {
-                            }.asPrimaryButton(padding: .stacked)
+                            CTAButton(title: "Video Unavailable", isDisabled: .constant(true), icon: .system("video.fill")) { }
+                                .asPrimaryButton(padding: .stacked)
                         }
                         if let sourceURL = vm.sourceURL {
                             CTAButton(title: "View Full Recipe", icon: .system("safari.fill")) {
@@ -91,8 +90,8 @@ struct RecipeDetailView: View {
                             }.asSecondaryButton(padding: .stacked)
                         } else {
                             
-                            CTAButton(title: "Source Unavailable", isDisabled: .constant(true), icon: .system("safari.fill")) {
-                            }.asSecondaryButton(padding: .stacked)
+                            CTAButton(title: "Source Unavailable", isDisabled: .constant(true), icon: .system("safari.fill")) { }
+                                .asSecondaryButton(padding: .stacked)
                         }
                     }
                 }
@@ -167,7 +166,6 @@ struct RecipeDetailView: View {
         }
         .navigationTitle(vm.title)
         .navigationBarTitleDisplayMode(.inline)
-        // YouTube sheet
         .sheet(item: $source) { source in
             VStack {
                 switch source {
@@ -179,8 +177,9 @@ struct RecipeDetailView: View {
                             .multilineTextAlignment(.center)
                             .lineLimit(2)
                             .padding(.top)
+                        
                         YouTubePlayerView(videoID: videoID, isLoading: $isLoading)
-                        .scaledToFit()
+                            .scaledToFit()
                             .overlay {
                                 if isLoading {
                                     ProgressView()
@@ -202,7 +201,7 @@ struct RecipeDetailView: View {
         }
     }
     
-
+    
     // Simple SafariView wrapper
     struct SafariView: UIViewControllerRepresentable {
         typealias UIViewControllerType = SFSafariViewController
@@ -217,8 +216,8 @@ struct RecipeDetailView: View {
         
         
     }
-
-    // Regex helper as before
+    
+    // Regex helper to find id for video
     func extractStringAfterV(from inputString: String) -> String? {
         let regex = /v=(.*)/
         if let match = inputString.firstMatch(of: regex) {
@@ -235,12 +234,11 @@ struct RecipeDetailView_Previews: PreviewProvider {
     static var previews: some View {
         //    let memoryStore = MockRecipeMemoryDataSource()
         let recipe = Recipe.recipePreview(using: .good).first
-        var recipeItem = RecipeItem(recipe!)
         
         let recipeStore = RecipeDataService(memoryStore: MockRecipeMemoryDataSource(), fetchCache: MockFetchCache())
         recipeStore.setRecipes(recipes: [recipe!])
         
-        return RecipeDetailView(makeRecipeRowVM: { RecipeRowViewModel(recipeId: recipe!.id, recipeStore: recipeStore) })
+        return RecipeDetailView(makeRecipeRowVM: { RecipeRowViewModel(recipeId: recipe!.id, recipeStore: recipeStore, imageSize: .large) })
             .environmentObject(ThemeManager())
     }
 }

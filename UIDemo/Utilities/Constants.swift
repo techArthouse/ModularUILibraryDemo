@@ -9,6 +9,9 @@ import SwiftUI
 import Foundation
 import ModularUILibrary
 
+enum NetworkEndpoint: String {
+    case root = "https://d3jbb8n5wk0qxi.cloudfront.net/recipes.json"
+}
 protocol CanBeInvalid {
     var isValid: Bool { get }
 }
@@ -102,3 +105,4 @@ public extension Font {
         CustomFont.RobotoMono
     }
 }
+

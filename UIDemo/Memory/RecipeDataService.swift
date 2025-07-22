@@ -13,8 +13,8 @@ import Combine
 @MainActor
 final class RecipeDataService: RecipeDataServiceProtocol {
     @Published private(set) var allItems: [Recipe] = [] // Models decoded from network
-    @Published private(set) var memoryDataSource: RecipeMemoryDataSourceProtocol // Stores RecipMemory data
-    @Published private(set) var imageCache: ImageCacheProtocol
+    private(set) var memoryDataSource: RecipeMemoryDataSourceProtocol // Stores RecipMemory data
+    private(set) var imageCache: ImageCacheProtocol
     
     init(memoryStore: any RecipeMemoryDataSourceProtocol, fetchCache: ImageCacheProtocol) {
         self.memoryDataSource = memoryStore

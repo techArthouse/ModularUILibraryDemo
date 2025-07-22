@@ -19,7 +19,7 @@ protocol ImageCacheProtocol {
 /// Takes in a path to build the adresss where the images are cached in memory. Set once and share across modules or
 /// better control what you cache and share.
 @MainActor
-class CustomAsyncImageCache: ObservableObject, ImageCacheProtocol {
+class CustomAsyncImageCache: ImageCacheProtocol {
     private let networkService: any NetworkServiceProtocol
     private var memoryCache = [String: Image]() // in‐memory cache
     private let path: String // The identity of the cache

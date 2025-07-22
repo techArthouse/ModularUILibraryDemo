@@ -9,7 +9,7 @@ import SwiftUI
 
 @MainActor
 final class DiscoverViewModel: ObservableObject {
-    @Published var recipeStore: any RecipeDataServiceProtocol
+    let recipeStore: any RecipeDataServiceProtocol
     
     init(recipeStore: any RecipeDataServiceProtocol) {
         self.recipeStore = recipeStore

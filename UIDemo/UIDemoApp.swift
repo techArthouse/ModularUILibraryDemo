@@ -30,7 +30,7 @@ struct UIDemoApp: App {
 //    @StateObject private var fetchCache = FetchCache(path: cachePath)
 
     /// Central source of truth for recipe data.
-    @StateObject private var recipeStore: RecipeDataService
+    private let recipeStore: RecipeDataService
     private let networkService: NetworkService
 
     /// Initializes the application, setting up the shared data sources:
@@ -42,7 +42,7 @@ struct UIDemoApp: App {
         let memoryStore = RecipeMemoryDataSource()
         let cache = CustomAsyncImageCache(path: Self.cachePath, networkService: networkService)
         let store = RecipeDataService(memoryStore: memoryStore, fetchCache: cache)
-        _recipeStore = StateObject(wrappedValue: store)
+        self.recipeStore = store
         self.networkService = networkService
     }
     

@@ -72,8 +72,8 @@ struct RecipesView: View {
                     Divider().frame(height: 1)
                         .background(.black.opacity(0.5))
                     ForEach(vm.items, id: \.id) { item in
-                        if item.selected {
-                            RecipeRowView(makeRecipeRowVM: { RecipeRowViewModel(recipeId: item.id, recipeStore: vm.recipeStore)} ) {
+                        if item.shouldShow {
+                            RecipeRowView(makeRecipeRowVM: { RecipeRowViewModel(recipeId: item.id, recipeStore: vm.recipeStore, imageSize: .small)} ) {
                                 nav.homePath.append(.recipeDetail(item.id))
                             }
                             .transition(.asymmetric(
@@ -87,7 +87,7 @@ struct RecipesView: View {
                 }
                 .padding(.horizontal, 5)
                 .cornerRadius(4)
-                .animation(.easeInOut, value: vm.items.map(\.selected))
+                .animation(.easeInOut, value: vm.items.map(\.shouldShow))
             }
         }
     }
@@ -188,7 +188,7 @@ struct RecipesView: View {
 #if DEBUG
 struct RecipesView_Previews: PreviewProvider {
     static var previews: some View {
-        @StateObject var recipeStore = RecipeDataService(memoryStore: RecipeMemoryDataSource(), fetchCache: MockFetchCache())
+        let recipeStore = RecipeDataService(memoryStore: RecipeMemoryDataSource(), fetchCache: MockFetchCache())
         @StateObject var vm = RecipesViewModel(recipeStore: recipeStore, filterStrategy: AllRecipesFilter(), networkService: NetworkService())
         @StateObject var nav = AppNavigation.shared
         @StateObject var themeManager: ThemeManager = ThemeManager()

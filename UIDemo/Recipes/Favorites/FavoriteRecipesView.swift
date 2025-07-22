@@ -97,8 +97,8 @@ struct FavoriteRecipesView: View {
             LazyVStack(spacing: 15) {
                 searchHeaderView
                 ForEach(vm.items, id: \.id) { item in
-                    if item.selected {
-                        FavoriteRecipeCard(makeRecipeRowVM: { RecipeRowViewModel(recipeId: item.id, recipeStore: vm.recipeStore) }) {
+                    if item.shouldShow {
+                        FavoriteRecipeCard(makeRecipeRowVM: { RecipeRowViewModel(recipeId: item.id, recipeStore: vm.recipeStore, imageSize: .large) }) {
                             nav.favoritesPath.append(.recipeDetail(item.id))
                         }
                         .transition(.asymmetric(
@@ -113,7 +113,7 @@ struct FavoriteRecipesView: View {
             }
             .padding(.horizontal, 10)
         }
-        .animation(.easeInOut, value: vm.items.map(\.selected))
+        .animation(.easeInOut, value: vm.items.map(\.shouldShow))
         .listStyle(.plain)
     }
     

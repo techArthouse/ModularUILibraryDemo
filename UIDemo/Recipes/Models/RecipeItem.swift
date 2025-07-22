@@ -12,11 +12,11 @@ import SwiftUI
 @MainActor
 class RecipeItem: ObservableObject, Identifiable, Equatable {
     let id: UUID // essential and nonmutating
-    @Published var selected: Bool
+    @Published var shouldShow: Bool
     
     init(_ recipe: Recipe) {
         self.id = recipe.id
-        self.selected = false
+        self.shouldShow = false
     }
     
     nonisolated static func == (lhs: RecipeItem, rhs: RecipeItem) -> Bool {

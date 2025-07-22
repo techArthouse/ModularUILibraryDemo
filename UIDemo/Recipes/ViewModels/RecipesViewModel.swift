@@ -8,7 +8,6 @@
 import SwiftUI
 import Combine
 
-///
 @MainActor
 class RecipesViewModel: ObservableObject {
     enum LoadPhase: Equatable {
@@ -32,10 +31,10 @@ class RecipesViewModel: ObservableObject {
     @Published var searchQuery: String = ""
     @Published var selectedCuisine: String?
     @Published var searchModel: SearchViewModel?
-
-    private let networkService: any NetworkServiceProtocol
-    @Published var recipeStore: any RecipeDataServiceProtocol
+    
+    let recipeStore: any RecipeDataServiceProtocol
     private let filterStrategy: RecipeFilterStrategy
+    private let networkService: any NetworkServiceProtocol
     
     // MARK: - Init
     
@@ -51,7 +50,7 @@ class RecipesViewModel: ObservableObject {
     /// the 2nd listens to filter options and mutates items in place to determine if item should be showed.
     /// By modifying in place we preserve swiftui's internal identity property and keeps animations intact.
     private func subscribe() {
-        // 1.
+        // 1. updates the items list with new recipes (used for response to network fetching recipes)
         recipeStore
             .itemsPublisher
             .dropFirst()
@@ -62,7 +61,7 @@ class RecipesViewModel: ObservableObject {
             }
             .store(in: &cancellables)
         
-        // 2.
+        // 2. performs filtering through search/filtering options
         Publishers
             .CombineLatest(
                 $selectedCuisine.removeDuplicates(),
@@ -83,7 +82,7 @@ class RecipesViewModel: ObservableObject {
             }
             .store(in: &cancellables)
         
-        // 3. centralizes item assignment and in place mutations.
+        // 3. Centralizes item assignment and in place mutations.
         $loadPhase
             .receive(on: RunLoop.main)
             .sink { [weak self] phase in
@@ -97,14 +96,14 @@ class RecipesViewModel: ObservableObject {
                     
                     let newItems = filtered.map {
                         let item = RecipeItem($0)
-                        item.selected = true
+                        item.shouldShow = true
                         return item
                     }
                     self.items = newItems
                     
                 case .success(.itemsFiltered(let ids)):
                     for (i, item) in self.items.enumerated() {
-                        self.items[i].selected = ids.contains(item.id)
+                        self.items[i].shouldShow = ids.contains(item.id)
                     }
                     
                 default: break
@@ -140,25 +139,24 @@ class RecipesViewModel: ObservableObject {
     }
     
     var cusineCategories: [String] {
-        var categories = Set<String>()
-        let selectedItemIds = items.filter(\.selected).map { $0.id }
+        var categories = Set<String>() // No duplicates
+        let selectedItemIds = items.filter(\.shouldShow).map { $0.id }
         
-        // chose the recipes that are selected and gather all their cuisines.
+        // Choose the recipes that are set to show and gather all their cuisines.
         for item in recipeStore.allItems.filter({ selectedItemIds.contains($0.id) }) {
             categories.insert(item.cuisine)
         }
-        return Array(categories)
+        return Array(categories.sorted(by: <))
     }
     
     /// Load and wrap your recipes in order
-    internal func loadRecipes(from url: URL? = nil) async {
+    func loadRecipes() async {
         do {
-            let data = try await networkService.requestData(
-                from: url ?? URL(string: "https://d3jbb8n5wk0qxi.cloudfront.net/recipes.json")!,
-                using: .get)
-            
+            guard let url = URL(string: NetworkEndpoint.root.rawValue) else {
+                return
+            }
+            let data = try await networkService.requestData(from: url, using: .get)
             let list = try JSONDecoder().decode(RecipeList.self, from: data)
-            
             let recipes = list.recipes + list.invalidRecipes
 //            var recipes = try await Recipe.allFromJSON(using: .good)
             recipeStore.setRecipes(recipes: recipes)

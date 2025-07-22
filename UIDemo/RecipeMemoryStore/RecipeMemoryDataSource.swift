@@ -9,15 +9,11 @@ import SwiftUI
 import Combine
 
 @MainActor
-final class RecipeMemoryDataSource: ObservableObject, RecipeMemoryDataSourceProtocol {
-    private let defaults: UserDefaults
+final class RecipeMemoryDataSource: RecipeMemoryDataSourceProtocol {
     private let key: String
+    private let defaults: UserDefaults
     
-    @Published private(set) var memories: [UUID: RecipeMemory] = [:]
-    var itemsPublisher: AnyPublisher<[UUID : RecipeMemory], Never> {
-        $memories
-            .eraseToAnyPublisher()
-    }
+    private(set) var memories: [UUID: RecipeMemory] = [:]
     
     /// The key for memory stored.
     init(key: String = "RecipeMemories", defaults: UserDefaults = .standard) {
@@ -61,7 +57,7 @@ final class RecipeMemoryDataSource: ObservableObject, RecipeMemoryDataSourceProt
     
     // Explicitly set value for favorite
     func setFavorite(_ favorite: Bool, for recipeUUID: UUID) {
-        if var mem = memories[recipeUUID] {
+        if let mem = memories[recipeUUID] {
             mem.isFavorite = favorite
             memories[recipeUUID] = mem
         } else if favorite {
@@ -71,7 +67,7 @@ final class RecipeMemoryDataSource: ObservableObject, RecipeMemoryDataSourceProt
     }
     
     func toggleFavorite(recipeUUID: UUID) {
-        if var mem = memories[recipeUUID] {
+        if let mem = memories[recipeUUID] {
             mem.isFavorite.toggle()
             memories[recipeUUID] = mem
         } else {
@@ -85,7 +81,7 @@ final class RecipeMemoryDataSource: ObservableObject, RecipeMemoryDataSourceProt
     }
     
     func addNote(_ text: String, for recipeUUID: UUID) {
-        guard var mem = memories[recipeUUID], mem.isFavorite else {
+        guard let mem = memories[recipeUUID], mem.isFavorite else {
             return
         }
         
@@ -96,7 +92,7 @@ final class RecipeMemoryDataSource: ObservableObject, RecipeMemoryDataSourceProt
     }
     
     func deleteNotes(for recipeUUID: UUID) {
-        if var mem = memories[recipeUUID] {
+        if let mem = memories[recipeUUID] {
             mem.notes.removeAll()
             memories[recipeUUID] = mem
             save()

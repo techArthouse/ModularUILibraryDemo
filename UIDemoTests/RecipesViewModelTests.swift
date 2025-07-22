@@ -57,7 +57,7 @@ final class RecipesViewModelTests: XCTestCase {
                 phase == .success(.itemsLoaded([r1, r2]))
             }
             .sink { items, _ in
-                XCTAssertTrue(items.allSatisfy { $0.selected })
+                XCTAssertTrue(items.allSatisfy { $0.shouldShow })
                 expect.fulfill()
             }
             .store(in: &cancellables)
@@ -398,7 +398,7 @@ private class TestableRecipesViewModel: RecipesViewModel {
     var didCall = false
     var shouldThrow = false
 
-    override func loadRecipes(from url: URL? = nil) async {
+    override func loadRecipes() async {
         didCall = true
     }
 }

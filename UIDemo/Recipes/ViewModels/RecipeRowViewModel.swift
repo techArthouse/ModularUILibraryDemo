@@ -11,15 +11,22 @@ import Combine
 @MainActor
 final class RecipeRowViewModel: ObservableObject {
     private let imageLoader: ImageLoader
-    var recipeId: UUID
-    @Published var recipeStore: any RecipeDataServiceProtocol
+    private let recipeId: UUID
+    private let recipeStore: any RecipeDataServiceProtocol
     @Published private(set) var image: Image?
+    
+    enum ImageSize {
+        case small
+        case large
+    }
     
     private var cancellables = Set<AnyCancellable>()
     
-    init(recipeId: UUID, recipeStore: any RecipeDataServiceProtocol) {
+    init(recipeId: UUID, recipeStore: any RecipeDataServiceProtocol, imageSize: ImageSize) {
         self.recipeId = recipeId
-        self.imageLoader = ImageLoader(url: recipeStore.smallImageURL(for: recipeId), cache: recipeStore.imageCache)
+        self.imageLoader = ImageLoader(url: imageSize == .small
+                                       ? recipeStore.smallImageURL(for: recipeId)
+                                       : recipeStore.largeImageURL(for: recipeId), cache: recipeStore.imageCache)
         self.recipeStore = recipeStore
     }
     
@@ -37,15 +44,9 @@ final class RecipeRowViewModel: ObservableObject {
         await self.imageLoader.load()
     }
     
+    // Helper var for views requiring binding.
     var isDisabledBinding: Binding<Bool> {
-        Binding(get: {
-            return !self.isValid
-        }, set: { _ in
-        })
-    }
-    
-    var accessibilityId: String {
-        recipeId.uuidString
+        .constant(!self.isValid)
     }
     
     var isFavoriteBinding: Binding<Bool> {
@@ -59,6 +60,10 @@ final class RecipeRowViewModel: ObservableObject {
                 self.recipeStore.setFavorite(newValue, for: self.recipeId)
             }
         )
+    }
+    
+    var accessibilityId: String {
+        recipeId.uuidString
     }
 }
 

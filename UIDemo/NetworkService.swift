@@ -8,12 +8,13 @@
 import Foundation
 
 final class NetworkService: NetworkServiceProtocol {
-    let statusCodeSuccessRange = Array(200...300) + Array(arrayLiteral: 304)
+    let statusCodeSuccessRange = Array(200...300) + Array(arrayLiteral: 304) /* Values of success codes according to
+                                                                              http rules plus redirection seen in testing */
     
     /// throws custom NetworkError for more control and relevant info to caller
     func requestData(from url: URL, using method: HTTPMethodType = .get) async throws(NetworkError) -> Data {
         do {
-            // Before you do anything, respect any pending cancellation:
+            // Exit early on pending cancellation
             try Task.checkCancellation()
             
             var request = URLRequest(url: url)

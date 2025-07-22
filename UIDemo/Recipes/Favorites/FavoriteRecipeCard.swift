@@ -123,13 +123,13 @@ struct FavoriteRecipeCard: View {
 #if DEBUG
 struct FavoriteRecipesCard_Previews: PreviewProvider {
     static var previews: some View {
-        @StateObject var recipeStore = RecipeDataService(memoryStore: MockRecipeMemoryDataSource(), fetchCache: MockFetchCache())
+        let recipeStore = RecipeDataService(memoryStore: MockRecipeMemoryDataSource(), fetchCache: MockFetchCache())
         @StateObject var nav = AppNavigation.shared
         
         @StateObject var themeManager: ThemeManager = ThemeManager()
         // TODO: Test resizing here later.
         
-        FavoriteRecipeCard(makeRecipeRowVM: { RecipeRowViewModel(recipeId: UUID(), recipeStore: recipeStore) }) {
+        FavoriteRecipeCard(makeRecipeRowVM: { RecipeRowViewModel(recipeId: UUID(), recipeStore: recipeStore, imageSize: .large) }) {
             Logger.log("row tapped")
         }
         .environmentObject(themeManager)

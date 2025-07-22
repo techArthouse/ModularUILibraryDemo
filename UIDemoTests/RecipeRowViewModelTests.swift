@@ -23,7 +23,7 @@ final class RecipeRowViewModelTests: XCTestCase {
         store = FakeRecipeDataService()
         recipe = Recipe(id: UUID(), name: "Test Soup", cuisine: "Global")
         store.setRecipes(recipes: [recipe])
-        vm = RecipeRowViewModel(recipeId: recipe.id, recipeStore: store)
+        vm = RecipeRowViewModel(recipeId: recipe.id, recipeStore: store, imageSize: .small)
     }
 
     override func tearDown() {
@@ -86,7 +86,7 @@ final class RecipeRowViewModelTests: XCTestCase {
     func test_isValid_false() {
         invalideRecipe = Recipe(id: UUID(), name: nil, cuisine: "Latin")
         store.setRecipes(recipes: [invalideRecipe])
-        vm = RecipeRowViewModel(recipeId: invalideRecipe.id, recipeStore: store)
+        vm = RecipeRowViewModel(recipeId: invalideRecipe.id, recipeStore: store, imageSize: .small)
         
         XCTAssertFalse(vm.isValid)
     }

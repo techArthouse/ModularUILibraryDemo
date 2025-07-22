@@ -41,7 +41,7 @@ struct RecipeRowView: View {
                 onTapRow()
             },
             leading: {
-                ImageContainer(image: vm.image, size: dynamicTypeSize.photoDimension, accessibilityId: vm.recipeId.uuidString)
+                ImageContainer(image: vm.image, size: dynamicTypeSize.photoDimension, accessibilityId: vm.accessibilityId)
                     .equatable()
                     .border(.black.opacity(0.5), width: 1)
                     .onAppear{
@@ -58,7 +58,7 @@ struct RecipeRowView: View {
                         isDisabled: vm.isDisabledBinding,
                         isSelected: vm.isFavoriteBinding)
                     .asStandardIconButtonStyle(withColor: .yellow)
-                    .accessibilityLabel(Text("ToggleIconButton: \(vm.recipeId.uuidString)"))
+                    .accessibilityLabel(Text("ToggleIconButton: \(vm.accessibilityId)"))
                 }
             })
         
@@ -108,7 +108,7 @@ struct RecipeRowView_Previews: PreviewProvider {
         recipeStore.setRecipes(recipes: [goodRecipe, invalidRecipe])
         
         return VStack {
-            RecipeRowView(makeRecipeRowVM: { RecipeRowViewModel(recipeId: goodItem.id, recipeStore: recipeStore)} ) {
+            RecipeRowView(makeRecipeRowVM: { RecipeRowViewModel(recipeId: goodItem.id, recipeStore: recipeStore, imageSize: .small)} ) {
                 Logger.log("Tapped row with goodItem")
             }
             .background(.red)
@@ -116,7 +116,7 @@ struct RecipeRowView_Previews: PreviewProvider {
             .environmentObject(nav)
             .environmentObject(themeManager)
             
-            RecipeRowView(makeRecipeRowVM: { RecipeRowViewModel(recipeId: badItem.id, recipeStore: recipeStore)} ) {
+            RecipeRowView(makeRecipeRowVM: { RecipeRowViewModel(recipeId: badItem.id, recipeStore: recipeStore, imageSize: .small)} ) {
                 Logger.log("Tapped row with badItem")
             }
             .background(.red)
@@ -180,7 +180,7 @@ class MockRecipeMemoryDataSource: RecipeMemoryDataSourceProtocol {
     }
     
     func setFavorite(_ favorite: Bool, for recipeUUID: UUID) {
-        if var mem = memories[recipeUUID] {
+        if let mem = memories[recipeUUID] {
             mem.isFavorite = favorite
             memories[recipeUUID] = mem
         } else if favorite {
@@ -201,7 +201,7 @@ class MockRecipeMemoryDataSource: RecipeMemoryDataSourceProtocol {
     }
     
     func toggleFavorite(recipeUUID: UUID) {
-        if var mem = memories[recipeUUID] {
+        if let mem = memories[recipeUUID] {
             mem.isFavorite.toggle()
             memories[recipeUUID] = mem
         } else {

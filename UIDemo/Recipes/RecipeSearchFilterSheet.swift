@@ -55,7 +55,7 @@ struct RecipeSearchFilterSheet: View {
                                 }
                             }
                         }
-                        .id(category) // Assign ID for scroll target
+                        .id(category)
                     }
                 }
                 .listStyle(.plain)
@@ -69,10 +69,7 @@ struct RecipeSearchFilterSheet: View {
                     }
                 }
             }
-
-
-
-            // Reset
+            
             Button("Reset") {
                 onReset()
             }
