@@ -9,7 +9,7 @@ Images load asynchronously via a custom ImageCache. ProgressView provides feedba
 predictably takes a moment, but on returning to previously loaded images it instantly loads from local memory.
 Pull-to-Refresh flushes cache and images request from network again. (see ProgressView for each image again while load).
 
-<video src="Media/appLaunch.mp4" controls width="100%"></video>
+https://github.com/user-attachments/assets/2a1ccb1a-9485-4558-bcfe-1c70c1440610
 
 Click on any recipe to view it in more detail. Detailed view shows larger image in a different composable view.
 If the recipe has a valid video or source url, you can visit each link by pressing each button. To view video a sheet
@@ -18,22 +18,23 @@ allows you to add notes about the recipe. To activate, the user needs to add the
 the start icon. Once added the notes window changes and guides the user to add note. The user may add any number of notes.
 To delete a note, prese and hold the notes and follow instructions. Notes persist as do favorites. 
 
-<video src="Media/recipeDetailedView.mp4" controls width="100%"></video>
+https://github.com/user-attachments/assets/f2b6e750-60d4-4344-b826-3d44fe2c7ac8
 
 The Favorites tab is a place to view all your favorited recipes. It uses a different composable card view that gives 
 a quick but detailed overview of each for quick reference. The video and source Icons inform the user on what's available
 and the notes section features any notes the user has added. Click on a recipe to see it in more detail.
 
-<video src="Media/favoritesView.mp4" controls width="100%"></video>
+https://github.com/user-attachments/assets/8d176cb0-77fc-48a2-a000-11653b6795d8
 
 Don't have a favorite recipe? No worries! Go to the discover tab and view a random one!
 
-<video src="Media/noFavorites.mp4" controls width="100%"></video>
+https://github.com/user-attachments/assets/ca0a1377-c153-4a8e-bff1-e0bcc42b83c9
+
 
 Use the search bar to find a recipe by name. Alternately, press the filter button to open the filter sheet and look for
 a specific cuisine.
 
-<video src="Media/filter.mp4" controls width="100%"></video>
+https://github.com/user-attachments/assets/6f841fba-bfb8-439f-b14a-0912d9bed325
 
 Some useful state feedback include loading error, empty results, and malformed data. Although you requested that a list
 of recipes be entirely disregarded if a recipe is malformed, I made the design decision to provide feedback for the
