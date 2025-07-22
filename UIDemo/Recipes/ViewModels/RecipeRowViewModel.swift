@@ -14,6 +14,7 @@ final class RecipeRowViewModel: ObservableObject {
     private let recipeId: UUID
     private let recipeStore: any RecipeDataServiceProtocol
     @Published private(set) var image: Image?
+    @Published var notes = [RecipeNote]()
     
     enum ImageSize {
         case small
@@ -28,6 +29,7 @@ final class RecipeRowViewModel: ObservableObject {
                                        ? recipeStore.smallImageURL(for: recipeId)
                                        : recipeStore.largeImageURL(for: recipeId), cache: recipeStore.imageCache)
         self.recipeStore = recipeStore
+        self.notes = getNotes
     }
     
     /// Binding: ViewModel.image ← ImageLoader.image
@@ -88,12 +90,18 @@ extension RecipeRowViewModel {
         recipeStore.youtubeVideoURL(for: recipeId)
     }
     
-    var notes: [RecipeNote] {
+    var getNotes: [RecipeNote] {
         recipeStore.notes(for: recipeId)
     }
     
     func addNote(_ text: String) {
         recipeStore.addNote(text, for: recipeId)
+        self.notes = getNotes
+    }
+    
+    func deleteNote(_ note: RecipeNote) {
+        recipeStore.deleteNote(noteId: note.id, for: recipeId)
+        self.notes = getNotes
     }
     
     var isFavorite: Bool {

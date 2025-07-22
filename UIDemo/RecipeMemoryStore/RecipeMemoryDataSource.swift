@@ -91,6 +91,14 @@ final class RecipeMemoryDataSource: RecipeMemoryDataSourceProtocol {
         save()
     }
     
+    func deleteNote(for recipeUUID: UUID, noteId: UUID) {
+        if let mem = memories[recipeUUID], !mem.notes.isEmpty {
+            mem.notes.removeAll(where: { $0.id == noteId })
+            memories[recipeUUID] = mem
+            save()
+        }
+    }
+    
     func deleteNotes(for recipeUUID: UUID) {
         if let mem = memories[recipeUUID] {
             mem.notes.removeAll()

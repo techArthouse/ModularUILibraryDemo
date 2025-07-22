@@ -80,6 +80,10 @@ final class RecipeDataService: RecipeDataServiceProtocol {
         memoryDataSource.addNote(text, for: id)
     }
     
+    func deleteNote(noteId: UUID, for id: UUID) {
+        memoryDataSource.deleteNote(for: id, noteId: noteId)
+    }
+    
     func deleteNotes(for id: UUID) {
         memoryDataSource.deleteNotes(for: id)
     }

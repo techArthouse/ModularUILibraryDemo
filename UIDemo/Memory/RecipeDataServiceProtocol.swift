@@ -29,6 +29,7 @@ protocol RecipeDataServiceProtocol {
     // MARK: – Notes
     func notes(for id: UUID) -> [RecipeNote]
     func addNote(_ text: String, for id: UUID)
+    func deleteNote(noteId: UUID, for id: UUID)
     func deleteNotes(for id: UUID)
     
     // MARK: – URLs

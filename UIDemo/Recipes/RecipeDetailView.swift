@@ -17,6 +17,9 @@ struct RecipeDetailView: View {
     @State private var isLoading: Bool = false
     @State private var isAddingNote = false
     @State private var newNoteText = ""
+    @State private var noteToDelete: RecipeNote? = nil
+    @State private var showDeleteAlert = false
+    @GestureState private var isDetectingLongPress = false
     
     init(makeRecipeRowVM: @escaping () -> RecipeRowViewModel) {
         self._vm = StateObject(wrappedValue: makeRecipeRowVM())
@@ -57,12 +60,11 @@ struct RecipeDetailView: View {
                                         iconOn: .system("star.fill"),
                                         iconOff: .system("star"),
                                         isDisabled: vm.isDisabledBinding,
-                                        isSelected: vm.isFavoriteBinding) {
-                                        }
-                                        .asStandardIconButtonStyle(withColor: .yellow)
-                                        .accessibilityLabel(Text("ToggleIconButton: \(vm.accessibilityId)"))
-                                        .padding(.trailing)
-                                        .padding(.top)
+                                        isSelected: vm.isFavoriteBinding)
+                                    .asStandardIconButtonStyle(withColor: .yellow)
+                                    .accessibilityLabel(Text("ToggleIconButton: \(vm.accessibilityId)"))
+                                    .padding(.trailing)
+                                    .padding(.top)
                                     Spacer()
                                 }
                             }
@@ -104,17 +106,31 @@ struct RecipeDetailView: View {
                             .frame(maxWidth: .infinity, alignment: .center)
                     }
                     .padding(.vertical, 5)
-                    .background( isAddingNote ? .white : .yellow.opacity(0.4))
+                    .background(isAddingNote ? .white : .yellow.opacity(0.4))
                     
                     ForEach(vm.notes) { note in
-                        Text(note.text)
-                            .padding(.leading, 10)
-                            .cornerRadius(8)
-                            .transition(.opacity)
+                        VStack(alignment: .leading) {
+                            Text(note.text)
+                                .padding(.leading, 10)
+                                .cornerRadius(8)
+                        }
+                        .transition(.move(edge: .leading).combined(with: .opacity))
+                        .contentShape(Rectangle())
+                        .gesture(
+                            LongPressGesture(minimumDuration: 0.5)
+                                .updating($isDetectingLongPress) { currentState, gestureState, _ in
+                                    gestureState = currentState
+                                }
+                                .onEnded { _ in
+                                    showDeleteConfirmation(for: note)
+                                }
+                        )
                         Divider()
                             .frame(height: 1)
                             .background(.black.opacity(0.5))
+                            .transition(.identity)
                     }
+                    .animation(.linear, value: vm.notes.count)
                     
                     if isAddingNote {
                         TextField("Write your note...", text: $newNoteText)
@@ -122,7 +138,8 @@ struct RecipeDetailView: View {
                             .background(Color.yellow.opacity(0.4))
                             .cornerRadius(8)
                             .overlay(RoundedRectangle(cornerRadius: 8).stroke(Color.gray.opacity(0.6)))
-                            .transition(.move(edge: .bottom).combined(with: .opacity)).onSubmit {
+                            .transition(.move(edge: .bottom).combined(with: .opacity))
+                            .onSubmit {
                                 if !newNoteText.trimmingCharacters(in: .whitespaces).isEmpty {
                                     vm.addNote(newNoteText.trimmingCharacters(in: .whitespaces))
                                     withAnimation {
@@ -199,6 +216,22 @@ struct RecipeDetailView: View {
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
+        .alert("Delete Note?",
+               isPresented: $showDeleteAlert,
+               presenting: noteToDelete) { note in
+            Button("Delete", role: .destructive) {
+                withAnimation {
+                    vm.deleteNote(note)
+                }
+            }
+            Button("Cancel", role: .cancel) { }
+        } message: { note in
+            let shortPreview = note.text.count > 10
+            ? "\(note.text.prefix(10))..."
+            : note.text
+            
+            Text("Are you sure you want to delete this note? \"\(shortPreview)\"")
+        }
     }
     
     
@@ -213,8 +246,6 @@ struct RecipeDetailView: View {
         
         func updateUIViewController(_ uiViewController: SFSafariViewController, context: Context) {
         }
-        
-        
     }
     
     // Regex helper to find id for video
@@ -224,6 +255,11 @@ struct RecipeDetailView: View {
             return String(match.output.1)
         }
         return nil
+    }
+    
+    private func showDeleteConfirmation(for note: RecipeNote) {
+        noteToDelete = note
+        showDeleteAlert = true
     }
 }
 

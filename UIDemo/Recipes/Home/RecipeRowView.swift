@@ -152,6 +152,11 @@ class MockFetchCacheGOODandBAD: ImageCacheProtocol {
 }
 
 class MockRecipeMemoryDataSource: RecipeMemoryDataSourceProtocol {
+    var notes = [RecipeNote(id: UUID(), text: "this is one note", date: Date())]
+    func deleteNote(for recipeUUID: UUID, noteId: UUID) {
+        notes.removeAll(where: {$0.id == noteId})
+    }
+    
     func load() {
         // nothing yet
     }
@@ -161,7 +166,7 @@ class MockRecipeMemoryDataSource: RecipeMemoryDataSourceProtocol {
     }
     
     func addNote(_ text: String, for recipeUUID: UUID) {
-        // nothing yet
+        self.notes.append(RecipeNote(id: UUID(), text: text, date: Date()))
     }
     
     @Published var memories: [UUID : RecipeMemory] = [:]
@@ -189,7 +194,7 @@ class MockRecipeMemoryDataSource: RecipeMemoryDataSourceProtocol {
     }
     
     func notes(for recipeUUID: UUID) -> [RecipeNote] {
-        [RecipeNote(id: UUID(), text: "this is one note", date: Date())]
+        self.notes
     }
     
     func addNote(_ text: String, for recipeUUID: UUID) -> RecipeNote? {

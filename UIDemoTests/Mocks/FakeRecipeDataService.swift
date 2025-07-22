@@ -12,6 +12,10 @@ import Combine
 
 @MainActor
 class FakeRecipeDataService: RecipeDataServiceProtocol {
+    func deleteNote(noteId: UUID, for id: UUID) {
+        //
+    }
+    
     @Published var allItems: [Recipe] = []
     @Published var imageCache: any ImageCacheProtocol = FakeImageCache()
     var itemsPublisher: AnyPublisher<[Recipe], Never> { $allItems.eraseToAnyPublisher() }

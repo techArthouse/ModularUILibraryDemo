@@ -18,5 +18,6 @@ protocol RecipeMemoryDataSourceProtocol {
     func toggleFavorite(recipeUUID: UUID)
     func notes(for recipeUUID: UUID) -> [RecipeNote]
     func addNote(_ text: String, for recipeUUID: UUID)
+    func deleteNote(for recipeUUID: UUID, noteId: UUID)
     func deleteNotes(for recipeUUID: UUID)
 }
