@@ -2,10 +2,71 @@
 
 ### Focus Areas: What specific areas of the project did you prioritize? Why did you choose to focus on these areas?
 
+I prioritized architecture above all. I’ve seen firsthand how bad architectural decisions create long-term pain, 
+so I focused early on setting up a clean, composable structure rooted in Swift’s reactivity model. Most UI quirks 
+and redraw bugs were solved not through patches, but by refactoring how Viewmodels are injected. For example,
+moving to a factory constructor approach helped eliminate tight coupling and made views easier to reuse and test.
+
+Another major focus was unit testing. While not exhaustive, the tests I wrote surfaced real bugs faster than SwiftUI 
+previews ever could. It reinforced my belief that testability and architecture go hand in hand.
+
+Lastly, organization mattered. I treated this like real production code: folders, files, and responsibilities are 
+clearly divided. It should be immediately understandable to any engineer stepping in.
+
 ### Time Spent: Approximately how long did you spend working on this project? How did you allocate your time?
+
+Roughly 6 weeks total. A good portion of that overlapped with active development on my ModularUILibrary, which powers 
+much of the UI for this project. This allowed me to work efficiently across both domains. Whenever reusable views
+showed up during implementation, I pulled it out, generalized it, and added it into my library and back into the app.
+For example, the body of `ImageCard` was something i found myself using often, so I pulled it aside and evaluated its
+composability. I decided it is useful enough and general enough to be a useful component in my library so I added it to
+ModularUILibrary. On the other hand, if a component I was building was a specialized view specific to the context of 
+the app, then I still generalized it as much as i could so that I could reause it on other composable views.
+`RandomRecipeButton` is one such view. Following this pattern has already paid off in flexibility and speed of iteration.
 
 ### Trade-offs and Decisions: Did you make any significant trade-offs in your approach?
 
+I gave this project enough time to avoid most of the usual compromises. That said, the temptation to "just make it work" 
+definitely came up but I held the line on clean architecture and declarative UI design. In the process, I learned a great
+deal more about SwiftUI's reactive engine and behaviour. 
+
+One practical issue I ran into was inconsistent behavior between previews and runtime. The previews occasionally flickered 
+or misbehaved, while the simulator ran the same code cleanly. I traced this to the lifecycle management of `@StateObject`, 
+which is expected to be created within the view that owns it, according to Apple’s documentation. When you violate that by 
+passing in an already-instantiated object, SwiftUI previews can act unpredictably.
+
+To solve this cleanly, I adopted a `factory constructor pattern` where instead of passing a raw Viewmodel I passed a closure 
+that instantiates the view model inside the view.
+
+```
+    // Via ContentView
+    init(
+        makeHomeVM: @escaping () -> RecipesViewModel,
+        makeFavoritesVM: @escaping () -> RecipesViewModel,
+        makeDiscoveryVM: @escaping () -> DiscoverViewModel) {
+            _homeVM = StateObject(wrappedValue: makeHomeVM())
+            _favoritesVM = StateObject(wrappedValue: makeFavoritesVM())
+            _discoverVM = StateObject(wrappedValue: makeDiscoveryVM())
+        }
+```
+
+This guaranteed SwiftUI-owned lifecycles and eliminated the preview quirks. It also kept injection flexible and testable, 
+which fits my architectural goals.
+
+The one real trade-off I made was skipping tests for components I judged to be low-risk or purely declarative. In practice, 
+that decision held up because none of those areas became bug sources, and my focus stayed on the parts of the stack where bugs 
+are more likely to appear like with state, logic, and input/output coordination.
+
 ### Weakest Part of the Project: What do you think is the weakest part of your project?
 
+If anything, it’s the incomplete test coverage. I didn’t write tests for every view or helper method, even though I normally
+strive for fuller coverage. Still, I stand by the decision while still focusing testing efforts where they mattered most. 
+It was a strategic omission, not an oversight.
+
 ### Additional Information: Is there anything else we should know? Feel free to share any insights or constraints you encountered.
+
+The UI component library used throughout this project is my own: ModularUILibrary. I developed it in parallel and it’s hosted on my GitHub. 
+Since you asked not to include third-party libraries, this seemed like a fair and productive exception: I authored it, I maintain it, 
+and it reflects how I build UI professionally.
+
+Also, any edge cases or brittle behaviors I encountered were opportunities to evolve the library itself so this project benefitted from that feedback loop.
