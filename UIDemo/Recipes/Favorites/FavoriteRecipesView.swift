@@ -28,7 +28,7 @@ struct FavoriteRecipesView: View {
                 errorView(type: .error(msg))
             case .success(let phase):
                 switch phase {
-                case .itemsLoaded(let recipes) where recipes.isEmpty:
+                case .itemsEmpty:
                     errorView(type: .noResults)
                 default:
                     contentList

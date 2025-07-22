@@ -20,6 +20,7 @@ class RecipesViewModel: ObservableObject {
         enum LoadSuccess: Equatable {
             case itemsLoaded([Recipe])     // Simple reassign
             case itemsFiltered([UUID])   // Mutate items in place for view identity
+            case itemsEmpty
         }
     }
 
@@ -100,6 +101,9 @@ class RecipesViewModel: ObservableObject {
                         return item
                     }
                     self.items = newItems
+                    if newItems.isEmpty {
+                        self.loadPhase = .success(.itemsEmpty)
+                    }
                     
                 case .success(.itemsFiltered(let ids)):
                     for (i, item) in self.items.enumerated() {
@@ -158,7 +162,7 @@ class RecipesViewModel: ObservableObject {
             let data = try await networkService.requestData(from: url, using: .get)
             let list = try JSONDecoder().decode(RecipeList.self, from: data)
             let recipes = list.recipes + list.invalidRecipes
-//            var recipes = try await Recipe.allFromJSON(using: .good)
+//            var recipes = try await Recipe.allFromJSON(using: .empty)
             recipeStore.setRecipes(recipes: recipes)
         } catch {
             loadPhase = .failure(error.localizedDescription)

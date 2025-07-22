@@ -1,5 +1,18 @@
 ### Summary: Include screen shots or a video of your app highlighting its features
 
+# Core App Flow
+
+- App Launch
+
+![App Launch](Media/appLaunch.mov)
+
+App launches without a hitch and loads the recipe list from the Network. Recipe rows load lazily.
+Images load asynchronously via a custom ImageCache. ProgressView provides feedback to user. First time cached images
+predictably takes a moment, but on returning to previously loaded images it instantly loads from local memory.
+Pull-to-Refresh flushes cache and images request from network again. (see ProgressView for each image again while load).
+
+![App Launch](Media/appLaunch.mov)
+
 ### Focus Areas: What specific areas of the project did you prioritize? Why did you choose to focus on these areas?
 
 I prioritized architecture above all. I’ve seen firsthand how bad architectural decisions create long-term pain, 
